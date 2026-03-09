@@ -53,9 +53,10 @@ TERMS_FILE = BASE_DIR / "terms.html"
 
 FORM_TEMPLATE = """
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" translate="no">
 <head>
   <meta charset="UTF-8" />
+  <meta name="google" content="notranslate" />
   <title>구매대행 계약서 및 청구서</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
   <script>
@@ -372,7 +373,7 @@ FORM_TEMPLATE = """
 
             <div class="section-title">결제 전 필수 동의</div>
             <div class="mt-2 rounded-2xl bg-gradient-to-br from-brand-dark via-brand-blue/90 to-brand-dark text-white p-4 md:p-5 border border-white/10 shadow-md space-y-2">
-              <p class="text-xs text-white/80">
+              <p class="text-xs text-white">
                 고객님, 안전한 경매 대행 서비스를 위해 아래 사항에 모두 동의해 주셔야 입찰 및 결제가 진행됩니다.
               </p>
               <div class="space-y-2 text-sm">
@@ -408,7 +409,7 @@ FORM_TEMPLATE = """
 
             <div class="mt-4">
               <label class="text-xs font-semibold text-gray-700 mb-1 block">이용약관 전문</label>
-              <div class="border border-gray-200 rounded-lg h-40 overflow-hidden bg-gray-50">
+              <div class="border border-gray-200 rounded-lg h-72 overflow-hidden bg-gray-50">
                 <iframe src="{{ url_for('terms') }}" class="w-full h-full border-0 bg-white"></iframe>
               </div>
             </div>
@@ -611,19 +612,6 @@ def payment():
         except Exception:
             last_result = None
 
-    # 마지막 결과가 성공이 아닌 경우에만, 이전 주문 데이터를 기본값으로 사용 (간이 자동완성)
-    if not (last_result and last_result.get("status") == "success"):
-        if Path(ORDER_JSON_PATH).exists():
-            try:
-                with open(ORDER_JSON_PATH, "r", encoding="utf-8") as f:
-                    saved = json.load(f)
-                for key in HEADERS:
-                    if key in saved and saved[key] not in (None, ""):
-                        defaults[key] = str(saved[key])
-            except Exception:
-                # 손상된 JSON 이 있어도 폼은 기본값으로 표시
-                pass
-
     # 카드번호 4칸 분리용 기본값
     card_number = defaults.get("card_number", "")
     defaults["card_number_1"] = card_number[0:4]
@@ -667,7 +655,7 @@ def payment():
             flash(f"데이터 저장 중 오류가 발생했습니다: {e}", "error")
         else:
             flash("주문 데이터가 성공적으로 저장되었습니다.", "success")
-        return redirect(url_for("index"))
+        return redirect(url_for("payment"))
 
     return render_template_string(
         FORM_TEMPLATE,

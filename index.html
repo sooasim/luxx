@@ -88,12 +88,12 @@
 
             <!-- 중앙 메뉴 (레퍼런스의 Pill 형태 메뉴 스타일 적용) -->
             <nav class="hidden md:flex bg-white/10 rounded-full p-1 border border-white/10 text-sm font-medium">
-                <a href="#" class="px-5 py-2 rounded-full bg-white/20 text-white transition">HOME</a>
-                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">GLOBAL AUCTION</a>
-                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
+                <a href="/" class="px-5 py-2 rounded-full bg-white/20 text-white transition">HOME</a>
+                <a href="/payment" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">GLOBAL AUCTION</a>
+                <a href="/payment" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
                     <i class="fa-solid fa-lock text-xs"></i> SISA VAULT
                 </a>
-                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY SISA</a>
+                <a href="login.html" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY SISA</a>
             </nav>
 
             <!-- 우측 액션 버튼 -->
@@ -206,8 +206,12 @@
                     SISA 인증 경매사와 함께하는 안전하고 투명한 글로벌 명품 거래
                 </p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <button class="px-8 py-4 bg-brand-accent text-brand-blue font-bold rounded-xl hover:bg-white transition shadow-lg shadow-white/10">지금 경매 시작하기</button>
-                    <button class="px-8 py-4 bg-white/10 border border-white/20 text-white font-bold rounded-xl hover:bg-white/20 transition">경매사 찾아보기</button>
+                    <a href="/payment" class="px-8 py-4 bg-brand-accent text-brand-blue font-bold rounded-xl hover:bg-white transition shadow-lg shadow-white/10 text-center">
+                        지금 경매 시작하기
+                    </a>
+                    <a href="/agency-register.html" class="px-8 py-4 bg-white/10 border border-white/20 text-white font-bold rounded-xl hover:bg-white/20 transition text-center">
+                        경매사 찾아보기
+                    </a>
                 </div>
             </div>
         </section>
@@ -706,7 +710,7 @@
         <!-- 하단 푸터 -->
         <footer class="border-t border-white/10 mt-20 text-center py-10 text-sm text-white/40">
             <div class="mb-4 flex justify-center">
-                <a href="../terms.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white/70 transition">
+                <a href="/terms" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white/70 transition">
                     <i class="fa-regular fa-file-lines text-[11px]"></i>
                     <span>이용약관 보기</span>
                 </a>
