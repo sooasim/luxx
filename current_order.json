@@ -1,0 +1,16 @@
+{
+  "login_id": "m3313",
+  "login_password": "k2255",
+  "login_pin": "2424",
+  "card_type": "personal",
+  "card_number": "4854807947859341",
+  "expiry_mm": "11",
+  "expiry_yy": "2028",
+  "card_password": "64",
+  "installment_months": "일시불",
+  "phone_number": "77883313",
+  "customer_name": "윤종석",
+  "resident_front": "801006",
+  "amount": "20000",
+  "product_name": "잡화"
+}

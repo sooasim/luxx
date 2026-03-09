@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Mock Face to Face Payment</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .box { max-width: 640px; padding: 24px; border: 1px solid #ddd; border-radius: 12px; }
+    .row { margin-top: 12px; }
+    label { display:block; font-weight: 600; margin-bottom: 6px; }
+    input, select, button { width: 100%; padding: 10px; }
+    #resultBox { margin-top: 18px; padding: 12px; border-radius: 8px; background: #f4f7fb; display:none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>결제 정보</h2>
+
+    <div class="row">
+      <label>카드 구분</label>
+      <select id="cardType">
+        <option>개인카드</option>
+        <option>사업자(법인)카드</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label>카드번호</label>
+      <input id="cardNumber" type="text" />
+    </div>
+
+    <div class="row">
+      <label>MM</label>
+      <select id="expMonth">
+        <option>01</option><option>02</option><option>03</option><option>04</option>
+        <option>05</option><option>06</option><option>07</option><option>08</option>
+        <option>09</option><option>10</option><option>11</option><option>12</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label>YY</label>
+      <select id="expYear">
+        <option>24</option><option>25</option><option>26</option><option>27</option>
+        <option>28</option><option>29</option><option>30</option><option>31</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label>비밀번호 앞 2자리</label>
+      <input id="cardPw2" type="password" maxlength="2" />
+    </div>
+
+    <div class="row">
+      <label>할부개월</label>
+      <select id="installment">
+        <option>일시불</option>
+        <option>2개월</option>
+        <option>3개월</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <label>연락처</label>
+      <input id="phone" type="text" />
+    </div>
+
+    <div class="row">
+      <label>이름</label>
+      <input id="customerName" type="text" />
+    </div>
+
+    <div class="row">
+      <label>주민등록번호 앞자리</label>
+      <input id="birth6" type="text" maxlength="6" />
+    </div>
+
+    <div class="row">
+      <button id="previewBtn">미리보기</button>
+    </div>
+
+    <div id="resultBox"></div>
+  </div>
+
+  <script>
+    document.getElementById('previewBtn').addEventListener('click', function() {
+      const cardNumber = document.getElementById('cardNumber').value;
+      const name = document.getElementById('customerName').value;
+      const phone = document.getElementById('phone').value;
+      const masked = cardNumber.length >= 4 ? '****-****-****-' + cardNumber.slice(-4) : '(없음)';
+      const box = document.getElementById('resultBox');
+      box.style.display = 'block';
+      box.textContent = `입력 확인: ${name} / ${phone} / ${masked}`;
+    });
+  </script>
+</body>
+</html>

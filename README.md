@@ -78,4 +78,3 @@ python auto_kvan.py
 - 크롬에서 `F12` 누르고 → Elements 탭에서 입력창을 클릭 → `name` / `id` / `placeholder` 값을 확인 후
 - `auto_kvan.py` 의 `SIGN_IN_SELECTORS`, `FACE_TO_FACE_SELECTORS` 부분을 수정하세요.
 
-"# sisa"  

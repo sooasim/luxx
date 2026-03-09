@@ -1,0 +1,12 @@
+{
+  "sessions": [
+    {
+      "id": "154454782571",
+      "amount": "",
+      "installment": "일시불",
+      "status": "결제중",
+      "created_at": "2026-03-06T15:44:54.782571"
+    }
+  ],
+  "history": []
+}

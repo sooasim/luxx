@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISA - Society of International Specialized Auctioneers</title>
+    <!-- 폰트 및 아이콘 불러오기 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#2f4b9f', /* 레퍼런스 이미지와 유사한 딥 블루 */
+                            dark: '#1e326b',
+                            accent: '#e6edf7'
+                        }
+                    },
+                    animation: {
+                        'marquee': 'marquee 45s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 3s infinite',
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 커스텀 글래스모피즘 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding-left: 100%;
+            box-sizing: content-box;
+        }
+    </style>
+</head>
+<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased">
+
+    <!-- 상단 네비게이션 바 -->
+    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <!-- 로고 영역 (디자인 강화 및 풀네임/도메인 추가) -->
+            <div class="flex items-center gap-3">
+                <!-- 컬러 로고 아이콘 -->
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30 border border-white/20">
+                    <i class="fa-solid fa-globe text-white text-lg shadow-sm"></i>
+                </div>
+                <!-- 로고 텍스트 -->
+                <div class="flex flex-col justify-center">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-extrabold tracking-tight text-white">SISA</span>
+                        <span class="text-[10px] font-mono bg-white/10 text-blue-200 px-1.5 py-0.5 rounded border border-white/10 tracking-wider">worldsisa.com</span>
+                    </div>
+                    <span class="text-[9px] text-white/60 font-medium tracking-[0.15em] mt-0.5 uppercase">Society of International Specialized Auctioneers</span>
+                </div>
+            </div>
+
+            <!-- 중앙 메뉴 (레퍼런스의 Pill 형태 메뉴 스타일 적용) -->
+            <nav class="hidden md:flex bg-white/10 rounded-full p-1 border border-white/10 text-sm font-medium">
+                <a href="#" class="px-5 py-2 rounded-full bg-white/20 text-white transition">HOME</a>
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">GLOBAL AUCTION</a>
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
+                    <i class="fa-solid fa-lock text-xs"></i> SISA VAULT
+                </a>
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY SISA</a>
+            </nav>
+
+            <!-- 우측 액션 버튼 -->
+            <div class="flex items-center gap-4 text-sm font-semibold">
+                <div class="hidden sm:flex items-center gap-1 cursor-pointer text-white/80 hover:text-white">
+                    EN <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+                <a href="login.html" class="flex items-center gap-2 bg-white text-brand-blue px-6 py-2.5 rounded-lg hover:bg-brand-accent transition shadow-lg">
+                    <span>로그인 / 가입</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 래퍼 (헤더 높이만큼 패딩) -->
+    <main class="pt-20">
+        <!-- Vault Ticker (실시간 스크롤) -->
+        <div class="ticker-wrap h-10 flex items-center border-b border-white/10">
+            <div class="inline-block whitespace-nowrap animate-marquee text-sm text-white/80 font-mono tracking-wide">
+                <span class="mx-4"><span class="text-green-400">🔔 SV-1049</span> (롤렉스 서브마리너) 14,500,000원 ➔ 익명 딜러 매입 완료</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-blue-300">💎 SV-8821</span> (에르메스 버킨 30) 28,000,000원 ➔ 낙찰 대기중</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-green-400">🔔 SV-0012</span> (파텍필립 노틸러스) 112,000,000원 ➔ SISA 보관소 입고 완료</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-yellow-400">⚡ LIVE</span> Christie's 런던 하이엔드 시계 경매 진행 중</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-green-400">🔔 SV-2934</span> (샤넬 클래식 미디엄) 12,800,000원 ➔ SISA 전문 검수 완료</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-blue-300">💎 SV-7710</span> (오데마피게 로얄오크) 65,000,000원 ➔ VIP 프라이빗 거래 성사</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-yellow-400">⚡ LIVE</span> Sotheby's 뉴욕 현대미술 경매 시작</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-green-400">🔔 SV-0922</span> (반클리프 아펠 알함브라) 8,200,000원 ➔ 일본 야후 옥션 입찰 중</span>
+                <span class="mx-4 text-white/30">|</span>
+                <span class="mx-4"><span class="text-purple-400">🔒 SISA Vault</span> 글로벌 누적 예치 자산 1,500억원 돌파</span>
+            </div>
+        </div>
+
+        <!-- Hero Section (레퍼런스 이미지의 플로팅 UI 컨셉 구현) -->
+        <section class="relative max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col items-center justify-center min-h-[70vh]">
+            
+            <!-- 플로팅 카드 배경 영역 -->
+            <div class="relative w-full max-w-4xl h-[400px] mb-16 flex justify-center items-center">
+                
+                <!-- 중앙 메인 앱 UI 모크업 -->
+                <div class="absolute z-20 w-72 h-[420px] bg-white text-gray-800 rounded-[2rem] shadow-2xl overflow-hidden p-6 flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-6">
+                        <i class="fa-regular fa-user text-gray-400"></i>
+                        <div class="flex gap-2 text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <i class="fa-regular fa-bell"></i>
+                        </div>
+                    </div>
+                    <!-- 가상 상품 이미지 (그라데이션 원형으로 레퍼런스 느낌 냄) -->
+                    <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-[#e7c7a5] to-[#f5e3ce] mb-6 shadow-inner relative flex items-center justify-center">
+                         <i class="fa-regular fa-gem text-4xl text-white/70 shadow-sm"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">Current Highest Bid</p>
+                    <h2 class="text-3xl font-bold mb-6">₩14,500,000</h2>
+                    <div class="flex w-full gap-3">
+                        <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition text-sm flex flex-col items-center justify-center gap-1">
+                            <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i> Auto Bid
+                        </button>
+                        <button class="flex-1 bg-brand-blue hover:bg-brand-dark text-white py-3 rounded-xl font-medium transition text-sm flex flex-col items-center justify-center gap-1 shadow-md">
+                            <i class="fa-solid fa-arrow-up text-xs"></i> Bid Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 좌측 하단 플로팅 카드 -->
+                <div class="absolute z-10 -left-4 md:left-12 bottom-0 glass-card p-4 rounded-2xl w-64 shadow-2xl animate-float-delayed flex items-center gap-4 border-l-4 border-l-blue-400">
+                    <div class="w-16 h-16 rounded-xl bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80');"></div>
+                    <div>
+                        <p class="text-xs text-white/60 mb-1">SISA Auth Guarantee</p>
+                        <p class="font-bold text-lg text-white">Verified <i class="fa-solid fa-circle-check text-blue-400 text-sm"></i></p>
+                    </div>
+                </div>
+
+                <!-- 우측 상단 플로팅 카드 -->
+                <div class="absolute z-10 -right-4 md:right-12 top-10 glass-card p-5 rounded-2xl w-56 shadow-2xl animate-float">
+                    <div class="flex justify-between items-center mb-3 text-sm">
+                        <span class="text-white/70">Conversion</span>
+                        <i class="fa-solid fa-ellipsis text-white/50"></i>
+                    </div>
+                    <div class="flex justify-between items-end mb-2 border-b border-white/10 pb-2">
+                        <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-full bg-blue-500"></div> USD</div>
+                        <div class="font-bold">$ 12,000</div>
+                    </div>
+                    <div class="flex justify-between items-end pt-2">
+                        <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-full bg-red-500"></div> KRW</div>
+                        <div class="font-bold">16,140,000</div>
+                    </div>
+                </div>
+
+                <!-- 우측 하단 미니 카드 (QR 컨셉) -->
+                <div class="absolute z-0 right-10 md:right-24 bottom-10 glass-card p-3 rounded-xl shadow-2xl animate-float">
+                    <p class="text-[10px] text-white/60 mb-2">Item Vault Code</p>
+                    <i class="fa-solid fa-qrcode text-5xl text-white/90"></i>
+                </div>
+            </div>
+
+            <!-- 하단 텍스트 (레퍼런스와 동일한 레이아웃 구조) -->
+            <div class="text-center z-30 mt-8">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 leading-tight">
+                    세계 최고의 명품 경매를<br>당신의 손안에
+                </h1>
+                <p class="text-lg md:text-xl text-white/70 max-w-2xl mx-auto font-light mb-8">
+                    SISA 인증 경매사와 함께하는 안전하고 투명한 글로벌 명품 거래
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button class="px-8 py-4 bg-brand-accent text-brand-blue font-bold rounded-xl hover:bg-white transition shadow-lg shadow-white/10">지금 경매 시작하기</button>
+                    <button class="px-8 py-4 bg-white/10 border border-white/20 text-white font-bold rounded-xl hover:bg-white/20 transition">경매사 찾아보기</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 실시간 통계 (Trust Indicators) -->
+        <section class="max-w-7xl mx-auto px-6 -mt-10 relative z-40">
+            <div class="glass-card rounded-2xl p-6 shadow-2xl bg-brand-dark/50">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x divide-white/10 text-center">
+                    <div>
+                        <p class="text-white/60 text-sm mb-1">누적 거래액</p>
+                        <p class="text-3xl font-bold text-white">$2.5B</p>
+                    </div>
+                    <div>
+                        <p class="text-white/60 text-sm mb-1">인증 경매사</p>
+                        <p class="text-3xl font-bold text-blue-300">247개</p>
+                    </div>
+                    <div>
+                        <p class="text-white/60 text-sm mb-1">회원 수</p>
+                        <p class="text-3xl font-bold text-white">52,341</p>
+                    </div>
+                    <div>
+                        <p class="text-white/60 text-sm mb-1">만족도</p>
+                        <p class="text-3xl font-bold text-green-400">98.7%</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 실시간 인기 경매 & 필터 -->
+        <section class="max-w-7xl mx-auto px-6 py-24">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold mb-2 flex items-center gap-3"><i class="fa-solid fa-fire text-red-500"></i> 실시간 인기 경매</h2>
+                    <p class="text-white/60">마감 임박, 인기 순, 가격 순으로 전 세계 핫한 매물을 확인하세요.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition border border-white/10"><i class="fa-solid fa-arrow-down-short-wide"></i> 정렬 기준</button>
+                    <button class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition border border-white/10"><i class="fa-solid fa-sliders"></i> 고급 검색 필터</button>
+                </div>
+            </div>
+
+            <!-- 브랜드 & 카테고리 필터 (가로 스크롤) -->
+            <div class="flex gap-2 overflow-x-auto pb-4 mb-4" style="scrollbar-width: none;">
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-blue-500 text-white text-sm font-medium shadow-lg shadow-blue-500/30 border border-blue-400">Ending Soon (마감 임박)</button>
+                <div class="w-px h-6 bg-white/20 my-auto mx-2"></div>
+                <!-- Brand Pavilion -->
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">👜 에르메스</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">⌚ 롤렉스</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">👜 샤넬</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">🧳 루이비통</button>
+                <div class="w-px h-6 bg-white/20 my-auto mx-2"></div>
+                <!-- Categories -->
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">핸드백</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">시계</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">주얼리</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">아트 & 빈티지</button>
+                <button class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">의류/신발</button>
+            </div>
+
+            <!-- 가로 스크롤 카드 리스트 -->
+            <div class="flex gap-6 overflow-x-auto pb-8 snap-x" style="scrollbar-width: none;">
+                <!-- Card 1 (마감 임박) -->
+                <div class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start group cursor-pointer border border-white/10">
+                    <div class="h-48 bg-gradient-to-br from-gray-700 to-gray-900 relative p-4 flex items-start justify-between">
+                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg animate-pulse">02:14:59 남음</span>
+                        <div class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition"><i class="fa-regular fa-heart"></i></div>
+                        <i class="fa-solid fa-briefcase absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl text-white/10 group-hover:scale-110 transition duration-500"></i>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs text-white/50 mb-1">Sotheby's 뉴욕 · 핸드백</p>
+                        <h3 class="font-bold text-lg mb-3 truncate">에르메스 버킨 30 크로코다일</h3>
+                        <p class="text-sm text-white/60 mb-1">현재 최고 입찰가</p>
+                        <div class="flex justify-between items-end mb-4">
+                            <span class="text-2xl font-bold text-white">₩ 85,000,000</span>
+                            <span class="text-xs text-green-400 font-medium">14 Bids</span>
+                        </div>
+                        <button class="w-full bg-brand-accent text-brand-blue font-bold py-2.5 rounded-lg hover:bg-white transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> 긴급 입찰 (Sniper)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Card 2 (라이브 진행 중) -->
+                <div class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start group cursor-pointer border border-white/10">
+                    <div class="h-48 bg-gradient-to-br from-blue-800 to-blue-950 relative p-4 flex items-start justify-between">
+                        <span class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded shadow-lg">LIVE 경매중</span>
+                        <div class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition"><i class="fa-regular fa-heart text-red-400"></i></div>
+                        <i class="fa-regular fa-clock absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl text-white/10 group-hover:scale-110 transition duration-500"></i>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs text-white/50 mb-1">Christie's 제네바 · 시계</p>
+                        <h3 class="font-bold text-lg mb-3 truncate">롤렉스 데이토나 폴뉴먼</h3>
+                        <p class="text-sm text-white/60 mb-1">현재 최고 입찰가</p>
+                        <div class="flex justify-between items-end mb-4">
+                            <span class="text-2xl font-bold text-white">$ 125,000</span>
+                            <span class="text-xs text-green-400 font-medium">32 Bids</span>
+                        </div>
+                        <button class="w-full bg-blue-500 text-white font-bold py-2.5 rounded-lg hover:bg-blue-400 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30">
+                            <i class="fa-solid fa-gavel"></i> 실시간 입찰 참여
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 3 (24시간 내 종료) -->
+                <div class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start group cursor-pointer border border-white/10">
+                    <div class="h-48 bg-gradient-to-br from-purple-800 to-indigo-950 relative p-4 flex items-start justify-between">
+                        <span class="bg-white/20 backdrop-blur-md text-white border border-white/30 text-xs font-bold px-2 py-1 rounded">24시간 내 종료</span>
+                        <div class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition"><i class="fa-regular fa-heart"></i></div>
+                        <i class="fa-solid fa-gem absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl text-white/10 group-hover:scale-110 transition duration-500"></i>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs text-white/50 mb-1">Phillips 홍콩 · 주얼리</p>
+                        <h3 class="font-bold text-lg mb-3 truncate">반클리프 아펠 빈티지 알함브라</h3>
+                        <p class="text-sm text-white/60 mb-1">현재 최고 입찰가</p>
+                        <div class="flex justify-between items-end mb-4">
+                            <span class="text-2xl font-bold text-white">₩ 6,500,000</span>
+                            <span class="text-xs text-green-400 font-medium">5 Bids</span>
+                        </div>
+                        <button class="w-full bg-brand-accent text-brand-blue font-bold py-2.5 rounded-lg hover:bg-white transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-crosshairs"></i> 긴급 입찰 (Sniper)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Card 4 (전체보기 유도) -->
+                <div class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start flex items-center justify-center group cursor-pointer border-dashed border-2 border-white/20 hover:bg-white/5 transition">
+                    <div class="text-center">
+                        <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-white/20 group-hover:scale-110 transition duration-300">
+                            <i class="fa-solid fa-arrow-right text-2xl text-white/80"></i>
+                        </div>
+                        <p class="font-bold text-lg">전체 경매 보기</p>
+                        <p class="text-sm text-white/50 mt-1">12,450+ 개의 아이템 진행 중</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SISA CERTIFIED 인증 시스템 -->
+        <section class="border-y border-white/10 bg-brand-dark/30 py-24 relative overflow-hidden">
+            <!-- 배경 데코레이션 -->
+            <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+            
+            <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12 relative z-10">
+                <!-- 입체 배지 영역 -->
+                <div class="w-full md:w-1/3 flex justify-center">
+                    <div class="relative w-56 h-56 flex items-center justify-center">
+                        <div class="absolute inset-0 bg-blue-500 blur-3xl opacity-30 animate-pulse rounded-full"></div>
+                        <div class="relative z-10 w-48 h-48 glass-card rounded-full border-4 border-blue-400/50 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.4)] bg-gradient-to-br from-blue-900/80 to-brand-blue/80">
+                            <i class="fa-solid fa-shield-halved text-6xl text-blue-300 mb-2 drop-shadow-lg"></i>
+                            <span class="font-extrabold text-2xl tracking-widest text-white drop-shadow-md">SISA</span>
+                            <span class="text-[11px] tracking-[0.2em] text-blue-200 uppercase mt-1">Certified</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 텍스트 및 체크리스트 -->
+                <div class="w-full md:w-2/3">
+                    <div class="mb-4 inline-block px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-bold tracking-wider">CERTIFICATION STANDARDS</div>
+                    <h2 class="text-3xl md:text-4xl font-bold mb-4">SISA CERTIFIED <span class="font-light text-white/60">인증 마크란?</span></h2>
+                    <p class="text-lg text-white/70 mb-10 max-w-2xl leading-relaxed">
+                        SISA의 권위와 신뢰성을 보여주는 핵심 지표입니다. SISA Certified 마크는 글로벌 경매 시장에서 가장 안전하고 투명한 거래를 보장하는 국제 표준 파트너에게만 부여됩니다.
+                    </p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10">
+                        <div class="flex items-start gap-4">
+                            <div class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30"><i class="fa-solid fa-check text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">엄격한 심사 기준 통과</h4>
+                                <p class="text-sm text-white/60 mt-1 leading-relaxed">자본금, 거래이력, 보안 시스템 등 40개 항목의 심층 검증을 통과한 파트너 경매사만 부여</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30"><i class="fa-solid fa-check text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">100% 진품 보증</h4>
+                                <p class="text-sm text-white/60 mt-1 leading-relaxed">SISA 소속 전문 감정사의 3단계 크로스 체크 및 가품 판정 시 구매가 200% 보상 규정 적용</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30"><i class="fa-solid fa-check text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">투명한 거래 내역 공개</h4>
+                                <p class="text-sm text-white/60 mt-1 leading-relaxed">블록체인 네트워크를 활용하여 입찰 이력, 최종 낙찰가, 수수료 내역을 투명하게 기록 및 공유</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30"><i class="fa-solid fa-check text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white text-lg">안전한 에스크로 결제</h4>
+                                <p class="text-sm text-white/60 mt-1 leading-relaxed">회원이 상품을 안전하게 인수 및 검수 완료하는 시점까지 글로벌 은행 에스크로에 자금 보관</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="px-7 py-3.5 bg-transparent border border-white/30 text-white font-bold rounded-xl hover:bg-white hover:text-brand-dark transition flex items-center gap-2 group">
+                        인증 기준 자세히 보기 <i class="fa-solid fa-arrow-right text-sm group-hover:translate-x-1 transition"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PRIVATE HALL (회원사 전용관) -->
+        <section class="max-w-7xl mx-auto px-6 py-24">
+            <div class="text-center mb-16">
+                <span class="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 inline-block">B2B Exclusive</span>
+                <h2 class="text-3xl md:text-5xl font-bold mb-4 flex items-center justify-center gap-4">
+                    <i class="fa-solid fa-lock text-white/30 text-4xl"></i> PRIVATE HALL
+                </h2>
+                <p class="text-lg text-white/60 max-w-2xl mx-auto">SISA 인증을 거친 글로벌 파트너 회원사만 접근 가능한 B2B 폐쇄형 마켓 및 프리미엄 보관 서비스입니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Wholesale Market -->
+                <div class="glass-card p-8 rounded-2xl hover:bg-white/10 transition duration-300 group">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/20 group-hover:bg-blue-500 transition duration-300">
+                        <i class="fa-solid fa-boxes-stacked text-2xl text-blue-300 group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white">Wholesale Market <span class="text-lg font-light text-white/50 ml-1">(도매 경매)</span></h3>
+                    <ul class="text-white/70 space-y-3 text-sm">
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-blue-400 mt-1 mr-3"></i>유럽 및 일본 회원사의 대량 출품 매물 독점 접근</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-blue-400 mt-1 mr-3"></i>효율적인 재고 확보를 위한 Lot 단위 묶음 판매 지원</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-blue-400 mt-1 mr-3"></i>일반 소비자 낙찰가 대비 합리적인 도매가 기준 경매</li>
+                    </ul>
+                </div>
+                
+                <!-- Dealer's Choice -->
+                <div class="glass-card p-8 rounded-2xl hover:bg-white/10 transition duration-300 group">
+                    <div class="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/20 group-hover:bg-yellow-500 transition duration-300">
+                        <i class="fa-solid fa-star text-2xl text-yellow-300 group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white">Dealer's Choice <span class="text-lg font-light text-white/50 ml-1">(큐레이터 추천)</span></h3>
+                    <ul class="text-white/70 space-y-3 text-sm">
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-yellow-400 mt-1 mr-3"></i>SISA 수석 큐레이터가 엄선한 고수익 예상 럭셔리 아이템</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-yellow-400 mt-1 mr-3"></i>희소성 및 시세 동향을 포함한 상세 투자 가치 분석 리포트 제공</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-yellow-400 mt-1 mr-3"></i>과거 낙찰가 빅데이터 기반의 객관적인 예상 수익률 안내</li>
+                    </ul>
+                </div>
+
+                <!-- Direct Trade -->
+                <div class="glass-card p-8 rounded-2xl hover:bg-white/10 transition duration-300 group">
+                    <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/20 group-hover:bg-green-500 transition duration-300">
+                        <i class="fa-solid fa-handshake text-2xl text-green-300 group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white">Direct Trade <span class="text-lg font-light text-white/50 ml-1">(회원간 직거래)</span></h3>
+                    <ul class="text-white/70 space-y-3 text-sm">
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-green-400 mt-1 mr-3"></i>SISA의 강력한 보증 하에 이루어지는 회원사 간 안전한 재고 교환</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-green-400 mt-1 mr-3"></i>B2B 거래 활성화를 위한 신용 거래 및 장기 결제 옵션 지원</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-green-400 mt-1 mr-3"></i>플래티넘 회원사 대상 중개 수수료 전액 면제 혜택</li>
+                    </ul>
+                </div>
+
+                <!-- SISA Vault -->
+                <div class="glass-card p-8 rounded-2xl border border-purple-500/30 hover:bg-purple-900/20 transition duration-300 group relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 opacity-10 transform -rotate-12"><i class="fa-solid fa-vault text-[150px]"></i></div>
+                    <div class="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 group-hover:bg-purple-500 transition duration-300 relative z-10">
+                        <i class="fa-solid fa-shield-halved text-2xl text-purple-300 group-hover:text-white transition"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 text-white relative z-10">SISA Vault <span class="text-lg font-light text-white/50 ml-1">(프리미엄 보관)</span></h3>
+                    <ul class="text-white/70 space-y-3 text-sm relative z-10">
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-purple-400 mt-1 mr-3"></i>스위스 제네바, 홍콩 등 주요 글로벌 물류 허브 내 고가품 실물 보관</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-purple-400 mt-1 mr-3"></i>미술품 전용 완벽한 항온/항습 및 24시간 군사급 보안 시스템 가동</li>
+                        <li class="flex items-start"><i class="fa-solid fa-caret-right text-purple-400 mt-1 mr-3"></i>실물 배송 없이 소유권(NFT 보관증)만으로 즉시 거래 가능한 시스템</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SISA LAB (데이터 & 아카데미) -->
+        <section class="max-w-7xl mx-auto px-6 py-20 mb-10">
+            <div class="mb-12 border-b border-white/10 pb-8">
+                <h2 class="text-3xl font-bold mb-3 flex items-center gap-3">
+                    <i class="fa-solid fa-flask text-blue-400"></i> SISA LAB <span class="text-xl font-light text-white/60 ml-2">데이터 & 아카데미</span>
+                </h2>
+                <p class="text-white/70 text-lg">명품 경매 시장의 전문성과 부가가치를 제공하는 SISA만의 지식 콘텐츠 허브입니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Market Intelligence -->
+                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-chart-line text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3 text-white">Market Intelligence</h4>
+                    <p class="text-sm text-white/60 mb-6 leading-relaxed">AI 기반 글로벌 명품 시세 분석, 하이엔드 브랜드별 수익률 통계 및 정기적인 투자 가치 예측 리포트.</p>
+                    <a href="#" class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">시장 동향 보기 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+                </div>
+                
+                <!-- Authentication Guide -->
+                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-magnifying-glass text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3 text-white">Authentication Guide</h4>
+                    <p class="text-sm text-white/60 mb-6 leading-relaxed">주요 브랜드별 진품 감별법 심화 가이드, SISA 감정사 온라인 진위 판정 서비스 및 가품 사례 DB.</p>
+                    <a href="#" class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">감별 가이드 열람 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+                </div>
+
+                <!-- Investment Academy -->
+                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-graduation-cap text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3 text-white">Investment Academy</h4>
+                    <p class="text-sm text-white/60 mb-6 leading-relaxed">성공적인 명품 투자 전략 교육, 업계 최상위 전문가 칼럼 및 온라인 라이브 세미나, 초보자 입문 가이드.</p>
+                    <a href="#" class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">아카데미 수강 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+                </div>
+
+                <!-- Auction Dictionary -->
+                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-book text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                    </div>
+                    <h4 class="font-bold text-lg mb-3 text-white">Auction Dictionary</h4>
+                    <p class="text-sm text-white/60 mb-6 leading-relaxed">Buyer's Premium, Reserve Price, Condition Report 등 헷갈리기 쉬운 글로벌 경매 전문 용어 총망라.</p>
+                    <a href="#" class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">사전 검색하기 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 데이터 테이블 섹션: 글로벌 경매사 연동 현황 -->
+        <section class="max-w-7xl mx-auto px-6 py-20">
+            <div class="mb-10">
+                <h2 class="text-3xl font-bold mb-3 flex items-center gap-3">
+                    <i class="fa-solid fa-globe text-blue-400"></i> SISA Global Auction Network
+                </h2>
+                <p class="text-white/70 text-lg">
+                    SISA는 전 세계 최상위 럭셔리 경매사 및 마켓플레이스와 실시간 API로 연동되어 있습니다.<br class="hidden md:block">
+                    SISA 인증을 통해 아래의 모든 경매에 안전하게 입찰하실 수 있습니다.
+                </p>
+            </div>
+
+            <!-- 글래스모피즘 테이블 래퍼 -->
+            <div class="glass-card rounded-2xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-white/10 text-white text-sm uppercase tracking-wider">
+                                <th class="px-6 py-4 font-semibold">국가/지역</th>
+                                <th class="px-6 py-4 font-semibold">사이트명 (경매사)</th>
+                                <th class="px-6 py-4 font-semibold">핵심 카테고리</th>
+                                <th class="px-6 py-4 font-semibold">구매자 수수료 (Premium)</th>
+                                <th class="px-6 py-4 font-semibold">신뢰성/보증 장치</th>
+                                <th class="px-6 py-4 font-semibold">비고 (API/연동 특성)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/10 text-sm text-white/90">
+                            <!-- 미국 그룹 -->
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">미국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Sotheby's</td>
+                                <td class="px-6 py-4">하이엔드 핸드백/시계</td>
+                                <td class="px-6 py-4">티어별 상이 (15~28%)</td>
+                                <td class="px-6 py-4 text-green-300"><i class="fa-solid fa-shield-halved mr-1"></i>진위 보증 조건서, 앱 지원</td>
+                                <td class="px-6 py-4 text-white/60">최상위 럭셔리 타겟</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">미국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">eBay</td>
+                                <td class="px-6 py-4">전 카테고리 (가장 큼)</td>
+                                <td class="px-6 py-4">판매자 수수료 위주</td>
+                                <td class="px-6 py-4"><i class="fa-solid fa-check mr-1"></i>실물 검사(Auth Guarantee)</td>
+                                <td class="px-6 py-4 text-white/60">즉시구매(Buy it Now) 혼합</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">미국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Heritage Auctions</td>
+                                <td class="px-6 py-4">빈티지, 쿠튀르</td>
+                                <td class="px-6 py-4">부문별 상이</td>
+                                <td class="px-6 py-4">자체 감정 라인 운영</td>
+                                <td class="px-6 py-4 text-white/60">앱 지원</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">미국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">LiveAuctioneers</td>
+                                <td class="px-6 py-4">주얼리, 시계 플랫폼</td>
+                                <td class="px-6 py-4">경매사 설정 비용 따름</td>
+                                <td class="px-6 py-4 text-yellow-300">플랫폼 면책 (경매사 책임)</td>
+                                <td class="px-6 py-4 text-white/60">제3자 배송 체계</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">미국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Invaluable</td>
+                                <td class="px-6 py-4">주얼리, 시계 플랫폼</td>
+                                <td class="px-6 py-4">경매사 설정 비용 따름</td>
+                                <td class="px-6 py-4">마켓플레이스 역할</td>
+                                <td class="px-6 py-4 text-white/60">추가 수수료 확인 필요</td>
+                            </tr>
+
+                            <!-- 영국 그룹 -->
+                            <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-red-900/50 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500/30">영국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Christie's</td>
+                                <td class="px-6 py-4">명품 핸드백 (에르메스 등)</td>
+                                <td class="px-6 py-4">세일/지역별 상이</td>
+                                <td class="px-6 py-4 text-green-300"><i class="fa-solid fa-shield-halved mr-1"></i>진위 보증서 제공</td>
+                                <td class="px-6 py-4 text-white/60">런던 글로벌 HQ</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-red-900/50 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500/30">영국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Phillips</td>
+                                <td class="px-6 py-4">하이엔드 시계/주얼리</td>
+                                <td class="px-6 py-4">15~29% (Priority 시 인하)</td>
+                                <td class="px-6 py-4"><i class="fa-solid fa-video mr-1"></i>앱 기반 라이브 스트리밍</td>
+                                <td class="px-6 py-4 text-white/60">조기 입찰 수수료 할인제</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-red-900/50 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500/30">영국</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Bonhams</td>
+                                <td class="px-6 py-4">주얼리/시계</td>
+                                <td class="px-6 py-4">세일별 상이 (최대 33%)</td>
+                                <td class="px-6 py-4">공신력 높은 전통 경매사</td>
+                                <td class="px-6 py-4 text-white/60">-</td>
+                            </tr>
+
+                            <!-- 유럽 그룹 -->
+                            <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20">
+                                <td class="px-6 py-4"><span class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">유럽</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Catawiki (NL)</td>
+                                <td class="px-6 py-4">패션, 시계 주간 경매</td>
+                                <td class="px-6 py-4">9% + €3 (구매자)</td>
+                                <td class="px-6 py-4">인하우스 가상 심사, 공증인</td>
+                                <td class="px-6 py-4 text-white/60">한국 배송 별도 확인 요망</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">유럽</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Drouot.com (FR)</td>
+                                <td class="px-6 py-4">시계, 브랜드 주얼리</td>
+                                <td class="px-6 py-4">25% + VAT (경매사 설정)</td>
+                                <td class="px-6 py-4">파리 기반 플랫폼</td>
+                                <td class="px-6 py-4 text-white/60">플랫폼 수수료 별도 가능성</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">유럽</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Antiquorum (CH)</td>
+                                <td class="px-6 py-4">시계 중심 전문 경매</td>
+                                <td class="px-6 py-4">15~26%</td>
+                                <td class="px-6 py-4 text-green-300"><i class="fa-solid fa-file-contract mr-1"></i>조건서 기반 엄격한 결제 (7일)</td>
+                                <td class="px-6 py-4 text-white/60">제네바 기반</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">유럽</span></td>
+                                <td class="px-6 py-4 font-bold text-white">the-saleroom.com</td>
+                                <td class="px-6 py-4">종합 (영국 중심)</td>
+                                <td class="px-6 py-4">4.95% + VAT (플랫폼 비딩비)</td>
+                                <td class="px-6 py-4 text-yellow-300">경매사 책임제</td>
+                                <td class="px-6 py-4 text-white/60">모바일 웹 지원</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">유럽</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Lot-tissimo (DE)</td>
+                                <td class="px-6 py-4">앤틱, 일부 럭셔리</td>
+                                <td class="px-6 py-4">세일/경매사별 상이</td>
+                                <td class="px-6 py-4">플랫폼형 (경매사 조건)</td>
+                                <td class="px-6 py-4 text-white/60">독일 기반</td>
+                            </tr>
+
+                            <!-- 일본 그룹 -->
+                            <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">일본</span></td>
+                                <td class="px-6 py-4 font-bold text-white">Yahoo!オークション</td>
+                                <td class="px-6 py-4">C2C 명품 전반</td>
+                                <td class="px-6 py-4">출품자 이용료 10%</td>
+                                <td class="px-6 py-4 text-green-300"><i class="fa-solid fa-magnifying-glass mr-1"></i>진위 감정(鑑定) 서비스 도입</td>
+                                <td class="px-6 py-4 text-white/60">유동성 최대</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">일본</span></td>
+                                <td class="px-6 py-4 font-bold text-white">JBA (브랜드옥션)</td>
+                                <td class="px-6 py-4">B2B 명품 전문 경매</td>
+                                <td class="px-6 py-4">회원/거래별 상이</td>
+                                <td class="px-6 py-4"><i class="fa-solid fa-certificate mr-1"></i>AACD 가입, 철저한 진위 검품</td>
+                                <td class="px-6 py-4 text-white/60">전문가/기업 중심</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
+                                <td class="px-6 py-4"><span class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">일본</span></td>
+                                <td class="px-6 py-4 font-bold text-white">KOMEHYO Auction</td>
+                                <td class="px-6 py-4">시계/가방 기업 경매</td>
+                                <td class="px-6 py-4">가입비 3만엔/월 3천엔 등</td>
+                                <td class="px-6 py-4">코메병 그룹 인하우스 검수</td>
+                                <td class="px-6 py-4 text-white/60">해외 입찰 지원</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition duration-150">
+                                <td class="px-6 py-4"><span class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">일본</span></td>
+                                <td class="px-6 py-4 font-bold text-white">ALLU AUCTION</td>
+                                <td class="px-6 py-4">희소 시계 중심</td>
+                                <td class="px-6 py-4">낙찰 수수료 16.5%</td>
+                                <td class="px-6 py-4">대회/행사 형태 운영</td>
+                                <td class="px-6 py-4 text-white/60">B2B 중심</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 하단 푸터 -->
+        <footer class="border-t border-white/10 mt-20 text-center py-10 text-sm text-white/40">
+            <div class="mb-4 flex justify-center">
+                <a href="../terms.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white/70 transition">
+                    <i class="fa-regular fa-file-lines text-[11px]"></i>
+                    <span>이용약관 보기</span>
+                </a>
+            </div>
+            <p>&copy; 2026 Society of International Specialized Auctioneers. All rights reserved.</p>
+        </footer>
+    </main>
+
+</body>
+</html>
