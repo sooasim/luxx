@@ -15,6 +15,7 @@ from flask import (
     flash,
     jsonify,
     session,
+    send_file,
 )
 
 ORDER_JSON_PATH = "current_order.json"
@@ -263,7 +264,7 @@ FORM_TEMPLATE = """
             {% endif %}
           {% endwith %}
 
-          <form method="post" action="{{ url_for('index') }}">
+          <form method="post" action="{{ form_action }}">
             <!-- 로그인 정보는 폼에 보이지 않게 hidden 으로 처리 -->
             <input type="hidden" name="login_id" value="{{ defaults.login_id }}" />
             <input type="hidden" name="login_password" value="{{ defaults.login_password }}" />
@@ -580,8 +581,17 @@ FORM_TEMPLATE = """
 """
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+@app.route("/")
+def home():
+    """SISA 메인 랜딩 페이지 (정적 index.html)."""
+    index_path = BASE_DIR / "index.html"
+    if index_path.exists():
+        return send_file(index_path)
+    return "<h1>World SISA</h1>", 200
+
+
+@app.route("/payment", methods=["GET", "POST"])
+def payment():
     defaults = {
         "login_id": "m3313",
         "login_password": "k2255",
@@ -659,7 +669,12 @@ def index():
             flash("주문 데이터가 성공적으로 저장되었습니다.", "success")
         return redirect(url_for("index"))
 
-    return render_template_string(FORM_TEMPLATE, defaults=defaults, last_result=last_result)
+    return render_template_string(
+        FORM_TEMPLATE,
+        defaults=defaults,
+        last_result=last_result,
+        form_action=url_for("payment"),
+    )
 
 
 @app.route("/pay/<session_id>", methods=["GET", "POST"])
@@ -759,6 +774,7 @@ def pay(session_id: str):
         last_result=last_result,
         fixed_amount=fixed_amount,
         session_id=session_id,
+        form_action=url_for("pay", session_id=session_id),
     )
 
 
@@ -890,6 +906,15 @@ def terms():
         200,
         {"Content-Type": "text/html; charset=utf-8"},
     )
+
+
+@app.route("/agency-register.html", methods=["GET"])
+def agency_register_page():
+    """대행사 등록 신청 정적 페이지 제공."""
+    path = BASE_DIR / "agency-register.html"
+    if path.exists():
+        return send_file(path)
+    return "<p>agency-register.html 파일을 찾을 수 없습니다.</p>", 404
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
