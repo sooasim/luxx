@@ -23,6 +23,7 @@ ORDER_JSON_PATH = "current_order.json"
 # 결제 결과를 저장할 엑셀 / JSON 파일
 RESULT_EXCEL_PATH = "kvan_results.xlsx"
 RESULT_JSON_PATH = "last_result.json"
+HQ_STATE_PATH = "hq_state.json"
 
 # 세션별 주문/결과 디렉토리 (동시 여러 세션용)
 SESSION_ORDER_DIR = Path("sessions") / "orders"
@@ -602,6 +603,93 @@ def save_result_to_json(path: str, status: str, message: str) -> None:
         pass
 
 
+def _load_hq_state() -> dict:
+    """본사 어드민 상태(hq_state.json)를 로드 (transactions 포함)."""
+    state = {"applications": [], "agencies": [], "transactions": []}
+    path = Path(HQ_STATE_PATH)
+    if path.exists():
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                for key in state.keys():
+                    if key in loaded and isinstance(loaded[key], list):
+                        state[key] = loaded[key]
+        except Exception:
+            pass
+    return state
+
+
+def _save_hq_state(state: dict) -> None:
+    try:
+        with Path(HQ_STATE_PATH).open("w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def append_transaction_to_hq(
+    row,
+    status: str,
+    message: str,
+    session_id: str,
+) -> None:
+    """결제 결과를 본사 어드민용 거래 리스트에 추가."""
+    try:
+        state = _load_hq_state()
+        txs = state.get("transactions") or []
+        now = datetime.utcnow().isoformat()
+        tx_id = datetime.utcnow().strftime("TX%Y%m%d%H%M%S%f")
+
+        # 세션 ID 로부터 실제 대행사 ID 를 추적 (admin_state.json 참조)
+        agency_id = ""
+        if session_id:
+            admin_path = Path("admin_state.json")
+            if admin_path.exists():
+                try:
+                    with admin_path.open("r", encoding="utf-8") as f:
+                        admin_state = json.load(f)
+                except Exception:
+                    admin_state = {}
+                sessions = admin_state.get("sessions") or []
+                history = admin_state.get("history") or []
+                for s in sessions:
+                    if str(s.get("id")) == str(session_id) and s.get("agency_id"):
+                        agency_id = s["agency_id"]
+                        break
+                if not agency_id:
+                    for h in history:
+                        if str(h.get("id")) == str(session_id) and h.get("agency_id"):
+                            agency_id = h["agency_id"]
+                            break
+
+        # 금액은 정수 변환 시도 (실패 시 0)
+        try:
+            amount_int = int(getattr(row, "amount", 0) or 0)
+        except (ValueError, TypeError):
+            amount_int = 0
+
+        tx = {
+            "id": tx_id,
+            "created_at": now,
+            "agency_id": agency_id or "",
+            "amount": amount_int,
+            "customer_name": getattr(row, "customer_name", ""),
+            "phone_number": getattr(row, "phone_number", ""),
+            "card_type": getattr(row, "card_type", ""),
+            "resident_front": getattr(row, "resident_front", ""),
+            "status": status,
+            "message": message,
+            "settlement_status": "미정산",
+        }
+        txs.append(tx)
+        state["transactions"] = txs
+        _save_hq_state(state)
+    except Exception:
+        # HQ 집계 실패는 결제 자체에는 영향을 주지 않으므로 조용히 무시
+        pass
+
+
 def main() -> None:
     # 명령행 인자로 세션 ID 를 받을 수 있게 함:
     # python auto_kvan.py            -> 기본 단일 모드 (current_order.json 사용)
@@ -646,6 +734,7 @@ def main() -> None:
 
         save_result_to_excel(RESULT_EXCEL_PATH, row, status, msg)
         save_result_to_json(str(result_json_path), status, msg)
+        append_transaction_to_hq(row, status, msg, session_id=session_id)
 
         # 세션 모드인 경우, 어드민 상태에 세션 결과를 반영하고 세션을 히스토리로 이동
         if session_id:

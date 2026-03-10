@@ -5,6 +5,9 @@ from typing import List
 from pathlib import Path
 from datetime import datetime
 import os
+from io import BytesIO
+import subprocess
+import sys
 
 from flask import (
     Flask,
@@ -18,12 +21,43 @@ from flask import (
     send_file,
 )
 
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from openpyxl import Workbook
+
 ORDER_JSON_PATH = "current_order.json"
 RESULT_JSON_PATH = "last_result.json"
 ADMIN_STATE_PATH = "admin_state.json"
 HQ_STATE_PATH = "hq_state.json"
 SESSION_ORDER_DIR = Path("sessions") / "orders"
 SESSION_RESULT_DIR = Path("sessions") / "results"
+
+
+def trigger_auto_kvan_async(session_id: str | None = None) -> None:
+    """결제 폼에서 주문 저장 후 auto_kvan.py 를 비동기로 실행."""
+    try:
+        cmd = [sys.executable, "auto_kvan.py"]
+        if session_id:
+            cmd.append(str(session_id))
+        # 백그라운드에서 조용히 실행 (웹 요청을 막지 않도록)
+        subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception as e:  # noqa: BLE001
+        # 매크로 실행 실패는 웹 폼 자체 오류는 아니므로 서버 로그에만 남긴다.
+        print(f"auto_kvan.py 실행 실패: {e}")
+
+
+def _find_agency_by_credentials(login_id: str, password: str) -> dict | None:
+    """hq_state.json 에서 대행사 로그인 정보로 대행사 레코드를 찾는다."""
+    state = _load_hq_state()
+    agencies = state.get("agencies") or []
+    for ag in agencies:
+        if ag.get("login_id") == login_id and ag.get("login_password") == password:
+            return ag
+    return None
 
 HEADERS: List[str] = [
     "login_id",
@@ -49,6 +83,62 @@ app.secret_key = "worldsisa-form-secret"
 # 약관 파일 경로 (프로젝트 루트의 terms.html)
 BASE_DIR = Path(__file__).resolve().parent
 TERMS_FILE = BASE_DIR / "terms.html"
+
+
+@app.route("/login.html", methods=["GET"])
+@app.route("/login", methods=["GET"])
+def login_page():
+    """정적 로그인 페이지(login.html) 제공."""
+    path = BASE_DIR / "login.html"
+    if path.exists():
+        return send_file(path)
+    return "<p>login.html 파일을 찾을 수 없습니다.</p>", 404
+
+
+@app.route("/portal-login", methods=["POST"])
+def portal_login():
+    """메인 로그인 폼에서 본사/대행사 공용으로 로그인 처리."""
+    username = (request.form.get("username") or "").strip()
+    password = (request.form.get("password") or "").strip()
+
+    # 1) 본사 관리자 계정 확인
+    admin_user = os.environ.get("HQ_ADMIN_USER", "admin")
+    admin_pw = os.environ.get("HQ_ADMIN_PASSWORD", "admin1234")
+    if username == admin_user and password == admin_pw:
+        session["hq_logged_in"] = True
+        session.pop("agency_id", None)
+        return redirect(url_for("hq_admin"))
+
+    # 2) 대행사 계정 확인
+    ag = _find_agency_by_credentials(username, password)
+    if ag:
+        session["agency_id"] = ag.get("id")
+        session["agency_name"] = ag.get("company_name")
+        session.pop("hq_logged_in", None)
+        return redirect(url_for("agency_admin"))
+
+    # 3) 실패 시 간단한 에러 페이지 표시
+    return """
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8" />
+      <title>로그인 실패</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-[#1e326b] text-white font-[Inter] min-h-screen flex items-center justify-center">
+      <div class="bg-white/10 border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full text-center shadow-2xl">
+        <h1 class="text-xl font-bold mb-3">로그인에 실패했습니다.</h1>
+        <p class="text-sm text-white/70 mb-6">아이디 또는 비밀번호를 다시 확인해 주세요.</p>
+        <a href="/login.html" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white text-brand-blue font-semibold text-sm hover:bg-brand-accent transition">
+          로그인 페이지로 돌아가기
+        </a>
+      </div>
+    </body>
+    </html>
+    """
 
 
 FORM_TEMPLATE = """
@@ -122,7 +212,7 @@ FORM_TEMPLATE = """
     .amount-suffix { font-size:14px; color:#4b5563; }
     .buyer-grid { max-width:360px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:12px; }
     .phone-wrap { display:flex; align-items:center; gap:8px; }
-    .phone-prefix { padding:9px 10px; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; font-size:14px; color:#374151; }
+    .phone-prefix { padding:9px 12px; min-width:64px; text-align:center; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; font-size:14px; color:#374151; }
     .phone-segments { display:flex; gap:8px; flex:1; }
     .phone-segments input { max-width:70px; text-align:center; }
     .card-type-group { display:flex; flex-wrap:nowrap; align-items:center; gap:12px; border:1px solid #d1d5db; border-radius:999px; padding:6px 10px; background:#f9fafb; }
@@ -133,6 +223,8 @@ FORM_TEMPLATE = """
     .btn-primary:hover { background:#1d4ed8; }
     .btn-secondary { background:white; color:#374151; border:1px solid #d1d5db; }
     .btn-secondary:hover { background:#f3f4f6; }
+    /* 결제 전 필수 동의 영역 라벨 색상 */
+    .consent-label { color:#ffffff; }
     .help { font-size:12px; color:#6b7280; margin-top:2px; }
     .flash { margin-bottom:12px; padding:8px 10px; border-radius:8px; font-size:13px; }
     .flash-success { background:#ecfdf3; color:#166534; border:1px solid #bbf7d0; }
@@ -265,7 +357,7 @@ FORM_TEMPLATE = """
             {% endif %}
           {% endwith %}
 
-          <form method="post" action="{{ form_action }}">
+          <form id="order-form" method="post" action="{{ form_action }}">
             <!-- 로그인 정보는 폼에 보이지 않게 hidden 으로 처리 -->
             <input type="hidden" name="login_id" value="{{ defaults.login_id }}" />
             <input type="hidden" name="login_password" value="{{ defaults.login_password }}" />
@@ -376,47 +468,54 @@ FORM_TEMPLATE = """
               <p class="text-xs text-white">
                 고객님, 안전한 경매 대행 서비스를 위해 아래 사항에 모두 동의해 주셔야 입찰 및 결제가 진행됩니다.
               </p>
+              <!-- 전체 동의 -->
+              <div class="flex items-center justify-between mt-1 mb-1 text-sm">
+                <label class="consent-label flex items-center gap-3 cursor-pointer">
+                  <input id="agree_all" type="checkbox" class="h-4 w-4 rounded border-white/60 bg-white/10 accent-blue-400" />
+                  <span class="text-white font-semibold text-xs md:text-sm">모든 [필수] 항목 전체 동의</span>
+                </label>
+              </div>
               <div class="space-y-2 text-sm">
-                <label class="flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
+                <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_service" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-blue-300 mr-1">[필수]</strong> SISA 서비스 이용약관 동의</span>
+                  <span><strong class="text-white mr-1">[필수]</strong> SISA 서비스 이용약관 동의</span>
                 </label>
-                <label class="flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
+                <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_law" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-blue-300 mr-1">[필수]</strong> 해외 경매 입찰의 법적 구속력(민법 제527조) 및 원칙적 취소 불가 원칙에 대해 이해하였습니다.</span>
+                  <span><strong class="text-white mr-1">[필수]</strong> 해외 경매 입찰의 법적 구속력(민법 제527조) 및 원칙적 취소 불가 원칙에 대해 이해하였습니다.</span>
                 </label>
-                <label class="flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
+                <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_penalty" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-blue-300 mr-1">[필수]</strong> 정당한 사유 없는 취소 시 발생하는 위약금 규정 및 낙찰 권리/소유권 이전 규정에 동의합니다.</span>
+                  <span><strong class="text-white mr-1">[필수]</strong> 정당한 사유 없는 취소 시 발생하는 위약금 규정 및 낙찰 권리/소유권 이전 규정에 동의합니다.</span>
                 </label>
-                <label class="flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
+                <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_realname" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-blue-300 mr-1">[필수]</strong> 반드시 본인 명의의 결제수단을 사용하며, 부정거래(카드깡 등) 시 형사 고발 조치될 수 있음에 서약합니다.</span>
+                  <span><strong class="text-white mr-1">[필수]</strong> 반드시 본인 명의의 결제수단을 사용하며, 부정거래 시 형사 고발 조치될 수 있음에 서약합니다.</span>
                 </label>
-                <label class="flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
+                <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_privacy" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-blue-300 mr-1">[필수]</strong> 개인정보 수집 및 이용 동의</span>
+                  <span><strong class="text-white mr-1">[필수]</strong> 개인정보 수집 및 이용 동의</span>
                 </label>
-                <label class="flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-dashed border-white/20 cursor-pointer">
+                <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-dashed border-white/20 cursor-pointer">
                   <input id="agree_marketing" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-gray-300 mr-1">[선택]</strong> 마케팅 및 글로벌 경매 동향 정보 수신 동의</span>
+                  <span><strong class="text-white mr-1">[선택]</strong> 마케팅 및 글로벌 경매 동향 정보 수신 동의</span>
                 </label>
               </div>
               <p class="text-[11px] text-white/70 pt-1">
-                위의 필수 항목에 모두 체크하고 <strong>주문 데이터 저장</strong> 버튼을 누르는 경우, 상기 내용에 모두 동의하고 구매대행 계약 및 결제를 진행하는 것에 동의한 것으로 간주됩니다.
+                위의 필수 항목에 모두 체크하고 <strong>전체 동의 주문신청</strong> 버튼을 누르는 경우, 상기 내용에 모두 동의하고 구매대행 계약 및 결제를 진행하는 것에 동의한 것으로 간주됩니다.
               </p>
             </div>
 
             <div class="mt-4">
               <label class="text-xs font-semibold text-gray-700 mb-1 block">이용약관 전문</label>
               <div class="border border-gray-200 rounded-lg h-72 overflow-hidden bg-gray-50">
-                <iframe src="{{ url_for('terms') }}" class="w-full h-full border-0 bg-white"></iframe>
+                <iframe src="{{ url_for('terms') }}?customer_name={{ defaults.customer_name | urlencode }}&phone_number={{ defaults.phone_number | urlencode }}" class="w-full h-full border-0 bg-white"></iframe>
               </div>
             </div>
 
             <div class="actions">
               <button type="reset" class="btn-pill btn-secondary">초기화</button>
-              <button type="submit" class="btn-pill btn-primary">주문 데이터 저장</button>
+              <button type="submit" class="btn-pill btn-primary">전체 동의 주문신청</button>
             </div>
           </form>
         </div>
@@ -506,11 +605,13 @@ FORM_TEMPLATE = """
         updatePhone();
       }
 
-      var form = document.querySelector("form");
+      var form = document.getElementById("order-form") || document.querySelector("form");
       if (form) {
+        // 필수 동의 항목 ID 목록
+        var requiredIds = ["agree_service", "agree_law", "agree_penalty", "agree_realname", "agree_privacy"];
+
         form.addEventListener("submit", function(e) {
-          // 필수 동의 체크
-          var requiredIds = ["agree_service", "agree_law", "agree_penalty", "agree_realname", "agree_privacy"];
+          // 결제 전 필수 동의 체크 확인
           var allOk = true;
           for (var i = 0; i < requiredIds.length; i++) {
             var el = document.getElementById(requiredIds[i]);
@@ -524,10 +625,40 @@ FORM_TEMPLATE = """
             alert("모든 [필수] 동의 항목에 체크해 주세요.");
             return;
           }
+
           updateCardNumber();
           updateAmount();
           updatePhone();
         });
+
+        // 전체 동의 체크박스 동작
+        var agreeAll = document.getElementById("agree_all");
+        if (agreeAll) {
+          agreeAll.addEventListener("change", function(e) {
+            var checked = e.target.checked;
+            requiredIds.forEach(function(id) {
+              var el = document.getElementById(id);
+              if (el) el.checked = checked;
+            });
+          });
+
+          // 개별 체크 변경 시 전체 동의 상태 갱신
+          requiredIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener("change", function() {
+              var allOn = true;
+              for (var i = 0; i < requiredIds.length; i++) {
+                var t = document.getElementById(requiredIds[i]);
+                if (t && !t.checked) {
+                  allOn = false;
+                  break;
+                }
+              }
+              agreeAll.checked = allOn;
+            });
+          });
+        }
       }
 
       // 결과 모달 닫기 핸들러
@@ -584,7 +715,16 @@ FORM_TEMPLATE = """
 
 @app.route("/")
 def home():
-    """SISA 메인 랜딩 페이지 (정적 index.html)."""
+    """도메인에 따라 다른 랜딩 페이지 제공.
+
+    - worldsisa.com / www.worldsisa.com -> 메인 랜딩(index.html)
+    - s.worldsisa.com -> 대행사 등록 페이지(/agency-register.html)로 리다이렉트
+    """
+    host = (request.host or "").split(":")[0].lower()
+    if host.startswith("s.") or host == "s.worldsisa.com":
+        # 서브도메인 s.worldsisa.com 은 대행사 등록 신청 페이지로 이동
+        return redirect(url_for("agency_register_page"))
+
     index_path = BASE_DIR / "index.html"
     if index_path.exists():
         return send_file(index_path)
@@ -651,10 +791,12 @@ def payment():
                     ensure_ascii=False,
                     indent=2,
                 )
+            # 주문 저장이 성공하면 auto_kvan.py 를 백그라운드에서 실행
+            trigger_auto_kvan_async(session_id=None)
         except Exception as e:  # noqa: BLE001
             flash(f"데이터 저장 중 오류가 발생했습니다: {e}", "error")
         else:
-            flash("주문 데이터가 성공적으로 저장되었습니다.", "success")
+            flash("주문 데이터가 성공적으로 저장되었습니다. 자동 결제를 진행합니다.", "success")
         return redirect(url_for("payment"))
 
     return render_template_string(
@@ -750,10 +892,12 @@ def pay(session_id: str):
                     ensure_ascii=False,
                     indent=2,
                 )
+            # 세션 전용 결제의 경우에도 auto_kvan.py 를 백그라운드에서 실행 (세션 ID 전달)
+            trigger_auto_kvan_async(session_id=session_id)
         except Exception as e:  # noqa: BLE001
             flash(f"데이터 저장 중 오류가 발생했습니다: {e}", "error")
         else:
-            flash("주문 데이터가 성공적으로 저장되었습니다.", "success")
+            flash("주문 데이터가 성공적으로 저장되었습니다. 자동 결제를 진행합니다.", "success")
         return redirect(url_for("pay", session_id=session_id))
 
     return render_template_string(
@@ -883,17 +1027,48 @@ def agency_apply():
 
 @app.route("/terms", methods=["GET"])
 def terms():
-    """이용약관 HTML 파일을 iframe 으로 표시하기 위한 라우트."""
+    """이용약관 HTML 파일을 iframe/직접 방문 둘 다에서 표시."""
     if TERMS_FILE.exists():
-        try:
-            return TERMS_FILE.read_text(encoding="utf-8")
-        except Exception:
-            pass
-    return (
-        "<!doctype html><html><body><p>이용약관 파일을 불러올 수 없습니다.</p></body></html>",
-        200,
-        {"Content-Type": "text/html; charset=utf-8"},
-    )
+        return send_file(TERMS_FILE)
+    return "<!doctype html><html><body><p>이용약관 파일을 불러올 수 없습니다.</p></body></html>"
+
+
+@app.route("/terms-consent-pdf", methods=["POST"])
+def terms_consent_pdf():
+    """이용약관 동의 내용을 PDF로 생성하여 다운로드."""
+    name = (request.form.get("customer_name") or "").strip()
+    phone = (request.form.get("phone_number") or "").strip()
+
+    now = datetime.now()
+    date_str = now.strftime("%Y%m%d")
+
+    # 전화번호에서 숫자만 추출 후 뒤 4자리
+    digits = "".join(ch for ch in phone if ch.isdigit())
+    last4 = digits[-4:] if digits else "0000"
+
+    safe_name = name or "anonymous"
+    filename = f"{safe_name}_{last4}_{date_str}.pdf"
+
+    buf = BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+
+    text = c.beginText(40, 800)
+    text.setFont("Helvetica-Bold", 14)
+    text.textLine("SISA 플랫폼 서비스 이용약관 동의서")
+    text.textLine("")
+    text.setFont("Helvetica", 11)
+    text.textLine(f"이름: {name}")
+    text.textLine(f"전화번호: {phone}")
+    text.textLine(f"동의 일시: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+    text.textLine("")
+    text.textLine("위 고객은 SISA 플랫폼 서비스 이용약관 및 결제 전 필수 동의 항목에 모두 동의하였습니다.")
+
+    c.drawText(text)
+    c.showPage()
+    c.save()
+    buf.seek(0)
+
+    return send_file(buf, as_attachment=True, download_name=filename, mimetype="application/pdf")
 
 
 @app.route("/agency-register.html", methods=["GET"])
@@ -906,7 +1081,7 @@ def agency_register_page():
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    """어드민: 최대 5개까지 결제 세션 생성/조회 및 간단 관리."""
+    """본사 공용 K-VAN 세션 어드민 (HQ용). 최대 5개 세션 관리."""
     base_url = request.url_root.rstrip("/")
 
     # 기존 상태 로드 (sessions 리스트 기반)
@@ -959,6 +1134,7 @@ def admin():
                     "installment": installment or "",
                     "status": "결제중",
                     "created_at": datetime.utcnow().isoformat(),
+                    "agency_id": "",  # HQ에서 생성한 세션은 특정 대행사에 속하지 않음
                 }
                 sessions.append(session)
                 admin_state = {"sessions": sessions, "history": history}
@@ -991,6 +1167,7 @@ def admin():
                         "phone_number": "",
                         "product_name": "",
                         "settled": "정산전",
+                        "agency_id": s.get("agency_id", ""),
                     }
                     history.append(entry)
                 else:
@@ -1347,7 +1524,13 @@ def hq_login():
     <head>
       <meta charset="UTF-8" />
       <title>SISA HQ 어드민 로그인</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <script>
+        if (screen.width < 1280) {
+          var vp = document.getElementById('viewport-meta');
+          if (vp) vp.setAttribute('content', 'width=1280');
+        }
+      </script>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
@@ -1359,6 +1542,63 @@ def hq_login():
           <div>
             <label class="block text-xs font-semibold text-white/70 mb-1">아이디</label>
             <input name="username" type="text" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="admin" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-white/70 mb-1">비밀번호</label>
+            <input name="password" type="password" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="********" />
+          </div>
+          {% if error %}
+          <p class="text-xs text-red-200">{{ error }}</p>
+          {% endif %}
+          <button type="submit" class="w-full mt-2 bg-white text-brand-blue font-bold py-2.5 rounded-lg hover:bg-brand-accent transition">
+            로그인
+          </button>
+        </form>
+      </div>
+    </body>
+    </html>
+    """
+    return render_template_string(template, error=error)
+
+
+@app.route("/agency-login", methods=["GET", "POST"])
+def agency_login():
+    """대행사 전용 로그인 페이지."""
+    error = ""
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        ag = _find_agency_by_credentials(username, password)
+        if ag:
+            session["agency_id"] = ag.get("id")
+            session["agency_name"] = ag.get("company_name")
+            return redirect(url_for("agency_admin"))
+        error = "아이디 또는 비밀번호가 올바르지 않습니다."
+
+    template = """
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8" />
+      <title>SISA 대행사 어드민 로그인</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <script>
+        if (screen.width < 1280) {
+          var vp = document.getElementById('viewport-meta');
+          if (vp) vp.setAttribute('content', 'width=1280');
+        }
+      </script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-brand-blue text-white font-[Inter] min-h-screen flex items-center justify-center">
+      <div class="bg-white/10 border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
+        <h1 class="text-xl font-bold mb-2 text-center">SISA Agency Admin</h1>
+        <p class="text-xs text-white/70 text-center mb-6">승인된 대행사 전용 어드민 로그인</p>
+        <form method="post" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-white/70 mb-1">대행사 아이디</label>
+            <input name="username" type="text" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="agency id" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-white/70 mb-1">비밀번호</label>
@@ -1421,7 +1661,30 @@ def hq_admin():
                 state["agencies"] = agencies
                 _save_hq_state(state)
                 message = f"대행사 '{agency['company_name']}' 가 생성되었습니다."
-        # 다른 액션(수수료 변경, 정산 상태 변경 등)은 추후 확장
+        elif action == "update_fee":
+            agency_id = request.form.get("agency_id", "").strip()
+            try:
+                fee_percent = int(request.form.get("fee_percent", "").strip())
+            except ValueError:
+                fee_percent = None
+            if agency_id and fee_percent is not None:
+                for ag in agencies:
+                    if str(ag.get("id")) == agency_id:
+                        ag["fee_percent"] = fee_percent
+                        break
+                state["agencies"] = agencies
+                _save_hq_state(state)
+                message = "수수료 설정이 저장되었습니다."
+        elif action == "bulk_settle":
+            tx_ids = request.form.getlist("tx_ids")
+            if tx_ids:
+                for t in transactions:
+                    if str(t.get("id")) in tx_ids:
+                        t["settlement_status"] = "정산완료"
+                        t["settled_at"] = datetime.utcnow().isoformat()
+                state["transactions"] = transactions
+                _save_hq_state(state)
+                message = f"{len(tx_ids)}건을 정산완료로 표시했습니다."
 
     template = """
     <!DOCTYPE html>
@@ -1429,7 +1692,19 @@ def hq_admin():
     <head>
       <meta charset="UTF-8" />
       <title>SISA HQ Admin</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <script>
+        if (screen.width < 1280) {
+          var vp = document.getElementById('viewport-meta');
+          if (vp) vp.setAttribute('content', 'width=1280');
+        }
+      </script>
+      <script>
+        // 5분마다 자동 새로고침 (본사 어드민)
+        setInterval(function () {
+          location.reload();
+        }, 300000);
+      </script>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
@@ -1537,29 +1812,115 @@ def hq_admin():
             {% endif %}
           </section>
 
-          <!-- 2. 전체 거래 내역 (요약 구조만 준비) -->
+          <!-- 2. 전체 거래 내역 리스트 -->
           <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-lg font-semibold flex items-center gap-2">
-                <i class="fa-solid fa-list-ul text-brand-accent"></i> 전체 거래 내역 (요약)
+                <i class="fa-solid fa-list-ul text-brand-accent"></i> 전체 거래 내역
               </h2>
-              <p class="text-[11px] text-white/60">시간순으로 성사된 주문 결제가 여기에 누적됩니다.</p>
+              <p class="text-[11px] text-white/60">시간순으로 성사된 주문 결제 건을 확인하고, 정산 상태를 관리합니다.</p>
             </div>
             {% if transactions %}
-              <!-- 이후 결제 시스템과 연동 시 채워질 영역 -->
-              <p class="text-xs text-white/60">거래 데이터 연동 후 상세 리스트가 표시됩니다.</p>
+            <form method="post" action="{{ url_for('hq_admin') }}" class="space-y-3">
+              <input type="hidden" name="action" value="bulk_settle">
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs border-separate border-spacing-y-2">
+                  <thead class="text-white/70">
+                    <tr>
+                      <th class="px-3 py-1 text-center"><input type="checkbox" id="tx_check_all" onclick="
+                        var cbs = document.querySelectorAll('.tx-check'); 
+                        cbs.forEach(function(cb){ cb.checked = this.checked; }.bind(this));
+                      "></th>
+                      <th class="px-3 py-1 text-left">시간</th>
+                      <th class="px-3 py-1 text-left">대행사</th>
+                      <th class="px-3 py-1 text-right">금액</th>
+                      <th class="px-3 py-1 text-left">구매자</th>
+                      <th class="px-3 py-1 text-center">결제상태</th>
+                      <th class="px-3 py-1 text-center">정산상태</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set unsettled_total = 0 %}
+                    {% for t in transactions|sort(attribute="created_at", reverse=True) %}
+                    {% set ag_name = "" %}
+                    {% for ag in agencies %}
+                      {% if ag.id == t.agency_id %}
+                        {% set ag_name = ag.company_name %}
+                      {% endif %}
+                    {% endfor %}
+                    {% if not ag_name %}
+                      {% set ag_name = "본사" %}
+                    {% endif %}
+                    {% if t.status == 'success' and t.settlement_status != '정산완료' %}
+                      {% set unsettled_total = unsettled_total + (t.amount or 0) %}
+                    {% endif %}
+                    <tr class="bg-black/20 hover:bg-black/30 transition align-top">
+                      <td class="px-3 py-2 text-center">
+                        <input type="checkbox" class="tx-check" name="tx_ids" value="{{ t.id }}">
+                      </td>
+                      <td class="px-3 py-2 whitespace-nowrap">{{ t.created_at }}</td>
+                      <td class="px-3 py-2 whitespace-nowrap">{{ ag_name }}</td>
+                      <td class="px-3 py-2 text-right">{{ "{:,}".format(t.amount or 0) }} 원</td>
+                      <td class="px-3 py-2 whitespace-nowrap">{{ t.customer_name }}</td>
+                      <td class="px-3 py-2 text-center">
+                        {% if t.status == 'success' %}
+                          <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">성공</span>
+                        {% elif t.status == 'fail' %}
+                          <span class="px-2 py-1 rounded-full bg-red-500/20 text-red-200 border border-red-500/40 text-[10px]">실패</span>
+                        {% else %}
+                          <span class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-200 border border-gray-500/40 text-[10px]">기타</span>
+                        {% endif %}
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        {% if t.settlement_status == '정산완료' %}
+                          <span class="px-2 py-1 rounded-full bg-blue-500/20 text-blue-200 border border-blue-500/40 text-[10px]">정산완료</span>
+                        {% else %}
+                          <span class="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-200 border border-yellow-500/40 text-[10px]">미정산</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr class="bg-black/10">
+                      <td></td>
+                      <td colspan="6" class="px-3 pb-3 text-[11px] text-white/70">
+                        <div class="flex flex-wrap gap-3">
+                          <span><strong>카드구분:</strong> {{ t.card_type }}</span>
+                          <span><strong>생년월일(앞 6자리):</strong> {{ t.resident_front }}</span>
+                          <span><strong>전화번호(뒷자리):</strong> {{ t.phone_number }}</span>
+                          {% if t.message %}
+                          <span class="block w-full"><strong>메모:</strong> {{ t.message }}</span>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex items-center justify-between mt-3 text-[11px] text-white/80">
+                <div>
+                  미정산 총 합계 금액:
+                  <span class="font-semibold text-brand-accent">{{ "{:,}".format(unsettled_total) }} 원</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span>선택 건을</span>
+                  <button type="submit" class="px-3 py-1 rounded-full bg-brand-accent text-brand-blue font-semibold hover:bg-white transition">
+                    정산완료 처리
+                  </button>
+                </div>
+              </div>
+            </form>
             {% else %}
               <p class="text-xs text-white/60">아직 집계된 거래 내역이 없습니다.</p>
             {% endif %}
           </section>
 
-          <!-- 3. 대행사 목록 (기본 정보 및 추후 정산용) -->
+          <!-- 3. 대행사별 거래 내역 및 정산 시스템 (요약) -->
           <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-lg font-semibold flex items-center gap-2">
-                <i class="fa-solid fa-building text-brand-accent"></i> 등록된 대행사 목록
+                <i class="fa-solid fa-building text-brand-accent"></i> 대행사별 거래 내역 및 정산
               </h2>
-              <p class="text-[11px] text-white/60">수수료 % 및 정산 시스템은 이후 이 리스트를 기반으로 확장됩니다.</p>
+              <p class="text-[11px] text-white/60">업체별 수수료 % 설정과 미정산/정산완료 금액을 확인합니다.</p>
             </div>
             {% if agencies %}
             <div class="overflow-x-auto">
@@ -1570,16 +1931,44 @@ def hq_admin():
                     <th class="px-3 py-1 text-left">도메인</th>
                     <th class="px-3 py-1 text-left">아이디</th>
                     <th class="px-3 py-1 text-center">수수료%</th>
+                    <th class="px-3 py-1 text-right">총 거래금액</th>
+                    <th class="px-3 py-1 text-right">미정산 금액</th>
+                    <th class="px-3 py-1 text-right">입금 예정액</th>
                     <th class="px-3 py-1 text-center">상태</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for ag in agencies %}
+                  {% set total_amount = 0 %}
+                  {% set unsettled_amount = 0 %}
+                  {% for t in transactions %}
+                    {% if t.agency_id == ag.id and t.status == 'success' %}
+                      {% set total_amount = total_amount + (t.amount or 0) %}
+                      {% if t.settlement_status != '정산완료' %}
+                        {% set unsettled_amount = unsettled_amount + (t.amount or 0) %}
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  {% set net_amount = unsettled_amount * (100 - (ag.fee_percent or 0)) // 100 %}
                   <tr class="bg-black/20 hover:bg-black/30 transition">
                     <td class="px-3 py-2 font-semibold">{{ ag.company_name }}</td>
                     <td class="px-3 py-2 text-[11px] text-white/80">{{ ag.domain }}</td>
                     <td class="px-3 py-2 text-[11px] font-mono text-blue-200">{{ ag.login_id }}</td>
-                    <td class="px-3 py-2 text-center text-[11px] text-white/80">{{ ag.fee_percent }}%</td>
+                    <td class="px-3 py-2 text-center text-[11px] text-white/80">
+                      <form method="post" action="{{ url_for('hq_admin') }}" class="inline-flex items-center gap-1">
+                        <input type="hidden" name="action" value="update_fee">
+                        <input type="hidden" name="agency_id" value="{{ ag.id }}">
+                        <input type="number" name="fee_percent" value="{{ ag.fee_percent }}" min="0" max="100"
+                               class="w-12 bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px] text-center">
+                        <span>%</span>
+                        <button type="submit" class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20">
+                          저장
+                        </button>
+                      </form>
+                    </td>
+                    <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ "{:,}".format(total_amount) }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ "{:,}".format(unsettled_amount) }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-emerald-200">{{ "{:,}".format(net_amount) }} 원</td>
                     <td class="px-3 py-2 text-center text-[11px]">
                       {% if ag.status == 'active' %}
                         <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">활성</span>
@@ -1596,6 +1985,17 @@ def hq_admin():
               <p class="text-xs text-white/60">아직 승인된 대행사가 없습니다.</p>
             {% endif %}
           </section>
+
+          <!-- HQ 엑셀 다운로드 -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-4 flex items-center justify-between text-sm">
+            <div class="text-white/70 text-[11px]">
+              전체 거래 내역 및 대행사별 정산 정보를 엑셀 파일로 내려받을 수 있습니다.
+            </div>
+            <a href="{{ url_for('hq_export_excel') }}"
+               class="px-4 py-2 rounded-full bg-white text-brand-blue font-semibold text-xs hover:bg-brand-accent transition">
+              엑셀 다운받기
+            </a>
+          </section>
         </div>
       </main>
     </body>
@@ -1607,6 +2007,386 @@ def hq_admin():
         agencies=agencies,
         transactions=transactions,
         message=message,
+    )
+
+
+@app.route("/agency-admin", methods=["GET", "POST"])
+def agency_admin():
+    """대행사 전용 결제 세션/거래 대시보드."""
+    agency_id = session.get("agency_id")
+    if not agency_id:
+        return redirect(url_for("agency_login"))
+
+    # 본사에서 저장한 대행사 정보 로드
+    state = _load_hq_state()
+    agencies = state.get("agencies") or []
+    agency = None
+    for ag in agencies:
+        if str(ag.get("id")) == str(agency_id):
+            agency = ag
+            break;
+    if not agency:
+        # 세션에 남아 있지만 HQ 데이터에는 없는 경우 다시 로그인
+        session.pop("agency_id", None)
+        return redirect(url_for("agency_login"))
+
+    # 세션/히스토리는 admin_state.json 에서 agency_id 기준으로 필터
+    sessions: list[dict] = []
+    history: list[dict] = []
+    if Path(ADMIN_STATE_PATH).exists():
+        try:
+            with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+            all_sessions = saved.get("sessions") or []
+            all_history = saved.get("history") or []
+            sessions = [s for s in all_sessions if str(s.get("agency_id")) == str(agency_id)]
+            history = [h for h in all_history if str(h.get("agency_id")) == str(agency_id)]
+        except Exception:
+            sessions, history = [], []
+
+    message = ""
+    base_url = request.url_root.rstrip("/")
+
+    if request.method == "POST":
+        action = request.form.get("action", "create").strip()
+        if action == "create":
+            amount = request.form.get("admin_amount", "").strip()
+            installment = request.form.get("admin_installment", "일시불").strip()
+            # 이 대행사의 진행 중 세션 수만 카운트
+            active_count = sum(
+                1 for s in sessions if s.get("status", "결제중") == "결제중"
+            )
+            if active_count >= 5:
+                message = "동시에 진행할 수 있는 세션은 최대 5개입니다."
+            else:
+                session_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
+                new_session = {
+                    "id": session_id,
+                    "amount": amount,
+                    "installment": installment or "",
+                    "status": "결제중",
+                    "created_at": datetime.utcnow().isoformat(),
+                    "agency_id": agency_id,
+                }
+                # 전체 admin_state 에 병합 저장
+                all_sessions = sessions
+                all_history = history
+                if Path(ADMIN_STATE_PATH).exists():
+                    try:
+                        with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
+                            saved = json.load(f)
+                        all_sessions = saved.get("sessions") or []
+                        all_history = saved.get("history") or []
+                    except Exception:
+                        all_sessions, all_history = [], []
+                all_sessions.append(new_session)
+                admin_state = {"sessions": all_sessions, "history": all_history}
+                try:
+                    with open(ADMIN_STATE_PATH, "w", encoding="utf-8") as f:
+                        json.dump(admin_state, f, ensure_ascii=False, indent=2)
+                except Exception as e:  # noqa: BLE001
+                    message = f"세션 생성 중 오류가 발생했습니다: {e}"
+                else:
+                    if amount:
+                        message = "결제요청 페이지 링크가 생성되었습니다. 링크를 복사하여 고객에게 전달하세요."
+                    else:
+                        message = "금액이 고정되지 않은 결제요청 링크가 생성되었습니다. 링크를 복사하여 고객에게 전달하세요."
+                # 로컬 세션 리스트도 갱신
+                sessions.append(new_session)
+
+    template = """
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8" />
+      <title>SISA 대행사 결제 어드민</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <script>
+        if (screen.width < 1280) {
+          var vp = document.getElementById('viewport-meta');
+          if (vp) vp.setAttribute('content', 'width=1280');
+        }
+        // 5분마다 자동 새로고침
+        setInterval(function () {
+          location.reload();
+        }, 300000);
+      </script>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased min-h-screen flex flex-col">
+      <header class="fixed top-0 left-0 right-0 z-30 bg-brand-dark/80 backdrop-blur border-b border-white/10">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-store text-white text-xl"></i>
+            <div class="flex flex-col leading-tight">
+              <span class="text-sm font-semibold text-white/80">{{ agency.company_name }}</span>
+              <span class="text-[11px] text-white/60">SISA 대행사 결제 어드민</span>
+            </div>
+          </div>
+          <div class="text-[11px] text-white/70">
+            결제요청 링크 예시:
+            <span class="font-mono bg-white/10 px-2 py-1 rounded-full border border-white/20">
+              {{ base_url }}/pay/&lt;SESSION_ID&gt;
+            </span>
+          </div>
+        </div>
+      </header>
+      <main class="flex-grow pt-20 pb-10 px-3 sm:px-4">
+        <div class="max-w-5xl mx-auto space-y-8">
+          {% if message %}
+          <div class="bg-emerald-500/10 border border-emerald-400/40 text-emerald-100 text-sm px-4 py-3 rounded-xl">
+            {{ message }}
+          </div>
+          {% endif %}
+
+          <!-- 세션 생성 -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
+            <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-link text-brand-accent"></i> 결제 요청 링크 생성
+            </h2>
+            <form method="post" class="flex flex-wrap gap-3 items-end text-sm">
+              <input type="hidden" name="action" value="create">
+              <div>
+                <label class="block text-xs mb-1 text-white/70">결제 금액 (선택)</label>
+                <input name="admin_amount" type="text" placeholder="예: 550000"
+                       class="bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" />
+              </div>
+              <div>
+                <label class="block text-xs mb-1 text-white/70">할부개월</label>
+                <select name="admin_installment"
+                        class="bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-300">
+                  <option value="일시불">일시불</option>
+                  <option value="2">2개월</option>
+                  <option value="3">3개월</option>
+                  <option value="4">4개월</option>
+                  <option value="5">5개월</option>
+                  <option value="6">6개월</option>
+                </select>
+              </div>
+              <button type="submit"
+                      class="h-10 px-5 rounded-full bg-white text-brand-blue font-semibold text-sm hover:bg-brand-accent transition">
+                링크 생성
+              </button>
+            </form>
+            <p class="mt-3 text-[11px] text-white/60">
+              생성된 세션은 아래 "진행 중인 결제 세션" 목록에 표시되며, 각 세션 ID 를 통해 결제 페이지 링크를 고객에게 전달할 수 있습니다.
+            </p>
+          </section>
+
+          <!-- 대행사 엑셀 다운로드 -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-4 flex items-center justify-between text-sm">
+            <div class="text-white/70 text-[11px]">
+              이 대행사에 해당하는 결제/정산 내역을 엑셀로 내려받을 수 있습니다.
+            </div>
+            <a href="{{ url_for('agency_export_excel') }}"
+               class="px-4 py-2 rounded-full bg-white text-brand-blue font-semibold text-xs hover:bg-brand-accent transition">
+              엑셀 다운받기
+            </a>
+          </section>
+
+          <!-- 진행 중인 세션 -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
+            <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-clock text-brand-accent"></i> 진행 중인 결제 세션
+            </h2>
+            {% if sessions %}
+            <div class="space-y-2 text-sm">
+              {% for s in sessions %}
+              <div class="bg-black/25 border border-white/15 rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+                <div class="text-[11px]">
+                  <div class="font-mono text-blue-200">SESSION: {{ s.id }}</div>
+                  <div class="text-white/80">
+                    금액: {{ s.amount or '고객 입력' }} / 할부: {{ s.installment or '일시불' }}
+                  </div>
+                  <div class="text-white/60">생성일: {{ s.created_at }}</div>
+                </div>
+                <div class="flex flex-col items-end gap-1 text-[11px]">
+                  <button type="button"
+                          onclick="navigator.clipboard && navigator.clipboard.writeText('{{ base_url }}/pay/{{ s.id }}'); alert('링크가 복사되었습니다.');"
+                          class="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20">
+                    링크 복사
+                  </button>
+                  <span class="font-mono text-white/70 text-[10px]">{{ base_url }}/pay/{{ s.id }}</span>
+                </div>
+              </div>
+            {% endfor %}
+            </div>
+            {% else %}
+              <p class="text-xs text-white/60">현재 진행 중인 결제 세션이 없습니다.</p>
+            {% endif %}
+          </section>
+
+          <!-- 과거 세션(요약) -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
+            <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-brand-accent"></i> 완료/종료된 세션 요약
+            </h2>
+            {% if history %}
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs border-separate border-spacing-y-2">
+                <thead class="text-white/70">
+                  <tr>
+                    <th class="px-3 py-1 text-left">세션ID</th>
+                    <th class="px-3 py-1 text-right">금액</th>
+                    <th class="px-3 py-1 text-left">할부</th>
+                    <th class="px-3 py-1 text-left">상태</th>
+                    <th class="px-3 py-1 text-left">메모</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for h in history %}
+                  <tr class="bg-black/20 hover:bg-black/30 transition">
+                    <td class="px-3 py-2 font-mono text-blue-200">{{ h.id }}</td>
+                    <td class="px-3 py-2 text-right">{{ h.amount }}</td>
+                    <td class="px-3 py-2">{{ h.installment }}</td>
+                    <td class="px-3 py-2 text-[11px] text-white/80">{{ h.status }}</td>
+                    <td class="px-3 py-2 text-[11px] text-white/70 max-w-[200px] truncate">{{ h.result_message }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+              <p class="text-xs text-white/60">아직 종료된 세션 기록이 없습니다.</p>
+            {% endif %}
+          </section>
+        </div>
+      </main>
+    </body>
+    </html>
+    """
+    return render_template_string(
+        template,
+        agency=agency,
+        sessions=sessions,
+        history=history,
+        base_url=base_url,
+        message=message,
+    )
+
+
+@app.route("/hq-export-excel", methods=["GET"])
+def hq_export_excel():
+    """본사용 전체 거래/정산 엑셀 다운로드."""
+    if not session.get("hq_logged_in"):
+        return redirect(url_for("hq_login"))
+
+    state = _load_hq_state()
+    transactions = state.get("transactions") or []
+    agencies = state.get("agencies") or []
+    name_map = {str(ag.get("id")): ag.get("company_name", "") for ag in agencies}
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Transactions"
+    headers = [
+        "시간",
+        "대행사ID",
+        "대행사명",
+        "금액",
+        "이름",
+        "카드구분",
+        "생년월일(앞6)",
+        "전화번호(뒷자리)",
+        "결제상태",
+        "정산상태",
+        "메모",
+    ]
+    ws.append(headers)
+
+    for t in transactions:
+        aid = str(t.get("agency_id") or "")
+        ws.append(
+            [
+                t.get("created_at", ""),
+                aid,
+                name_map.get(aid, ""),
+                t.get("amount", 0),
+                t.get("customer_name", ""),
+                t.get("card_type", ""),
+                t.get("resident_front", ""),
+                t.get("phone_number", ""),
+                t.get("status", ""),
+                t.get("settlement_status", ""),
+                t.get("message", ""),
+            ]
+        )
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name="sisa_hq_transactions.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@app.route("/agency-export-excel", methods=["GET"])
+def agency_export_excel():
+    """대행사 전용 엑셀 다운로드 (자기 거래만)."""
+    agency_id = session.get("agency_id")
+    if not agency_id:
+        return redirect(url_for("agency_login"))
+
+    state = _load_hq_state()
+    transactions = state.get("transactions") or []
+    agencies = state.get("agencies") or []
+    agency = None
+    for ag in agencies:
+        if str(ag.get("id")) == str(agency_id):
+            agency = ag
+            break
+
+    filtered = [
+        t for t in transactions if str(t.get("agency_id")) == str(agency_id)
+    ]
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "AgencyTransactions"
+    headers = [
+        "시간",
+        "금액",
+        "이름",
+        "카드구분",
+        "생년월일(앞6)",
+        "전화번호(뒷자리)",
+        "결제상태",
+        "정산상태",
+        "메모",
+    ]
+    ws.append(headers)
+
+    for t in filtered:
+        ws.append(
+            [
+                t.get("created_at", ""),
+                t.get("amount", 0),
+                t.get("customer_name", ""),
+                t.get("card_type", ""),
+                t.get("resident_front", ""),
+                t.get("phone_number", ""),
+                t.get("status", ""),
+                t.get("settlement_status", ""),
+                t.get("message", ""),
+            ]
+        )
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    filename = "sisa_agency_transactions.xlsx"
+    if agency:
+        filename = f"sisa_{agency.get('company_name','agency')}_transactions.xlsx"
+
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 if __name__ == "__main__":

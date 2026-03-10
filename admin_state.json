@@ -1,40 +1,4 @@
 {
-  "sessions": [
-    {
-      "id": "154454782571",
-      "amount": "",
-      "installment": "일시불",
-      "status": "결제중",
-      "created_at": "2026-03-06T15:44:54.782571"
-    },
-    {
-      "id": "172604393411",
-      "amount": "",
-      "installment": "일시불",
-      "status": "결제중",
-      "created_at": "2026-03-09T17:26:04.393411"
-    },
-    {
-      "id": "173104584590",
-      "amount": "",
-      "installment": "일시불",
-      "status": "결제중",
-      "created_at": "2026-03-09T17:31:04.584590"
-    },
-    {
-      "id": "173605586076",
-      "amount": "",
-      "installment": "일시불",
-      "status": "결제중",
-      "created_at": "2026-03-09T17:36:05.586076"
-    },
-    {
-      "id": "174106599447",
-      "amount": "",
-      "installment": "일시불",
-      "status": "결제중",
-      "created_at": "2026-03-09T17:41:06.599447"
-    }
-  ],
+  "sessions": [],
   "history": []
 }
