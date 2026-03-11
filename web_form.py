@@ -2427,7 +2427,7 @@ def hq_admin():
                       </td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ t.created_at }}</td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ ag_name }}</td>
-                      <td class="px-3 py-2 text-right">{{ "{:,}".format(amount) }} 원</td>
+                      <td class="px-3 py-2 text-right">{{ amount }} 원</td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ t.customer_name }}</td>
                       <td class="px-3 py-2 text-center">
                         {% if t.status == 'success' %}
@@ -2476,7 +2476,7 @@ def hq_admin():
                 <div class="space-y-1">
                   <div>
                     미정산 총 합계 금액:
-                    <span class="font-semibold text-brand-accent">{{ "{:,}".format(unsettled_total) }} 원</span>
+                    <span class="font-semibold text-brand-accent">{{ unsettled_total }} 원</span>
                   </div>
                   <div>
                     선택 건 현황:
@@ -2548,9 +2548,9 @@ def hq_admin():
                     <td class="px-3 py-2 text-center text-[11px] text-white/80">
                       {{ ag.fee_percent or 0 }}%
                     </td>
-                    <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ "{:,}".format(total_amount) }} 원</td>
-                    <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ "{:,}".format(unsettled_amount) }} 원</td>
-                    <td class="px-3 py-2 text-right text-[11px] text-emerald-200">{{ "{:,}".format(net_amount) }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ total_amount }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ unsettled_amount }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-emerald-200">{{ net_amount }} 원</td>
                     <td class="px-3 py-2 text-center text-[11px]">
                       {% if ag.status == 'active' %}
                         <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">활성</span>
@@ -2619,9 +2619,9 @@ def hq_admin():
                     <td class="px-3 py-2 text-[11px] text-white/80 whitespace-nowrap">{{ ag.bank_name }} / {{ ag.account_number }}</td>
                     <td class="px-3 py-2 text-[11px] text-white/80 max-w-[160px] truncate">{{ ag.email_or_sheet }}</td>
                     <td class="px-3 py-2 text-center text-[11px] text-white/80">{{ ag.fee_percent or 0 }}%</td>
-                    <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ "{:,}".format(total_amount) }} 원</td>
-                    <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ "{:,}".format(unsettled_amount) }} 원</td>
-                    <td class="px-3 py-2 text-right text-[11px] text-emerald-200">{{ "{:,}".format(net_amount) }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ total_amount }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ unsettled_amount }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-emerald-200">{{ net_amount }} 원</td>
                     <td class="px-3 py-2 text-center text-[11px]">
                       {% if ag.status == 'active' %}
                         <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">활성</span>
@@ -3226,7 +3226,7 @@ def agency_admin():
                       data-date="{{ (t.created_at.strftime('%Y-%m-%d') if t.created_at) else '' }}"
                       data-status="{{ t.status or '' }}">
                     <td class="px-3 py-2 whitespace-nowrap">{{ t.created_at }}</td>
-                    <td class="px-3 py-2 text-right">{{ "{:,}".format(amount) }} 원</td>
+                    <td class="px-3 py-2 text-right">{{ amount }} 원</td>
                     <td class="px-3 py-2 whitespace-nowrap">{{ t.customer_name }}</td>
                     <td class="px-3 py-2 text-center">
                       {% if t.status == 'success' %}
