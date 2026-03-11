@@ -510,7 +510,7 @@
                 </div>
 
                 <!-- Card 4 (View All) -->
-                <div
+                <a href="/auction.html"
                     class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start flex items-center justify-center group cursor-pointer border-dashed border-2 border-white/20 hover:bg-white/5 transition">
                     <div class="text-center">
                         <div
@@ -520,7 +520,7 @@
                         <p class="font-bold text-lg">View All Auctions</p>
                         <p class="text-sm text-white/50 mt-1">12,450+ items in progress</p>
                     </div>
-                </div>
+                </a>
             </div>
         </section>
 
@@ -997,6 +997,85 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Auction Preview Slider (Footer 위) -->
+        <section class="max-w-7xl mx-auto px-6 pt-6 pb-10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl md:text-2xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-gavel text-yellow-300"></i>
+                    Featured Luxury Lots
+                </h2>
+                <p class="text-[11px] md:text-xs text-white/60">Tap any item to sign in and join bidding.</p>
+            </div>
+            <div class="glass-card rounded-2xl p-4 border border-white/10 shadow-2xl">
+                <div class="flex gap-4 overflow-x-auto pb-2" style="scrollbar-width: none;">
+                    <!-- 슬라이드 카드들: 클릭 시 로그인 페이지로 이동 -->
+                    <button onclick="window.location.href='login.html'"
+                        class="min-w-[180px] max-w-[180px] bg-white/5 hover:bg-white/15 rounded-2xl overflow-hidden border border-white/15 flex-shrink-0 text-left">
+                        <div class="h-28 bg-cover bg-center"
+                            style="background-image:url('https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=400&q=80');">
+                            <div class="h-full w-full bg-black/40 flex items-start justify-between p-2 text-[10px]">
+                                <span class="bg-yellow-400 text-black px-2 py-0.5 rounded-full font-bold">LIVE</span>
+                                <span class="bg-black/50 text-white px-2 py-0.5 rounded-full font-mono">Ends in 02:14</span>
+                            </div>
+                        </div>
+                        <div class="p-3 space-y-1">
+                            <p class="text-[11px] text-white/70">Hermès Birkin 30 Togo</p>
+                            <p class="text-xs font-bold text-blue-300">₩3,200,000</p>
+                            <p class="text-[10px] text-white/50">Christie's · Handbags</p>
+                        </div>
+                    </button>
+
+                    <button onclick="window.location.href='login.html'"
+                        class="min-w-[180px] max-w-[180px] bg-white/5 hover:bg-white/15 rounded-2xl overflow-hidden border border-white/15 flex-shrink-0 text-left">
+                        <div class="h-28 bg-cover bg-center"
+                            style="background-image:url('https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=400&q=80');">
+                            <div class="h-full w-full bg-black/40 flex items-start justify-between p-2 text-[10px]">
+                                <span class="bg-emerald-400 text-black px-2 py-0.5 rounded-full font-bold">BUY NOW</span>
+                                <span class="bg-black/50 text-white px-2 py-0.5 rounded-full font-mono">New York</span>
+                            </div>
+                        </div>
+                        <div class="p-3 space-y-1">
+                            <p class="text-[11px] text-white/70">Rolex Submariner Date</p>
+                            <p class="text-xs font-bold text-blue-300">₩9,800,000</p>
+                            <p class="text-[10px] text-white/50">Sotheby's · Watches</p>
+                        </div>
+                    </button>
+
+                    <button onclick="window.location.href='login.html'"
+                        class="min-w-[180px] max-w-[180px] bg-white/5 hover:bg-white/15 rounded-2xl overflow-hidden border border-white/15 flex-shrink-0 text-left">
+                        <div class="h-28 bg-cover bg-center"
+                            style="background-image:url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=400&q=80');">
+                            <div class="h-full w-full bg-black/40 flex items-start justify-between p-2 text-[10px]">
+                                <span class="bg-red-400 text-black px-2 py-0.5 rounded-full font-bold">HOT</span>
+                                <span class="bg-black/50 text-white px-2 py-0.5 rounded-full font-mono">12 Bids</span>
+                            </div>
+                        </div>
+                        <div class="p-3 space-y-1">
+                            <p class="text-[11px] text-white/70">Chanel Classic Flap</p>
+                            <p class="text-xs font-bold text-blue-300">₩5,450,000</p>
+                            <p class="text-[10px] text-white/50">eBay · Couture</p>
+                        </div>
+                    </button>
+
+                    <button onclick="window.location.href='login.html'"
+                        class="min-w-[180px] max-w-[180px] bg-white/5 hover:bg-white/15 rounded-2xl overflow-hidden border border-white/15 flex-shrink-0 text-left">
+                        <div class="h-28 bg-cover bg-center"
+                            style="background-image:url('https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=400&q=80');">
+                            <div class="h-full w-full bg-black/40 flex items-start justify-between p-2 text-[10px]">
+                                <span class="bg-blue-400 text-black px-2 py-0.5 rounded-full font-bold">RESERVE</span>
+                                <span class="bg-black/50 text-white px-2 py-0.5 rounded-full font-mono">EU · Online</span>
+                            </div>
+                        </div>
+                        <div class="p-3 space-y-1">
+                            <p class="text-[11px] text-white/70">Patek Philippe Nautilus</p>
+                            <p class="text-xs font-bold text-blue-300">₩85,000,000</p>
+                            <p class="text-[10px] text-white/50">Phillips · Watches</p>
+                        </div>
+                    </button>
                 </div>
             </div>
         </section>
