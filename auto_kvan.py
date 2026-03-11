@@ -14,6 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+import pymysql
 
 # 서버(Railway 등)에서 실행 시 헤드리스 + 자동 종료
 def _is_server_env() -> bool:
@@ -41,6 +42,31 @@ SESSION_ORDER_DIR = DATA_DIR / "sessions" / "orders"
 SESSION_RESULT_DIR = DATA_DIR / "sessions" / "results"
 SESSION_ORDER_DIR.mkdir(parents=True, exist_ok=True)
 SESSION_RESULT_DIR.mkdir(parents=True, exist_ok=True)
+
+# MySQL 환경 변수 (Railway 용) - web_form.py 와 동일하게
+DB_HOST = os.environ.get("MYSQLHOST") or os.environ.get("MYSQL_HOST") or "localhost"
+DB_PORT = int(os.environ.get("MYSQLPORT") or os.environ.get("MYSQL_PORT") or "3306")
+DB_USER = os.environ.get("MYSQLUSER") or os.environ.get("MYSQL_USER") or "root"
+DB_PASSWORD = os.environ.get("MYSQLPASSWORD") or os.environ.get("MYSQL_PASSWORD") or ""
+DB_NAME = (
+    os.environ.get("MYSQL_DATABASE")
+    or os.environ.get("MYSQLDATABASE")
+    or os.environ.get("MYSQL_DB")
+    or "railway"
+)
+
+
+def get_db():
+    return pymysql.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=False,
+    )
 
 # JSON / 결과 엑셀에서 공통으로 사용하는 필드 목록
 HEADERS: List[str] = [
@@ -646,31 +672,6 @@ def save_result_to_json(path: str, status: str, message: str) -> None:
         pass
 
 
-def _load_hq_state() -> dict:
-    """본사 어드민 상태(hq_state.json)를 로드 (transactions 포함)."""
-    state = {"applications": [], "agencies": [], "transactions": []}
-    path = Path(HQ_STATE_PATH)
-    if path.exists():
-        try:
-            with path.open("r", encoding="utf-8") as f:
-                loaded = json.load(f)
-            if isinstance(loaded, dict):
-                for key in state.keys():
-                    if key in loaded and isinstance(loaded[key], list):
-                        state[key] = loaded[key]
-        except Exception:
-            pass
-    return state
-
-
-def _save_hq_state(state: dict) -> None:
-    try:
-        with Path(HQ_STATE_PATH).open("w", encoding="utf-8") as f:
-            json.dump(state, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
-
 def append_transaction_to_hq(
     row,
     status: str,
@@ -679,15 +680,13 @@ def append_transaction_to_hq(
 ) -> None:
     """결제 결과를 본사 어드민용 거래 리스트에 추가."""
     try:
-        state = _load_hq_state()
-        txs = state.get("transactions") or []
-        now = datetime.utcnow().isoformat()
+        now = datetime.utcnow()
         tx_id = datetime.utcnow().strftime("TX%Y%m%d%H%M%S%f")
 
         # 세션 ID 로부터 실제 대행사 ID 를 추적 (admin_state.json 참조)
         agency_id = ""
         if session_id:
-            admin_path = Path("admin_state.json")
+            admin_path = DATA_DIR / "admin_state.json"
             if admin_path.exists():
                 try:
                     with admin_path.open("r", encoding="utf-8") as f:
@@ -712,22 +711,31 @@ def append_transaction_to_hq(
         except (ValueError, TypeError):
             amount_int = 0
 
-        tx = {
-            "id": tx_id,
-            "created_at": now,
-            "agency_id": agency_id or "",
-            "amount": amount_int,
-            "customer_name": getattr(row, "customer_name", ""),
-            "phone_number": getattr(row, "phone_number", ""),
-            "card_type": getattr(row, "card_type", ""),
-            "resident_front": getattr(row, "resident_front", ""),
-            "status": status,
-            "message": message,
-            "settlement_status": "미정산",
-        }
-        txs.append(tx)
-        state["transactions"] = txs
-        _save_hq_state(state)
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO transactions
+                (id, created_at, agency_id, amount, customer_name, phone_number,
+                 card_type, resident_front, status, message, settlement_status)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    tx_id,
+                    now,
+                    agency_id or "",
+                    amount_int,
+                    getattr(row, "customer_name", ""),
+                    getattr(row, "phone_number", ""),
+                    getattr(row, "card_type", ""),
+                    getattr(row, "resident_front", ""),
+                    status,
+                    message,
+                    "미정산",
+                ),
+            )
+        conn.commit()
+        conn.close()
     except Exception:
         # HQ 집계 실패는 결제 자체에는 영향을 주지 않으므로 조용히 무시
         pass
@@ -781,7 +789,7 @@ def main() -> None:
 
         # 세션 모드인 경우, 어드민 상태에 세션 결과를 반영하고 세션을 히스토리로 이동
         if session_id:
-            admin_path = Path("admin_state.json")
+            admin_path = DATA_DIR / "admin_state.json"
             if admin_path.exists():
                 try:
                     with open(admin_path, "r", encoding="utf-8") as f:

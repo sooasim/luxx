@@ -60,11 +60,28 @@
         .prose li { margin-bottom: 0.25rem; }
         .prose strong { color: white; font-weight: 600; }
     </style>
+    <script>
+        // iframe(이용약관 전문)으로 삽입될 때는 헤더/내비/배경 데코를 숨겨서 본문만 보이도록 처리
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                var search = window.location.search || "";
+                var isEmbed = search.indexOf('embed=1') !== -1;
+                if (isEmbed || window.self !== window.top) {
+                    var header = document.getElementById('terms-header');
+                    var main = document.getElementById('terms-main');
+                    if (header) header.style.display = 'none';
+                    if (main) main.style.paddingTop = '1.5rem';
+                }
+            } catch (e) {
+                // cross-origin 등 오류시 무시
+            }
+        });
+    </script>
 </head>
 <body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
 
-    <!-- 상단 네비게이션 바 (공통) -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10">
+    <!-- 상단 네비게이션 바 (공통) - 기본은 보이지만, iframe(이용약관 전문)에서 불러올 때는 JS로 숨김 -->
+    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10" id="terms-header">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <!-- 로고 영역 -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='sisa_home.html'">
@@ -118,7 +135,7 @@
     <div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
 
     <!-- 메인 컨텐츠 영역 -->
-    <main class="flex-grow pt-32 pb-20 px-6 relative z-10 max-w-7xl mx-auto w-full">
+    <main class="flex-grow pt-32 pb-20 px-6 relative z-10 max-w-7xl mx-auto w-full" id="terms-main">
         
         <!-- 페이지 타이틀 -->
         <div class="mb-10 text-center md:text-left">

@@ -10,6 +10,7 @@ from io import BytesIO
 import subprocess
 import sys
 
+import pymysql
 from flask import (
     Flask,
     render_template_string,
@@ -40,6 +41,97 @@ SESSION_RESULT_DIR = DATA_DIR / "sessions" / "results"
 SESSION_ORDER_DIR.mkdir(parents=True, exist_ok=True)
 SESSION_RESULT_DIR.mkdir(parents=True, exist_ok=True)
 
+# MySQL 환경 변수 (Railway 용)
+DB_HOST = os.environ.get("MYSQLHOST") or os.environ.get("MYSQL_HOST") or "localhost"
+DB_PORT = int(os.environ.get("MYSQLPORT") or os.environ.get("MYSQL_PORT") or "3306")
+DB_USER = os.environ.get("MYSQLUSER") or os.environ.get("MYSQL_USER") or "root"
+DB_PASSWORD = os.environ.get("MYSQLPASSWORD") or os.environ.get("MYSQL_PASSWORD") or ""
+DB_NAME = (
+    os.environ.get("MYSQL_DATABASE")
+    or os.environ.get("MYSQLDATABASE")
+    or os.environ.get("MYSQL_DB")
+    or "railway"
+)
+
+
+def get_db():
+    return pymysql.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=False,
+    )
+
+
+def init_db() -> None:
+    """신청 / 대행사 / 거래 테이블 생성 (없으면)."""
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS applications (
+                  id            VARCHAR(32) PRIMARY KEY,
+                  company_name  VARCHAR(255) NOT NULL,
+                  domain        VARCHAR(255) NOT NULL,
+                  phone         VARCHAR(50),
+                  bank_name     VARCHAR(100),
+                  account_number VARCHAR(100),
+                  email_or_sheet TEXT,
+                  login_id      VARCHAR(100),
+                  login_password VARCHAR(255),
+                  fee_percent   INT DEFAULT 10,
+                  created_at    DATETIME,
+                  status        VARCHAR(20)
+                ) CHARACTER SET utf8mb4
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS agencies (
+                  id            VARCHAR(32) PRIMARY KEY,
+                  company_name  VARCHAR(255) NOT NULL,
+                  domain        VARCHAR(255) NOT NULL,
+                  phone         VARCHAR(50),
+                  bank_name     VARCHAR(100),
+                  account_number VARCHAR(100),
+                  email_or_sheet TEXT,
+                  login_id      VARCHAR(100) UNIQUE,
+                  login_password VARCHAR(255),
+                  fee_percent   INT DEFAULT 10,
+                  created_at    DATETIME,
+                  status        VARCHAR(20)
+                ) CHARACTER SET utf8mb4
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS transactions (
+                  id                VARCHAR(32) PRIMARY KEY,
+                  created_at        DATETIME,
+                  agency_id         VARCHAR(32),
+                  amount            INT,
+                  customer_name     VARCHAR(255),
+                  phone_number      VARCHAR(50),
+                  card_type         VARCHAR(20),
+                  resident_front    VARCHAR(6),
+                  status            VARCHAR(20),
+                  message           TEXT,
+                  settlement_status VARCHAR(20),
+                  settled_at        DATETIME,
+                  FOREIGN KEY (agency_id) REFERENCES agencies(id)
+                ) CHARACTER SET utf8mb4
+                """
+            )
+        conn.commit()
+        conn.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"[WARN] DB 초기화 실패: {e}")
+
 
 def trigger_auto_kvan_async(session_id: str | None = None) -> None:
     """결제 폼에서 주문 저장 후 auto_kvan.py 를 비동기로 실행."""
@@ -59,13 +151,19 @@ def trigger_auto_kvan_async(session_id: str | None = None) -> None:
 
 
 def _find_agency_by_credentials(login_id: str, password: str) -> dict | None:
-    """hq_state.json 에서 대행사 로그인 정보로 대행사 레코드를 찾는다."""
-    state = _load_hq_state()
-    agencies = state.get("agencies") or []
-    for ag in agencies:
-        if ag.get("login_id") == login_id and ag.get("login_password") == password:
-            return ag
-    return None
+    """MySQL 에서 대행사 로그인 정보로 대행사 레코드를 찾는다."""
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM agencies WHERE login_id=%s AND login_password=%s LIMIT 1",
+                (login_id, password),
+            )
+            row = cur.fetchone()
+        conn.close()
+        return row
+    except Exception:
+        return None
 
 HEADERS: List[str] = [
     "login_id",
@@ -90,6 +188,9 @@ app.secret_key = "worldsisa-form-secret"
 
 # 약관 파일 경로 (프로젝트 루트의 terms.html)
 TERMS_FILE = BASE_DIR / "terms.html"
+
+# 애플리케이션 시작 시 DB 스키마 보장
+init_db()
 
 # 차단할 IP (공인 IP만). 환경변수 BLOCKED_IPS 로 지정 (쉼표 구분). 100.64.x.x 같은 CGN 대역은 넣지 말 것.
 _BLOCKED_IPS: set[str] = set()
@@ -278,9 +379,9 @@ FORM_TEMPLATE = """
     .amount-wrap { display:flex; align-items:center; gap:8px; }
     .amount-wrap input { max-width:110px; text-align:right; }
     .amount-suffix { font-size:14px; color:#4b5563; }
-    .buyer-grid { max-width:360px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:12px; }
+    .buyer-grid { max-width:420px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:12px; }
     .phone-wrap { display:flex; align-items:center; gap:8px; }
-    .phone-prefix { padding:9px 12px; min-width:64px; text-align:center; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; font-size:14px; color:#374151; }
+    .phone-prefix { display:flex; align-items:center; justify-content:center; padding:9px 12px; min-width:64px; height:40px; text-align:center; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; font-size:14px; color:#374151; }
     .phone-segments { display:flex; gap:8px; flex:1; }
     .phone-segments input { max-width:70px; text-align:center; }
     .card-type-group { display:flex; flex-wrap:nowrap; align-items:center; gap:12px; border:1px solid #d1d5db; border-radius:999px; padding:6px 10px; background:#f9fafb; }
@@ -433,7 +534,7 @@ FORM_TEMPLATE = """
 
             <div class="section-title">결제 / 카드 정보</div>
             <div class="field-row">
-              <div style="flex:1.4">
+              <div style="flex:1">
                 <label>카드 구분</label>
                 <div class="card-type-group mt-1">
                   <label class="card-type-option text-sm text-gray-700">
@@ -446,7 +547,7 @@ FORM_TEMPLATE = """
                   </label>
                 </div>
               </div>
-              <div style="flex:1.0">
+              <div style="flex:1">
                 <label for="product_name">상품명</label>
                 <input id="product_name" name="product_name" placeholder="기본값: 잡화" value="{{ defaults.product_name }}" />
               </div>
@@ -523,11 +624,11 @@ FORM_TEMPLATE = """
               </div>
               <div>
                 <label for="customer_name">이름</label>
-                <input id="customer_name" name="customer_name" required value="{{ defaults.customer_name }}" />
+                <input id="customer_name" name="customer_name" required value="{{ defaults.customer_name }}" style="max-width:220px;" />
               </div>
               <div>
                 <label for="resident_front">주민번호 앞자리 (YYMMDD)</label>
-                <input id="resident_front" name="resident_front" maxlength="6" required value="{{ defaults.resident_front }}" />
+                <input id="resident_front" name="resident_front" maxlength="6" required value="{{ defaults.resident_front }}" style="max-width:220px;" />
               </div>
             </div>
 
@@ -577,7 +678,7 @@ FORM_TEMPLATE = """
             <div class="mt-4">
               <label class="text-xs font-semibold text-gray-700 mb-1 block">이용약관 전문</label>
               <div class="border border-gray-200 rounded-lg h-72 overflow-hidden bg-gray-50">
-                <iframe src="{{ url_for('terms') }}?customer_name={{ defaults.customer_name | urlencode }}&phone_number={{ defaults.phone_number | urlencode }}" class="w-full h-full border-0 bg-white"></iframe>
+                <iframe src="{{ url_for('terms') }}?embed=1&customer_name={{ defaults.customer_name | urlencode }}&phone_number={{ defaults.phone_number | urlencode }}" class="w-full h-full border-0 bg-white"></iframe>
               </div>
             </div>
 
@@ -1069,26 +1170,107 @@ def health():
 
 
 def _load_hq_state() -> dict:
-    """본사 어드민 상태(hq_state.json)를 로드."""
+    """본사 어드민 상태를 MySQL 에서 로드."""
     state = {"applications": [], "agencies": [], "transactions": []}
-    path = Path(HQ_STATE_PATH)
-    if path.exists():
-        try:
-            with path.open("r", encoding="utf-8") as f:
-                loaded = json.load(f)
-            if isinstance(loaded, dict):
-                state.update({k: loaded.get(k, state[k]) for k in state.keys()})
-        except Exception:
-            pass
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM applications ORDER BY created_at DESC")
+            state["applications"] = cur.fetchall()
+            cur.execute("SELECT * FROM agencies ORDER BY created_at DESC")
+            state["agencies"] = cur.fetchall()
+            cur.execute("SELECT * FROM transactions ORDER BY created_at DESC")
+            state["transactions"] = cur.fetchall()
+        conn.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"[WARN] _load_hq_state 실패: {e}")
     return state
 
 
 def _save_hq_state(state: dict) -> None:
+    """기존 JSON 기반 코드와의 호환을 위해 전체 상태를 DB에 반영."""
     try:
-        with Path(HQ_STATE_PATH).open("w", encoding="utf-8") as f:
-            json.dump(state, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
+        conn = get_db()
+        with conn.cursor() as cur:
+            # applications 동기화
+            cur.execute("DELETE FROM applications")
+            for a in state.get("applications") or []:
+                cur.execute(
+                    """
+                    INSERT INTO applications
+                    (id, company_name, domain, phone, bank_name, account_number,
+                     email_or_sheet, login_id, login_password, fee_percent, created_at, status)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        a.get("id"),
+                        a.get("company_name"),
+                        a.get("domain"),
+                        a.get("phone"),
+                        a.get("bank_name"),
+                        a.get("account_number"),
+                        a.get("email_or_sheet"),
+                        a.get("login_id"),
+                        a.get("login_password"),
+                        a.get("fee_percent", 10),
+                        a.get("created_at"),
+                        a.get("status"),
+                    ),
+                )
+            # agencies 동기화
+            cur.execute("DELETE FROM agencies")
+            for ag in state.get("agencies") or []:
+                cur.execute(
+                    """
+                    INSERT INTO agencies
+                    (id, company_name, domain, phone, bank_name, account_number,
+                     email_or_sheet, login_id, login_password, fee_percent, created_at, status)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        ag.get("id"),
+                        ag.get("company_name"),
+                        ag.get("domain"),
+                        ag.get("phone"),
+                        ag.get("bank_name"),
+                        ag.get("account_number"),
+                        ag.get("email_or_sheet"),
+                        ag.get("login_id"),
+                        ag.get("login_password"),
+                        ag.get("fee_percent", 10),
+                        ag.get("created_at"),
+                        ag.get("status"),
+                    ),
+                )
+            # transactions 동기화
+            cur.execute("DELETE FROM transactions")
+            for t in state.get("transactions") or []:
+                cur.execute(
+                    """
+                    INSERT INTO transactions
+                    (id, created_at, agency_id, amount, customer_name, phone_number,
+                     card_type, resident_front, status, message, settlement_status, settled_at)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        t.get("id"),
+                        t.get("created_at"),
+                        t.get("agency_id"),
+                        t.get("amount"),
+                        t.get("customer_name"),
+                        t.get("phone_number"),
+                        t.get("card_type"),
+                        t.get("resident_front"),
+                        t.get("status"),
+                        t.get("message"),
+                        t.get("settlement_status"),
+                        t.get("settled_at"),
+                    ),
+                )
+        conn.commit()
+        conn.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"[WARN] _save_hq_state 실패: {e}")
 
 
 @app.route("/agency-apply", methods=["POST"])
@@ -1118,6 +1300,7 @@ def agency_apply():
             "email_or_sheet": email_or_sheet,
             "login_id": agency_login_id,
             "login_password": agency_login_pw,
+            "fee_percent": 10,
             "created_at": datetime.utcnow().isoformat(),
             "status": "pending",
         }
@@ -1146,9 +1329,13 @@ def agency_apply():
       SISA 본사 어드민에서 신청 내용을 검토한 후,<br/>
       담당자가 개별적으로 연락을 드립니다.
     </p>
-    <p class="text-[11px] text-white/60">
-      이 창은 닫으셔도 됩니다. 추가 문의는 본사 이메일로 연락해 주세요.
+    <p class="text-[11px] text-white/60 mb-6">
+      아래 버튼을 누르시면 SISA 메인 페이지로 이동합니다.
     </p>
+    <button onclick="window.location.href='/'"
+            class="mt-2 inline-flex items-center justify-center px-5 py-2 rounded-full bg-white text-[#2f4b9f] text-sm font-semibold hover:bg-[#e6edf7] transition">
+      메인 페이지로 이동
+    </button>
   </div>
 </body>
 </html>
@@ -1340,6 +1527,8 @@ def admin():
       <meta charset="UTF-8" />
       <title>SISA K-VAN 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <!-- SISA 브랜드 파비콘 -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
       <script>
         if (screen.width < 1280) {
           var vp = document.getElementById('viewport-meta');
@@ -1796,7 +1985,7 @@ def hq_admin():
                     "email_or_sheet": found.get("email_or_sheet", ""),
                     "login_id": found.get("login_id", ""),
                     "login_password": found.get("login_password", ""),
-                    "fee_percent": 10,
+                    "fee_percent": found.get("fee_percent", 10),
                     "created_at": datetime.utcnow().isoformat(),
                     "status": "active",
                 }
@@ -1819,6 +2008,20 @@ def hq_admin():
                 state["agencies"] = agencies
                 _save_hq_state(state)
                 message = "수수료 설정이 저장되었습니다."
+        elif action == "update_application_fee":
+            app_id = request.form.get("application_id", "").strip()
+            try:
+                fee_percent = int(request.form.get("fee_percent", "").strip())
+            except ValueError:
+                fee_percent = None
+            if app_id and fee_percent is not None:
+                for a in applications:
+                    if str(a.get("id")) == app_id:
+                        a["fee_percent"] = fee_percent
+                        break
+                state["applications"] = applications
+                _save_hq_state(state)
+                message = "대행사 신청 수수료가 저장되었습니다."
         elif action == "bulk_settle":
             tx_ids = request.form.getlist("tx_ids")
             if tx_ids:
@@ -1829,6 +2032,54 @@ def hq_admin():
                 state["transactions"] = transactions
                 _save_hq_state(state)
                 message = f"{len(tx_ids)}건을 정산완료로 표시했습니다."
+        elif action == "update_agency":
+            agency_id = request.form.get("agency_id", "").strip()
+            do = request.form.get("do", "save").strip()
+            if agency_id:
+                # 정보 수정
+                phone = (request.form.get("phone") or "").strip()
+                bank_name = (request.form.get("bank_name") or "").strip()
+                account_number = (request.form.get("account_number") or "").strip()
+                email_or_sheet = (request.form.get("email_or_sheet") or "").strip()
+                status_val = (request.form.get("status") or "").strip() or "active"
+                try:
+                    fee_percent = int((request.form.get("fee_percent") or "").strip())
+                except ValueError:
+                    fee_percent = None
+                for ag in agencies:
+                    if str(ag.get("id")) == agency_id:
+                        if phone:
+                            ag["phone"] = phone
+                        if bank_name:
+                            ag["bank_name"] = bank_name
+                        if account_number:
+                            ag["account_number"] = account_number
+                        if email_or_sheet:
+                            ag["email_or_sheet"] = email_or_sheet
+                        if fee_percent is not None:
+                            ag["fee_percent"] = fee_percent
+                        ag["status"] = status_val
+                        break
+                state["agencies"] = agencies
+                # 개별 대행사 미정산 건 정산완료 처리
+                if do == "settle":
+                    for t in transactions:
+                        if str(t.get("agency_id")) == agency_id and t.get("status") == "success":
+                            if t.get("settlement_status") != "정산완료":
+                                t["settlement_status"] = "정산완료"
+                                t["settled_at"] = datetime.utcnow().isoformat()
+                    state["transactions"] = transactions
+                    message = "선택한 대행사의 미정산 거래를 정산완료로 표시했습니다."
+                else:
+                    message = "대행사 정보가 저장되었습니다."
+                _save_hq_state(state)
+        elif action == "delete_tx":
+            tx_id = request.form.get("tx_id", "").strip()
+            if tx_id:
+                transactions = [t for t in transactions if str(t.get("id")) != tx_id]
+                state["transactions"] = transactions
+                _save_hq_state(state)
+                message = "선택한 거래 내역이 삭제되었습니다."
 
     template = """
     <!DOCTYPE html>
@@ -1837,6 +2088,8 @@ def hq_admin():
       <meta charset="UTF-8" />
       <title>SISA HQ Admin</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <!-- SISA 브랜드 파비콘 -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
       <script>
         if (screen.width < 1280) {
           var vp = document.getElementById('viewport-meta');
@@ -1881,6 +2134,9 @@ def hq_admin():
                 https://worldsisa.com/agency-register.html
               </span>
             </div>
+            <a href="{{ url_for('admin') }}" class="px-3 py-1.5 rounded-lg bg-brand-accent text-brand-blue text-sm font-semibold hover:bg-white transition">
+              결제페이지
+            </a>
             <a href="{{ url_for('logout') }}" class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/20 transition">
               로그아웃
             </a>
@@ -1916,6 +2172,8 @@ def hq_admin():
                     <th class="px-3 py-1 text-left">이메일/구글시트</th>
                     <th class="px-3 py-1 text-left">아이디</th>
                     <th class="px-3 py-1 text-left">비밀번호</th>
+                    <th class="px-3 py-1 text-center">수수료%</th>
+                    <th class="px-3 py-1 text-center">수수료 저장</th>
                     <th class="px-3 py-1 text-center">상태</th>
                     <th class="px-3 py-1 text-center">승인 및 생성</th>
                   </tr>
@@ -1931,6 +2189,21 @@ def hq_admin():
                     <td class="px-3 py-2 text-[11px] text-white/70 max-w-[160px] truncate">{{ a.email_or_sheet }}</td>
                     <td class="px-3 py-2 text-[11px] font-mono text-blue-200">{{ a.login_id }}</td>
                     <td class="px-3 py-2 text-[11px] text-white/60">••••••</td>
+                    <td class="px-3 py-2 text-center text-[11px]">
+                      {{ a.fee_percent or 10 }}%
+                    </td>
+                    <td class="px-3 py-2 text-center text-[11px]">
+                      <form method="post" action="{{ url_for('hq_admin') }}" class="inline-flex items-center gap-1">
+                        <input type="hidden" name="action" value="update_application_fee" />
+                        <input type="hidden" name="application_id" value="{{ a.id }}" />
+                        <input type="number" name="fee_percent" value="{{ a.fee_percent or 10 }}" min="0" max="100"
+                               class="w-12 bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px] text-center">
+                        <span>%</span>
+                        <button type="submit" class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20">
+                          저장
+                        </button>
+                      </form>
+                    </td>
                     <td class="px-3 py-2 text-center text-[11px]">
                       {% if a.status == 'approved' %}
                         <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">승인됨</span>
@@ -2003,13 +2276,14 @@ def hq_admin():
                     {% if t.status == 'success' and t.settlement_status != '정산완료' %}
                       {% set unsettled_total = unsettled_total + (t.amount or 0) %}
                     {% endif %}
+                    {% set amount = t.amount or 0 %}
                     <tr class="bg-black/20 hover:bg-black/30 transition align-top">
                       <td class="px-3 py-2 text-center">
                         <input type="checkbox" class="tx-check" name="tx_ids" value="{{ t.id }}">
                       </td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ t.created_at }}</td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ ag_name }}</td>
-                      <td class="px-3 py-2 text-right">{{ "{:,}".format(t.amount or 0) }} 원</td>
+                      <td class="px-3 py-2 text-right">{{ "{:,}".format(amount) }} 원</td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ t.customer_name }}</td>
                       <td class="px-3 py-2 text-center">
                         {% if t.status == 'success' %}
@@ -2037,6 +2311,15 @@ def hq_admin():
                           <span><strong>전화번호(뒷자리):</strong> {{ t.phone_number }}</span>
                           {% if t.message %}
                           <span class="block w-full"><strong>메모:</strong> {{ t.message }}</span>
+                          {% endif %}
+                          {% if amount == 0 or t.status != 'success' %}
+                          <form method="post" action="{{ url_for('hq_admin') }}" class="inline-block ml-auto">
+                            <input type="hidden" name="action" value="delete_tx">
+                            <input type="hidden" name="tx_id" value="{{ t.id }}">
+                            <button type="submit" class="px-2 py-1 rounded-full bg-red-500/30 text-red-100 border border-red-400/60 text-[10px] hover:bg-red-500/50">
+                              거래 내역 삭제
+                            </button>
+                          </form>
                           {% endif %}
                         </div>
                       </td>
@@ -2069,7 +2352,7 @@ def hq_admin():
               <h2 class="text-lg font-semibold flex items-center gap-2">
                 <i class="fa-solid fa-building text-brand-accent"></i> 대행사별 거래 내역 및 정산
               </h2>
-              <p class="text-[11px] text-white/60">업체별 수수료 % 설정과 미정산/정산완료 금액을 확인합니다.</p>
+              <p class="text-[11px] text-white/60">업체별 수수료 % 설정과 미정산/정산완료 금액을 확인합니다. (수정은 아래 대행사 관리 박스에서 가능합니다.)</p>
             </div>
             {% if agencies %}
             <div class="overflow-x-auto">
@@ -2091,10 +2374,11 @@ def hq_admin():
                   {% set total_amount = 0 %}
                   {% set unsettled_amount = 0 %}
                   {% for t in transactions %}
-                    {% if t.agency_id == ag.id and t.status == 'success' %}
-                      {% set total_amount = total_amount + (t.amount or 0) %}
+                    {% set amt = t.amount or 0 %}
+                    {% if t.agency_id == ag.id and t.status == 'success' and amt > 0 %}
+                      {% set total_amount = total_amount + amt %}
                       {% if t.settlement_status != '정산완료' %}
-                        {% set unsettled_amount = unsettled_amount + (t.amount or 0) %}
+                        {% set unsettled_amount = unsettled_amount + amt %}
                       {% endif %}
                     {% endif %}
                   {% endfor %}
@@ -2104,16 +2388,7 @@ def hq_admin():
                     <td class="px-3 py-2 text-[11px] text-white/80">{{ ag.domain }}</td>
                     <td class="px-3 py-2 text-[11px] font-mono text-blue-200">{{ ag.login_id }}</td>
                     <td class="px-3 py-2 text-center text-[11px] text-white/80">
-                      <form method="post" action="{{ url_for('hq_admin') }}" class="inline-flex items-center gap-1">
-                        <input type="hidden" name="action" value="update_fee">
-                        <input type="hidden" name="agency_id" value="{{ ag.id }}">
-                        <input type="number" name="fee_percent" value="{{ ag.fee_percent }}" min="0" max="100"
-                               class="w-12 bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px] text-center">
-                        <span>%</span>
-                        <button type="submit" class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20">
-                          저장
-                        </button>
-                      </form>
+                      {{ ag.fee_percent or 0 }}%
                     </td>
                     <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ "{:,}".format(total_amount) }} 원</td>
                     <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ "{:,}".format(unsettled_amount) }} 원</td>
@@ -2124,6 +2399,106 @@ def hq_admin():
                       {% else %}
                         <span class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-200 border border-gray-500/40 text-[10px]">중지</span>
                       {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+              <p class="text-xs text-white/60">아직 승인된 대행사가 없습니다.</p>
+            {% endif %}
+          </section>
+
+          <!-- 4. 대행사 관리 박스 (정보 수정 및 개별 정산) -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-user-gear text-brand-accent"></i> 대행사 관리
+              </h2>
+              <p class="text-[11px] text-white/60">대행사 정보, 수수료 %, 미정산 금액을 확인하고 수정/정산할 수 있습니다.</p>
+            </div>
+            {% if agencies %}
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm border-separate border-spacing-y-2">
+                <thead class="text-xs text-white/70">
+                  <tr>
+                    <th class="px-3 py-1 text-left">업체명</th>
+                    <th class="px-3 py-1 text-left">연락처</th>
+                    <th class="px-3 py-1 text-left">은행/계좌</th>
+                    <th class="px-3 py-1 text-left">이메일/구글시트</th>
+                    <th class="px-3 py-1 text-center">수수료%</th>
+                    <th class="px-3 py-1 text-right">총 거래금액</th>
+                    <th class="px-3 py-1 text-right">미정산 금액</th>
+                    <th class="px-3 py-1 text-right">입금 예정액</th>
+                    <th class="px-3 py-1 text-center">상태</th>
+                    <th class="px-3 py-1 text-center">관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ag in agencies %}
+                  {% set total_amount = 0 %}
+                  {% set unsettled_amount = 0 %}
+                  {% for t in transactions %}
+                    {% set amt = t.amount or 0 %}
+                    {% if t.agency_id == ag.id and t.status == 'success' and amt > 0 %}
+                      {% set total_amount = total_amount + amt %}
+                      {% if t.settlement_status != '정산완료' %}
+                        {% set unsettled_amount = unsettled_amount + amt %}
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  {% set net_amount = unsettled_amount * (100 - (ag.fee_percent or 0)) // 100 %}
+                  <tr class="bg-black/20 hover:bg-black/30 transition align-top">
+                    <td class="px-3 py-2 font-semibold whitespace-nowrap">{{ ag.company_name }}</td>
+                    <td class="px-3 py-2 text-[11px] text-white/80 whitespace-nowrap">{{ ag.phone }}</td>
+                    <td class="px-3 py-2 text-[11px] text-white/80 whitespace-nowrap">{{ ag.bank_name }} / {{ ag.account_number }}</td>
+                    <td class="px-3 py-2 text-[11px] text-white/80 max-w-[160px] truncate">{{ ag.email_or_sheet }}</td>
+                    <td class="px-3 py-2 text-center text-[11px] text-white/80">{{ ag.fee_percent or 0 }}%</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-white/80">{{ "{:,}".format(total_amount) }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-yellow-200">{{ "{:,}".format(unsettled_amount) }} 원</td>
+                    <td class="px-3 py-2 text-right text-[11px] text-emerald-200">{{ "{:,}".format(net_amount) }} 원</td>
+                    <td class="px-3 py-2 text-center text-[11px]">
+                      {% if ag.status == 'active' %}
+                        <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">활성</span>
+                      {% else %}
+                        <span class="px-2 py-1 rounded-full bg-gray-500/20 text-gray-200 border border-gray-500/40 text-[10px]">중지</span>
+                      {% endif %}
+                    </td>
+                    <td class="px-3 py-2 text-center text-[11px]">
+                      <form method="post" action="{{ url_for('hq_admin') }}" class="space-y-1">
+                        <input type="hidden" name="action" value="update_agency">
+                        <input type="hidden" name="agency_id" value="{{ ag.id }}">
+                        <div class="flex flex-col gap-1">
+                          <input type="text" name="phone" value="{{ ag.phone }}" placeholder="전화번호"
+                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                          <input type="text" name="bank_name" value="{{ ag.bank_name }}" placeholder="은행명"
+                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                          <input type="text" name="account_number" value="{{ ag.account_number }}" placeholder="계좌번호"
+                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                          <input type="text" name="email_or_sheet" value="{{ ag.email_or_sheet }}" placeholder="이메일/구글시트"
+                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                          <div class="flex items-center gap-1">
+                            <input type="number" name="fee_percent" value="{{ ag.fee_percent }}" min="0" max="100"
+                                   class="w-12 bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px] text-center">
+                            <span>%</span>
+                            <select name="status" class="bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px]">
+                              <option value="active" {% if ag.status == 'active' %}selected{% endif %}>활성</option>
+                              <option value="paused" {% if ag.status != 'active' %}selected{% endif %}>중지</option>
+                            </select>
+                          </div>
+                          <div class="flex items-center justify-center gap-1 pt-1">
+                            <button type="submit" name="do" value="save"
+                                    class="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-[10px]">
+                              정보 저장
+                            </button>
+                            <button type="submit" name="do" value="settle"
+                                    class="px-2 py-1 rounded-full bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-50 text-[10px]">
+                              미정산 정산완료
+                            </button>
+                          </div>
+                        </div>
+                      </form>
                     </td>
                   </tr>
                   {% endfor %}
@@ -2251,6 +2626,8 @@ def agency_admin():
       <meta charset="UTF-8" />
       <title>SISA 대행사 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
+      <!-- SISA 브랜드 파비콘 -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
       <script>
         if (screen.width < 1280) {
           var vp = document.getElementById('viewport-meta');
