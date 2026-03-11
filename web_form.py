@@ -1992,7 +1992,8 @@ def hq_admin():
                     found = a
                     break
             if found:
-                found["status"] = "approved"
+                # 승인된 신청서는 목록에서 제거
+                applications = [a for a in applications if str(a.get("id")) != app_id]
                 agency_id = datetime.utcnow().strftime("AGY%Y%m%d%H%M%S%f")
                 agency = {
                     "id": agency_id,
@@ -2060,6 +2061,8 @@ def hq_admin():
                 bank_name = (request.form.get("bank_name") or "").strip()
                 account_number = (request.form.get("account_number") or "").strip()
                 email_or_sheet = (request.form.get("email_or_sheet") or "").strip()
+                login_id_val = (request.form.get("login_id") or "").strip()
+                login_pw_val = (request.form.get("login_password") or "").strip()
                 status_val = (request.form.get("status") or "").strip() or "active"
                 try:
                     fee_percent = int((request.form.get("fee_percent") or "").strip())
@@ -2075,6 +2078,10 @@ def hq_admin():
                             ag["account_number"] = account_number
                         if email_or_sheet:
                             ag["email_or_sheet"] = email_or_sheet
+                        if login_id_val:
+                            ag["login_id"] = login_id_val
+                        if login_pw_val:
+                            ag["login_password"] = login_pw_val
                         if fee_percent is not None:
                             ag["fee_percent"] = fee_percent
                         ag["status"] = status_val
@@ -2193,7 +2200,6 @@ def hq_admin():
                     <th class="px-3 py-1 text-left">비밀번호</th>
                     <th class="px-3 py-1 text-center">수수료%</th>
                     <th class="px-3 py-1 text-center">수수료 저장</th>
-                    <th class="px-3 py-1 text-center">상태</th>
                     <th class="px-3 py-1 text-center">승인 및 생성</th>
                   </tr>
                 </thead>
@@ -2223,15 +2229,7 @@ def hq_admin():
                         </button>
                       </form>
                     </td>
-                    <td class="px-3 py-2 text-center text-[11px]">
-                      {% if a.status == 'approved' %}
-                        <span class="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 text-[10px]">승인됨</span>
-                      {% else %}
-                        <span class="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-200 border border-yellow-500/40 text-[10px]">대기</span>
-                      {% endif %}
-                    </td>
                     <td class="px-3 py-2 text-center">
-                      {% if a.status != 'approved' %}
                       <form method="post" action="{{ url_for('hq_admin') }}">
                         <input type="hidden" name="action" value="approve_application" />
                         <input type="hidden" name="application_id" value="{{ a.id }}" />
@@ -2239,9 +2237,6 @@ def hq_admin():
                           승인 및 생성
                         </button>
                       </form>
-                      {% else %}
-                        <span class="text-[10px] text-white/40">생성 완료</span>
-                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}
@@ -2259,7 +2254,18 @@ def hq_admin():
               <h2 class="text-lg font-semibold flex items-center gap-2">
                 <i class="fa-solid fa-list-ul text-brand-accent"></i> 전체 거래 내역
               </h2>
-              <p class="text-[11px] text-white/60">시간순으로 성사된 주문 결제 건을 확인하고, 정산 상태를 관리합니다.</p>
+              <div class="flex items-center gap-3">
+                <p class="text-[11px] text-white/60 hidden sm:block">시간순으로 성사된 주문 결제 건을 확인하고, 정산 상태를 관리합니다.</p>
+                <div class="flex items-center gap-1 text-[11px]">
+                  <span class="text-white/70">업체 선택:</span>
+                  <select id="txAgencyFilter" onchange="filterTransactions()" class="bg-black/30 border border-white/30 rounded px-2 py-1 text-[11px]">
+                    <option value="all">전체</option>
+                    {% for ag in agencies %}
+                    <option value="{{ ag.id }}">{{ ag.company_name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
             </div>
             {% if transactions %}
             <form method="post" action="{{ url_for('hq_admin') }}" class="space-y-3">
@@ -2284,9 +2290,11 @@ def hq_admin():
                     {% set unsettled_total = 0 %}
                     {% for t in transactions|sort(attribute="created_at", reverse=True) %}
                     {% set ag_name = "" %}
+                    {% set ag_fee = 0 %}
                     {% for ag in agencies %}
                       {% if ag.id == t.agency_id %}
                         {% set ag_name = ag.company_name %}
+                        {% set ag_fee = ag.fee_percent or 0 %}
                       {% endif %}
                     {% endfor %}
                     {% if not ag_name %}
@@ -2296,9 +2304,13 @@ def hq_admin():
                       {% set unsettled_total = unsettled_total + (t.amount or 0) %}
                     {% endif %}
                     {% set amount = t.amount or 0 %}
-                    <tr class="bg-black/20 hover:bg-black/30 transition align-top">
+                    <tr class="bg-black/20 hover:bg-black/30 transition align-top"
+                        data-tx-row="1"
+                        data-agency-id="{{ t.agency_id or '' }}"
+                        data-amount="{{ amount }}"
+                        data-fee-percent="{{ ag_fee }}">
                       <td class="px-3 py-2 text-center">
-                        <input type="checkbox" class="tx-check" name="tx_ids" value="{{ t.id }}">
+                        <input type="checkbox" class="tx-check" name="tx_ids" value="{{ t.id }}" onclick="updateSelectionSummary()">
                       </td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ t.created_at }}</td>
                       <td class="px-3 py-2 whitespace-nowrap">{{ ag_name }}</td>
@@ -2321,7 +2333,7 @@ def hq_admin():
                         {% endif %}
                       </td>
                     </tr>
-                    <tr class="bg-black/10">
+                    <tr class="bg-black/10" data-tx-detail="1">
                       <td></td>
                       <td colspan="6" class="px-3 pb-3 text-[11px] text-white/70">
                         <div class="flex flex-wrap gap-3">
@@ -2347,10 +2359,18 @@ def hq_admin():
                   </tbody>
                 </table>
               </div>
-              <div class="flex items-center justify-between mt-3 text-[11px] text-white/80">
-                <div>
-                  미정산 총 합계 금액:
-                  <span class="font-semibold text-brand-accent">{{ "{:,}".format(unsettled_total) }} 원</span>
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-3 text-[11px] text-white/80 gap-2">
+                <div class="space-y-1">
+                  <div>
+                    미정산 총 합계 금액:
+                    <span class="font-semibold text-brand-accent">{{ "{:,}".format(unsettled_total) }} 원</span>
+                  </div>
+                  <div>
+                    선택 건 현황:
+                    총 거래금액 <span id="selTotalAmount" class="font-semibold text-brand-accent">0 원</span>,
+                    미정산 금액 <span id="selUnsettledAmount" class="font-semibold text-yellow-200">0 원</span>,
+                    입금 예정액 <span id="selNetAmount" class="font-semibold text-emerald-200">0 원</span>
+                  </div>
                 </div>
                 <div class="flex items-center gap-2">
                   <span>선택 건을</span>
@@ -2485,39 +2505,48 @@ def hq_admin():
                       {% endif %}
                     </td>
                     <td class="px-3 py-2 text-center text-[11px]">
-                      <form method="post" action="{{ url_for('hq_admin') }}" class="space-y-1">
-                        <input type="hidden" name="action" value="update_agency">
-                        <input type="hidden" name="agency_id" value="{{ ag.id }}">
-                        <div class="flex flex-col gap-1">
-                          <input type="text" name="phone" value="{{ ag.phone }}" placeholder="전화번호"
-                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
-                          <input type="text" name="bank_name" value="{{ ag.bank_name }}" placeholder="은행명"
-                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
-                          <input type="text" name="account_number" value="{{ ag.account_number }}" placeholder="계좌번호"
-                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
-                          <input type="text" name="email_or_sheet" value="{{ ag.email_or_sheet }}" placeholder="이메일/구글시트"
-                                 class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
-                          <div class="flex items-center gap-1">
-                            <input type="number" name="fee_percent" value="{{ ag.fee_percent }}" min="0" max="100"
-                                   class="w-12 bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px] text-center">
-                            <span>%</span>
-                            <select name="status" class="bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px]">
-                              <option value="active" {% if ag.status == 'active' %}selected{% endif %}>활성</option>
-                              <option value="paused" {% if ag.status != 'active' %}selected{% endif %}>중지</option>
-                            </select>
-                          </div>
-                          <div class="flex items-center justify-center gap-1 pt-1">
-                            <button type="submit" name="do" value="save"
-                                    class="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-[10px]">
-                              정보 저장
-                            </button>
-                            <button type="submit" name="do" value="settle"
-                                    class="px-2 py-1 rounded-full bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-50 text-[10px]">
-                              미정산 정산완료
-                            </button>
-                          </div>
+                      <details class="inline-block text-left">
+                        <summary class="cursor-pointer text-brand-accent underline">관리</summary>
+                        <div class="mt-2 bg-black/40 border border-white/20 rounded-xl p-2 w-64">
+                          <form method="post" action="{{ url_for('hq_admin') }}" class="space-y-1">
+                            <input type="hidden" name="action" value="update_agency">
+                            <input type="hidden" name="agency_id" value="{{ ag.id }}">
+                            <div class="flex flex-col gap-1">
+                              <input type="text" name="login_id" value="{{ ag.login_id }}" placeholder="로그인 아이디"
+                                     class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                              <input type="text" name="login_password" value="{{ ag.login_password }}" placeholder="로그인 비밀번호"
+                                     class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                              <input type="text" name="phone" value="{{ ag.phone }}" placeholder="전화번호"
+                                     class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                              <input type="text" name="bank_name" value="{{ ag.bank_name }}" placeholder="은행명"
+                                     class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                              <input type="text" name="account_number" value="{{ ag.account_number }}" placeholder="계좌번호"
+                                     class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                              <input type="text" name="email_or_sheet" value="{{ ag.email_or_sheet }}" placeholder="이메일/구글시트"
+                                     class="bg-black/40 border border-white/20 rounded px-2 py-0.5 text-[11px]">
+                              <div class="flex items-center gap-1">
+                                <input type="number" name="fee_percent" value="{{ ag.fee_percent }}" min="0" max="100"
+                                       class="w-12 bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px] text-center">
+                                <span>%</span>
+                                <select name="status" class="bg-black/40 border border-white/20 rounded px-1 py-0.5 text-[11px]">
+                                  <option value="active" {% if ag.status == 'active' %}selected{% endif %}>활성</option>
+                                  <option value="paused" {% if ag.status != 'active' %}selected{% endif %}>중지</option>
+                                </select>
+                              </div>
+                              <div class="flex items-center justify-center gap-1 pt-1">
+                                <button type="submit" name="do" value="save"
+                                        class="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-[10px]">
+                                  정보 저장
+                                </button>
+                                <button type="submit" name="do" value="settle"
+                                        class="px-2 py-1 rounded-full bg-emerald-500/30 hover:bg-emerald-500/50 text-emerald-50 text-[10px]">
+                                  미정산 정산완료
+                                </button>
+                              </div>
+                            </div>
+                          </form>
                         </div>
-                      </form>
+                      </details>
                     </td>
                   </tr>
                   {% endfor %}
@@ -2541,6 +2570,48 @@ def hq_admin():
           </section>
         </div>
       </main>
+      <script>
+        function filterTransactions() {
+          var sel = document.getElementById('txAgencyFilter');
+          if (!sel) return;
+          var value = sel.value || 'all';
+          var rows = document.querySelectorAll('tr[data-tx-row="1"]');
+          rows.forEach(function(row) {
+            var ag = row.getAttribute('data-agency-id') || '';
+            var show = (value === 'all' || ag === value);
+            row.style.display = show ? '' : 'none';
+            var detail = row.nextElementSibling;
+            if (detail && detail.getAttribute('data-tx-detail') === '1') {
+              detail.style.display = show ? '' : 'none';
+            }
+          });
+          updateSelectionSummary();
+        }
+
+        function updateSelectionSummary() {
+          var total = 0;
+          var unsettled = 0;
+          var net = 0;
+          var checks = document.querySelectorAll('.tx-check');
+          checks.forEach(function(cb) {
+            if (cb.checked) {
+              var row = cb.closest('tr');
+              if (!row || row.style.display === 'none') return;
+              var amount = parseInt(row.getAttribute('data-amount') || '0', 10);
+              var fee = parseInt(row.getAttribute('data-fee-percent') || '0', 10);
+              total += amount;
+              unsettled += amount;
+              net += Math.floor(amount * (100 - fee) / 100);
+            }
+          });
+          var elTotal = document.getElementById('selTotalAmount');
+          var elUn = document.getElementById('selUnsettledAmount');
+          var elNet = document.getElementById('selNetAmount');
+          if (elTotal) elTotal.textContent = total.toLocaleString('ko-KR') + ' 원';
+          if (elUn) elUn.textContent = unsettled.toLocaleString('ko-KR') + ' 원';
+          if (elNet) elNet.textContent = net.toLocaleString('ko-KR') + ' 원';
+        }
+      </script>
     </body>
     </html>
     """
