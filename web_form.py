@@ -1291,26 +1291,37 @@ def agency_apply():
     agency_login_pw = form.get("대행사비밀번호", "").strip()
 
     app_id = datetime.utcnow().strftime("AG%Y%m%d%H%M%S%f")
-    state = _load_hq_state()
-    applications = state.get("applications") or []
-    applications.append(
-        {
-            "id": app_id,
-            "company_name": company_name,
-            "domain": domain,
-            "phone": phone,
-            "bank_name": bank_name,
-            "account_number": account_number,
-            "email_or_sheet": email_or_sheet,
-            "login_id": agency_login_id,
-            "login_password": agency_login_pw,
-            "fee_percent": 10,
-            "created_at": datetime.utcnow().isoformat(),
-            "status": "pending",
-        }
-    )
-    state["applications"] = applications
-    _save_hq_state(state)
+
+    # MySQL applications 테이블에 직접 INSERT (DB 기준 진짜 저장)
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO applications
+                (id, company_name, domain, phone, bank_name, account_number,
+                 email_or_sheet, login_id, login_password, fee_percent, created_at, status)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    app_id,
+                    company_name,
+                    domain,
+                    phone,
+                    bank_name,
+                    account_number,
+                    email_or_sheet,
+                    agency_login_id,
+                    agency_login_pw,
+                    10,
+                    datetime.utcnow(),
+                    "pending",
+                ),
+            )
+        conn.commit()
+        conn.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"[ERROR] agency_apply DB insert 실패: {e}")
 
     # 간단한 접수 완료 페이지 반환 (SISA 스타일)
     return """
