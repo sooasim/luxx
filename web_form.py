@@ -1740,6 +1740,40 @@ def admin():
         except Exception:
             sessions = []
 
+    # 크롤러가 생성한 DB 기반 정보 (참고용 요약)
+    recent_links: list[dict] = []
+    recent_tx: list[dict] = []
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    SELECT captured_at, title, amount, ttl_label, status, kvan_link
+                    FROM kvan_links
+                    ORDER BY captured_at DESC
+                    LIMIT 10
+                    """
+                )
+                recent_links = cur.fetchall()
+            except Exception:
+                recent_links = []
+            try:
+                cur.execute(
+                    """
+                    SELECT created_at, amount, customer_name, status, settlement_status
+                    FROM transactions
+                    ORDER BY created_at DESC
+                    LIMIT 10
+                    """
+                )
+                recent_tx = cur.fetchall()
+            except Exception:
+                recent_tx = []
+        conn.close()
+    except Exception as e:  # noqa: BLE001
+        print(f"[WARN] /admin DB 요약 조회 실패: {e}")
+
     # /admin 페이지에서는 이제 K-VAN 연동용 거래/링크 리스트를 표시하지 않는다.
 
     if request.method == "POST":
@@ -2092,6 +2126,78 @@ def admin():
                 {% endif %}
               </div>
 
+              <!-- K-VAN / 내부 DB 요약 (크롤러/매크로가 생성한 데이터 스냅샷) -->
+              <div class="status-card">
+                <div class="status-title">
+                  <i class="fa-solid fa-database text-sky-300 text-xs"></i>
+                  K-VAN 링크 DB 요약 (최근 10건)
+                </div>
+                {% if recent_links %}
+                  <div style="max-height:200px; overflow-y:auto; font-size:11px; margin-top:4px;">
+                    <table style="width:100%; border-collapse:collapse;">
+                      <thead>
+                        <tr style="border-bottom:1px solid rgba(148,163,184,0.4);">
+                          <th style="padding:3px 4px; text-align:left;">생성시각</th>
+                          <th style="padding:3px 4px; text-align:left;">제목</th>
+                          <th style="padding:3px 4px; text-align:right;">금액</th>
+                          <th style="padding:3px 4px; text-align:left;">상태</th>
+                          <th style="padding:3px 4px; text-align:left;">링크</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for l in recent_links %}
+                        <tr style="border-bottom:1px dashed rgba(55,65,81,0.8);">
+                          <td style="padding:3px 4px; font-size:10px;">{{ l.captured_at }}</td>
+                          <td style="padding:3px 4px;">{{ l.title }}</td>
+                          <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(l.amount or 0) }} 원</td>
+                          <td style="padding:3px 4px;">{{ l.status }}</td>
+                          <td style="padding:3px 4px; font-size:10px; word-break:break-all;">
+                            {{ l.kvan_link }}
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="hint">아직 K-VAN 링크 DB(kvan_links)에 저장된 내역이 없습니다.</div>
+                {% endif %}
+              </div>
+
+              <div class="status-card">
+                <div class="status-title">
+                  <i class="fa-solid fa-receipt text-emerald-300 text-xs"></i>
+                  내부 거래 DB 요약 (최근 10건)
+                </div>
+                {% if recent_tx %}
+                  <div style="max-height:200px; overflow-y:auto; font-size:11px; margin-top:4px;">
+                    <table style="width:100%; border-collapse:collapse;">
+                      <thead>
+                        <tr style="border-bottom:1px solid rgba(148,163,184,0.4);">
+                          <th style="padding:3px 4px; text-align:left;">시간</th>
+                          <th style="padding:3px 4px; text-align:right;">금액</th>
+                          <th style="padding:3px 4px; text-align:left;">고객</th>
+                          <th style="padding:3px 4px; text-align:left;">결제상태</th>
+                          <th style="padding:3px 4px; text-align:left;">정산상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for t in recent_tx %}
+                        <tr style="border-bottom:1px dashed rgba(55,65,81,0.8);">
+                          <td style="padding:3px 4px; font-size:10px;">{{ t.created_at }}</td>
+                          <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(t.amount or 0) }} 원</td>
+                          <td style="padding:3px 4px;">{{ t.customer_name }}</td>
+                          <td style="padding:3px 4px;">{{ t.status }}</td>
+                          <td style="padding:3px 4px;">{{ t.settlement_status }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="hint">아직 내부 거래 DB(transactions)에 저장된 내역이 없습니다.</div>
+                {% endif %}
+              </div>
               {% if message %}
                 <div class="msg">{{ message }}</div>
               {% endif %}
@@ -2150,6 +2256,8 @@ def admin():
         history=history,
         message=message,
         base_url=base_url,
+        recent_links=recent_links,
+        recent_tx=recent_tx,
     )
 
 
