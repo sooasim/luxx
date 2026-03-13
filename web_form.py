@@ -2458,6 +2458,15 @@ def hq_admin():
                 state["transactions"] = transactions
                 _save_hq_state(state)
                 message = "선택한 거래 내역이 삭제되었습니다."
+        elif action == "clear_logs":
+            # HQ 어드민에서 버튼으로 로그 파일을 비울 수 있게 한다.
+            try:
+                if ADMIN_LOG_PATH.exists():
+                    ADMIN_LOG_PATH.unlink()
+                message = "K-VAN/매크로 로그 파일을 삭제했습니다."
+            except Exception as e:  # noqa: BLE001
+                print(f"[WARN] HQ 로그 파일 삭제 실패: {e}")
+                message = "로그 파일 삭제 중 오류가 발생했습니다."
 
     # 대행사 관리 페이징 (20개씩)
     try:
@@ -2481,6 +2490,14 @@ def hq_admin():
     # 최근 HQ 로그 파일 tail (마지막 80줄 정도만 표시)
     admin_logs: list[str] = []
     try:
+        if ADMIN_LOG_PATH.exists():
+            # 하루 단위 로그 관리: 파일 수정일이 오늘보다 이전이면 자동으로 삭제
+            try:
+                mtime = datetime.utcfromtimestamp(ADMIN_LOG_PATH.stat().st_mtime).date()
+                if mtime < datetime.utcnow().date():
+                    ADMIN_LOG_PATH.unlink()
+            except Exception:
+                pass
         if ADMIN_LOG_PATH.exists():
             with open(ADMIN_LOG_PATH, "r", encoding="utf-8") as lf:
                 lines = lf.readlines()
@@ -2594,7 +2611,16 @@ def hq_admin():
               <h2 class="text-sm font-semibold flex items-center gap-2">
                 <i class="fa-solid fa-terminal text-brand-accent"></i> K-VAN 크롤링 & 자동결제 로그
               </h2>
-              <span class="text-[10px] text-white/50">최근 {{ admin_logs|length }}줄</span>
+              <div class="flex items-center gap-2 text-[10px]">
+                <span class="text-white/50">최근 {{ admin_logs|length }}줄</span>
+                <form method="post" action="{{ url_for('hq_admin') }}" onsubmit="return confirm('로그 파일을 정말 삭제하시겠습니까?');">
+                  <input type="hidden" name="action" value="clear_logs">
+                  <button type="submit"
+                          class="px-2 py-1 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/25">
+                    로그 삭제
+                  </button>
+                </form>
+              </div>
             </div>
             {% if admin_logs %}
             <div class="bg-black/40 rounded-xl border border-white/10 p-3 max-h-56 overflow-y-auto text-[11px] font-mono text-white/80 whitespace-pre-wrap">
