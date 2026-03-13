@@ -18,6 +18,21 @@ from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 import pymysql
 
+# 웹 어드민에서 볼 수 있는 간단한 로그 파일 (HQ 어드민에서 tail 형태로 노출)
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = Path(os.environ.get("SISA_DATA_DIR") or (BASE_DIR / "data"))
+ADMIN_LOG_PATH = DATA_DIR / "hq_logs.log"
+
+
+def _append_admin_log(source: str, message: str) -> None:
+    try:
+        ADMIN_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(ADMIN_LOG_PATH, "a", encoding="utf-8") as f:
+            ts = datetime.utcnow().isoformat()
+            f.write(f"{ts} [{source}] {message}\n")
+    except Exception:
+        pass
+
 # 서버(Railway 등)에서 실행 시 헤드리스 + 자동 종료
 def _is_server_env() -> bool:
     return bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RUN_HEADLESS"))
@@ -3126,6 +3141,7 @@ def main() -> None:
     try:
         row = load_order_from_json(str(order_path))
     except FileNotFoundError as e:
+        _append_admin_log("AUTO", f"주문 JSON 없음 session_id={session_id or '-'} path={order_path}")
         print(e)
         return
     except ValueError as e:
@@ -3137,18 +3153,22 @@ def main() -> None:
     driver = create_driver()
     try:
         _check_timeout("before_sign_in")
+        _append_admin_log("AUTO", f"K-VAN 로그인 시작 session_id={session_id or '-'}")
         print("K-VAN 가맹점 페이지에 로그인 중...")
         sign_in(driver, row)
         _check_timeout("after_sign_in")
 
+        _append_admin_log("AUTO", "로그인 완료, 결제링크 관리 페이지로 이동")
         print("로그인 완료. 결제링크 관리 페이지로 이동합니다...")
         _go_to_payment_link_page(driver)
         _check_timeout("after_go_payment_link")
 
+        _append_admin_log("AUTO", "결제링크 생성 페이지 진입 시도")
         print("결제링크 관리 화면에서 '+ 생성' 버튼을 눌러 생성 페이지로 이동합니다...")
         moved = _go_to_create_link_page(driver)
         _check_timeout("after_go_create")
         if not moved:
+            _append_admin_log("AUTO", "[ERROR] 링크 생성 페이지 진입 실패 (+ 생성 버튼 동작 안 함)")
             print("[ERROR] '+ 생성' 버튼 클릭 후 생성 페이지로 이동하지 못했습니다. 폼 작성 단계는 건너뜁니다.")
             status = "error"
             msg = "결제링크 생성 페이지 진입 실패(생성 버튼 미동작)."
@@ -3156,12 +3176,14 @@ def main() -> None:
             save_result_to_json(str(result_json_path), status, msg)
             return
 
+        _append_admin_log("AUTO", "결제링크 생성 폼 작성/전송 시작")
         print("결제링크 생성 페이지에서 폼을 채우고 링크를 생성합니다...")
         link_url = _fill_payment_link_form_and_get_url(driver, row, session_id)
         _check_timeout("after_fill_form")
         if link_url:
             status = "link_created"
             msg = "결제 링크가 생성되었습니다. 고객이 링크로 결제하면 K-VAN 크롤러가 상태를 반영합니다."
+            _append_admin_log("AUTO", f"결제 링크 생성 완료 session_id={session_id or '-'} link={link_url}")
             print(f"생성된 결제 링크: {link_url}")
             # 링크가 새로 생성되었으므로, 크롤러에 즉시 다시 크롤링하도록 신호를 보낸다.
             try:
@@ -3171,6 +3193,7 @@ def main() -> None:
         else:
             status = "error"
             msg = "결제 링크 생성에 실패했거나 링크를 찾지 못했습니다."
+            _append_admin_log("AUTO", "[ERROR] 결제 링크 생성 실패 또는 링크 미발견")
             print(msg)
 
         # 결과는 참고용 엑셀/JSON 에만 남기고, 실제 결제/정산 정보는

@@ -36,6 +36,7 @@ ORDER_JSON_PATH = str(DATA_DIR / "current_order.json")
 RESULT_JSON_PATH = str(DATA_DIR / "last_result.json")
 ADMIN_STATE_PATH = str(DATA_DIR / "admin_state.json")
 HQ_STATE_PATH = str(DATA_DIR / "hq_state.json")
+ADMIN_LOG_PATH = DATA_DIR / "hq_logs.log"
 SESSION_ORDER_DIR = DATA_DIR / "sessions" / "orders"
 SESSION_RESULT_DIR = DATA_DIR / "sessions" / "results"
 SESSION_ORDER_DIR.mkdir(parents=True, exist_ok=True)
@@ -244,8 +245,14 @@ def trigger_auto_kvan_async(session_id: str | None = None) -> None:
         cmd = [sys.executable, str(script_path)]
         if session_id:
             cmd.append(str(session_id))
-        # 백그라운드에서 실행하되, stdout/stderr 는 웹 서버 로그에 남겨
-        # Railway 등 호스팅 환경의 로그 뷰어에서 auto_kvan 동작을 확인할 수 있게 한다.
+        # 백그라운드에서 실행하되, 로그 파일과 서버 로그 양쪽에 상태를 남긴다.
+        try:
+            ADMIN_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(ADMIN_LOG_PATH, "a", encoding="utf-8") as f:
+                ts = datetime.utcnow().isoformat()
+                f.write(f"{ts} [WEB] auto_kvan 시작 session_id={session_id or '-'}\n")
+        except Exception:
+            pass
         subprocess.Popen(cmd)
     except Exception as e:  # noqa: BLE001
         # 매크로 실행 실패는 웹 폼 자체 오류는 아니므로 서버 로그에만 남긴다.
@@ -2595,6 +2602,16 @@ def hq_admin():
     # 전체 거래 기본 날짜(오늘) 문자열
     today_str = datetime.utcnow().strftime("%Y-%m-%d")
 
+    # 최근 HQ 로그 파일 tail (마지막 80줄 정도만 표시)
+    admin_logs: list[str] = []
+    try:
+        if ADMIN_LOG_PATH.exists():
+            with open(ADMIN_LOG_PATH, "r", encoding="utf-8") as lf:
+                lines = lf.readlines()
+            admin_logs = [ln.rstrip("\n") for ln in lines[-80:]]
+    except Exception as e:  # noqa: BLE001
+        print(f"[WARN] HQ 로그 파일 읽기 실패: {e}")
+
     template = """
     <!DOCTYPE html>
     <html lang="ko">
@@ -2694,6 +2711,25 @@ def hq_admin():
             {{ message }}
           </div>
           {% endif %}
+
+          <!-- 0. K-VAN / 매크로 상태 로그 뷰어 -->
+          <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-sm font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-terminal text-brand-accent"></i> K-VAN 크롤링 & 자동결제 로그
+              </h2>
+              <span class="text-[10px] text-white/50">최근 {{ admin_logs|length }}줄</span>
+            </div>
+            {% if admin_logs %}
+            <div class="bg-black/40 rounded-xl border border-white/10 p-3 max-h-56 overflow-y-auto text-[11px] font-mono text-white/80 whitespace-pre-wrap">
+              {% for line in admin_logs %}
+              <div class="leading-tight">{{ line }}</div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-[11px] text-white/60">아직 기록된 K-VAN/매크로 로그가 없습니다.</p>
+            {% endif %}
+          </section>
 
           <!-- 1. 대행사 신청 현황 -->
           <section class="glass-card rounded-2xl border border-white/20 shadow-xl p-5">
