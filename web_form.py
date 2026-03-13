@@ -2464,9 +2464,10 @@ def hq_admin():
         elif action == "clear_logs":
             # HQ 어드민에서 버튼으로 로그 파일을 비울 수 있게 한다.
             try:
-                if ADMIN_LOG_PATH.exists():
-                    ADMIN_LOG_PATH.unlink()
-                message = "K-VAN/매크로 로그 파일을 삭제했습니다."
+                ADMIN_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+                with open(ADMIN_LOG_PATH, "w", encoding="utf-8") as lf:
+                    lf.write("")
+                message = "K-VAN/매크로 로그 파일을 비웠습니다."
             except Exception as e:  # noqa: BLE001
                 print(f"[WARN] HQ 로그 파일 삭제 실패: {e}")
                 message = "로그 파일 삭제 중 오류가 발생했습니다."
@@ -2490,21 +2491,14 @@ def hq_admin():
     # 전체 거래 기본 날짜(오늘) 문자열
     today_str = datetime.utcnow().strftime("%Y-%m-%d")
 
-    # 최근 HQ 로그 파일 tail (마지막 80줄 정도만 표시)
+    # 최근 HQ 로그 파일 tail (하루치 기준, 최대 1000줄 정도만 표시)
     admin_logs: list[str] = []
     try:
         if ADMIN_LOG_PATH.exists():
-            # 하루 단위 로그 관리: 파일 수정일이 오늘보다 이전이면 자동으로 삭제
-            try:
-                mtime = datetime.utcfromtimestamp(ADMIN_LOG_PATH.stat().st_mtime).date()
-                if mtime < datetime.utcnow().date():
-                    ADMIN_LOG_PATH.unlink()
-            except Exception:
-                pass
-        if ADMIN_LOG_PATH.exists():
             with open(ADMIN_LOG_PATH, "r", encoding="utf-8") as lf:
                 lines = lf.readlines()
-            admin_logs = [ln.rstrip("\n") for ln in lines[-80:]]
+            # 마지막 1000줄만 유지 (사실상 하루치 로그)
+            admin_logs = [ln.rstrip("\n") for ln in lines[-1000:]]
     except Exception as e:  # noqa: BLE001
         print(f"[WARN] HQ 로그 파일 읽기 실패: {e}")
 
