@@ -210,13 +210,28 @@ SESSION_RESULT_DIR.mkdir(parents=True, exist_ok=True)
 ADMIN_STATE_PATH = DATA_DIR / "admin_state.json"
 
 
+def _data_dir_candidates() -> list[Path]:
+    """배포 경로 차이를 흡수하기 위한 데이터 디렉토리 후보 목록."""
+    candidates = [
+        Path(DATA_DIR),
+        (BASE_DIR / "data"),
+        (BASE_DIR.parent / "data"),
+        (BASE_DIR / "wsisa" / "data"),
+        Path("/app/data"),
+    ]
+    uniq: list[Path] = []
+    seen: set[str] = set()
+    for p in candidates:
+        k = str(p)
+        if k not in seen:
+            uniq.append(p)
+            seen.add(k)
+    return uniq
+
+
 def _admin_state_candidates() -> list[Path]:
     """환경별 경로 차이를 흡수하기 위해 admin_state.json 후보 경로를 반환."""
-    candidates = [
-        Path(ADMIN_STATE_PATH),
-        (BASE_DIR / "data" / "admin_state.json"),
-        (BASE_DIR / "wsisa" / "data" / "admin_state.json"),
-    ]
+    candidates = [d / "admin_state.json" for d in _data_dir_candidates()]
     uniq: list[Path] = []
     seen: set[str] = set()
     for p in candidates:
@@ -229,11 +244,7 @@ def _admin_state_candidates() -> list[Path]:
 
 def _session_order_path_candidates(session_id: str) -> list[Path]:
     """세션 주문 JSON 후보 경로 목록."""
-    candidates = [
-        SESSION_ORDER_DIR / f"{session_id}.json",
-        (BASE_DIR / "data" / "sessions" / "orders" / f"{session_id}.json"),
-        (BASE_DIR / "wsisa" / "data" / "sessions" / "orders" / f"{session_id}.json"),
-    ]
+    candidates = [d / "sessions" / "orders" / f"{session_id}.json" for d in _data_dir_candidates()]
     uniq: list[Path] = []
     seen: set[str] = set()
     for p in candidates:
@@ -257,10 +268,15 @@ def _has_active_sessions(window_minutes: int = 10) -> bool:
       크롤러에서 이 함수를 사용한다.
     """
     try:
-        if not ADMIN_STATE_PATH.exists():
+        st = None
+        for st_path in _admin_state_candidates():
+            if not st_path.exists():
+                continue
+            with open(st_path, "r", encoding="utf-8") as f:
+                st = json.load(f)
+            break
+        if st is None:
             return False
-        with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
-            st = json.load(f)
         sessions = st.get("sessions") or []
         history = st.get("history") or []
 
