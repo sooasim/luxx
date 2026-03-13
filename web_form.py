@@ -1745,7 +1745,7 @@ def admin():
                 kvan_links = []
         conn.close()
     except Exception as e:
-        print(f\"[WARN] K-VAN 연동 데이터 조회 실패: {e}\")
+        print(f"[WARN] K-VAN 연동 데이터 조회 실패: {e}")
         kvan_transactions, kvan_links = [], []
 
     if request.method == "POST":
