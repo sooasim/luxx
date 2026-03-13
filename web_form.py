@@ -2260,7 +2260,13 @@ def admin():
     """
 
     return render_template_string(
-        ADMIN_TEMPLATE, sessions=sessions, history=history, message=message, base_url=base_url
+        ADMIN_TEMPLATE,
+        sessions=sessions,
+        history=history,
+        message=message,
+        base_url=base_url,
+        kvan_transactions=kvan_transactions,
+        kvan_links=kvan_links,
     )
 
 
@@ -2451,6 +2457,14 @@ def hq_admin():
                 state["agencies"] = agencies
                 _save_hq_state(state)
                 message = f"대행사 '{agency['company_name']}' 가 생성되었습니다."
+        elif action == "delete_application":
+            app_id = request.form.get("application_id", "").strip()
+            if app_id:
+                # 해당 신청서를 목록에서 제거하고 DB 에 반영
+                applications = [a for a in applications if str(a.get("id")) != app_id]
+                state["applications"] = applications
+                _save_hq_state(state)
+                message = "선택한 대행사 신청이 삭제되었습니다."
         elif action == "update_fee":
             agency_id = request.form.get("agency_id", "").strip()
             try:
@@ -2583,6 +2597,13 @@ def hq_admin():
         setInterval(function () {
           location.reload();
         }, 300000);
+        // 혹시 이전 결제 페이지에서 남은 결과 모달이 DOM에 섞여 있으면 강제로 숨긴다.
+        window.addEventListener('load', function () {
+          var modal = document.getElementById('result-modal');
+          if (modal) {
+            modal.style.display = 'none';
+          }
+        });
       </script>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <script src="https://cdn.tailwindcss.com"></script>
@@ -2673,6 +2694,7 @@ def hq_admin():
                     <th class="px-3 py-1 text-center">수수료%</th>
                     <th class="px-3 py-1 text-center">수수료 저장</th>
                     <th class="px-3 py-1 text-center">승인 및 생성</th>
+                    <th class="px-3 py-1 text-center">삭제</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2707,6 +2729,15 @@ def hq_admin():
                         <input type="hidden" name="application_id" value="{{ a.id }}" />
                         <button type="submit" class="px-3 py-1 rounded-full bg-brand-accent text-brand-blue text-[11px] font-semibold hover:bg-white transition">
                           승인 및 생성
+                        </button>
+                      </form>
+                    </td>
+                    <td class="px-3 py-2 text-center">
+                      <form method="post" action="{{ url_for('hq_admin') }}" onsubmit="return confirm('해당 대행사 신청을 삭제하시겠습니까?');">
+                        <input type="hidden" name="action" value="delete_application" />
+                        <input type="hidden" name="application_id" value="{{ a.id }}" />
+                        <button type="submit" class="px-3 py-1 rounded-full bg-red-500/30 text-red-100 text-[11px] hover:bg-red-500/50">
+                          삭제
                         </button>
                       </form>
                     </td>
@@ -3413,6 +3444,13 @@ def agency_admin():
         setInterval(function () {
           location.reload();
         }, 300000);
+        // 결제 페이지의 결과 모달이 남아 있는 경우를 대비해, 어드민 진입 시에는 강제로 숨긴다.
+        window.addEventListener('load', function () {
+          var modal = document.getElementById('result-modal');
+          if (modal) {
+            modal.style.display = 'none';
+          }
+        });
       </script>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
