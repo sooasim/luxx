@@ -220,6 +220,46 @@ def init_db() -> None:
                 ) CHARACTER SET utf8mb4
                 """
             )
+            # K-VAN 결제링크 목록 저장 테이블
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS kvan_links (
+                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                  captured_at DATETIME NOT NULL,
+                  title VARCHAR(255) DEFAULT '',
+                  amount BIGINT DEFAULT 0,
+                  ttl_label VARCHAR(100) DEFAULT '',
+                  status VARCHAR(100) DEFAULT '',
+                  kvan_link VARCHAR(512) DEFAULT '',
+                  mid VARCHAR(100) DEFAULT '',
+                  kvan_session_id VARCHAR(100) DEFAULT '',
+                  raw_text TEXT
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                """
+            )
+            # K-VAN 거래내역 저장 테이블
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS kvan_transactions (
+                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                  captured_at DATETIME NOT NULL,
+                  merchant_name VARCHAR(255) DEFAULT '',
+                  pg_name VARCHAR(100) DEFAULT '',
+                  mid VARCHAR(100) DEFAULT '',
+                  fee_rate VARCHAR(50) DEFAULT '',
+                  tx_type VARCHAR(50) DEFAULT '',
+                  amount BIGINT DEFAULT 0,
+                  cancel_amount BIGINT DEFAULT 0,
+                  payable_amount BIGINT DEFAULT 0,
+                  card_company VARCHAR(100) DEFAULT '',
+                  card_number VARCHAR(64) DEFAULT '',
+                  installment VARCHAR(50) DEFAULT '',
+                  approval_no VARCHAR(100) DEFAULT '',
+                  registered_at VARCHAR(50) DEFAULT '',
+                  raw_text TEXT
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                """
+            )
             # 기존 DB에 이미 생성된 테이블들이 있는 경우를 위해
             # 필요한 열이 없으면 추가 (에러는 무시)
             try:
@@ -262,6 +302,37 @@ def trigger_auto_kvan_async(session_id: str | None = None) -> None:
     except Exception as e:  # noqa: BLE001
         # 매크로 실행 실패는 웹 폼 자체 오류는 아니므로 서버 로그에만 남긴다.
         print(f"auto_kvan.py 실행 실패: {e}")
+
+
+def _save_session_order_json(session_id: str, amount: str, installment: str) -> Path:
+    """
+    세션 기반 링크 생성용 주문 JSON을 sessions/orders 에 저장한다.
+
+    auto_kvan.py 에서 동일 session_id 파일을 직접 읽을 수 있도록
+    HEADERS 스키마를 채워 파일을 생성한다.
+    """
+    SESSION_ORDER_DIR.mkdir(parents=True, exist_ok=True)
+    amount_digits = str(amount or "").replace(",", "").strip()
+    payload = {
+        "login_id": os.environ.get("K_VAN_ID", "m3313"),
+        "login_password": os.environ.get("K_VAN_PW", "1234"),
+        "login_pin": os.environ.get("K_VAN_PIN", "2424"),
+        "card_type": "personal",
+        "card_number": "",
+        "expiry_mm": "",
+        "expiry_yy": "",
+        "card_password": "",
+        "installment_months": (installment or "일시불").strip() or "일시불",
+        "phone_number": "",
+        "customer_name": "",
+        "resident_front": "",
+        "amount": amount_digits,
+        "product_name": f"SISA 세션 {session_id}",
+    }
+    out_path = SESSION_ORDER_DIR / f"{session_id}.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    return out_path
 
 
 def _find_agency_by_credentials(login_id: str, password: str) -> dict | None:
@@ -1445,7 +1516,12 @@ def _run_path_self_heal(auto_env_data_dir: Path) -> list[str]:
         auto_env_data_dir / "sessions" / "orders",
         auto_env_data_dir / "sessions" / "results",
     ]
+    seen_dirs: set[str] = set()
     for d in target_dirs:
+        d_key = str(d)
+        if d_key in seen_dirs:
+            continue
+        seen_dirs.add(d_key)
         try:
             d.mkdir(parents=True, exist_ok=True)
             report.append(f"[OK] dir ensured: {d}")
@@ -1466,7 +1542,12 @@ def _run_path_self_heal(auto_env_data_dir: Path) -> list[str]:
         except Exception as e:  # noqa: BLE001
             report.append(f"[ERR] admin_state create failed: {st_path} ({e})")
 
+    seen_logs: set[str] = set()
     for p in [ADMIN_LOG_PATH, auto_env_data_dir / "hq_logs.log"]:
+        p_key = str(p)
+        if p_key in seen_logs:
+            continue
+        seen_logs.add(p_key)
         try:
             p.parent.mkdir(parents=True, exist_ok=True)
             with open(p, "a", encoding="utf-8"):
@@ -1482,7 +1563,12 @@ def _run_path_self_heal(auto_env_data_dir: Path) -> list[str]:
         auto_env_data_dir / "sessions" / "orders",
         auto_env_data_dir / "sessions" / "results",
     ]
+    seen_write_dirs: set[str] = set()
     for d in write_test_dirs:
+        d_key = str(d)
+        if d_key in seen_write_dirs:
+            continue
+        seen_write_dirs.add(d_key)
         test_file = d / f".write_test_{int(time.time() * 1000)}.tmp"
         try:
             d.mkdir(parents=True, exist_ok=True)
@@ -1492,6 +1578,13 @@ def _run_path_self_heal(auto_env_data_dir: Path) -> list[str]:
             report.append(f"[OK] write test passed: {d}")
         except Exception as e:  # noqa: BLE001
             report.append(f"[ERR] write test failed: {d} ({e})")
+
+    # DB 핵심 테이블 자동 생성/보정
+    try:
+        init_db()
+        report.append("[OK] DB schema ensured via init_db()")
+    except Exception as e:  # noqa: BLE001
+        report.append(f"[ERR] DB schema ensure failed: {e}")
 
     return report
 
@@ -1571,6 +1664,15 @@ def debug_paths():
     except Exception as e:  # noqa: BLE001
         recent_sessions.append({"id": "-", "amount": "-", "status": "-", "agency_id": "-", "kvan_link": "-", "order_exists": False, "order_candidates": [f"admin_state 읽기 실패: {e}"]})
 
+    def _row_pick(row: dict, key: str, default: str = "") -> str:
+        if key in row:
+            return str(row.get(key) or default)
+        key_lower = key.lower()
+        for k, v in row.items():
+            if str(k).lower() == key_lower:
+                return str(v or default)
+        return default
+
     db_info: dict = {"ok": False, "error": "", "counts": {}, "schemas": {}}
     try:
         conn = get_db()
@@ -1588,8 +1690,10 @@ def debug_paths():
             rows = cur.fetchall()
             schemas: dict[str, list[str]] = {}
             for r in rows:
-                t = str(r.get("table_name") or "")
-                c = str(r.get("column_name") or "")
+                t = _row_pick(r, "table_name")
+                c = _row_pick(r, "column_name")
+                if not t or not c:
+                    continue
                 if t not in schemas:
                     schemas[t] = []
                 schemas[t].append(c)
@@ -2165,6 +2269,11 @@ def admin():
                     except Exception as e:  # noqa: BLE001
                         message = f"상태 저장 중 오류가 발생했습니다: {e}"
                     else:
+                        try:
+                            order_json = _save_session_order_json(session_id, amount, installment)
+                            _append_hq_log("WEB", f"세션 주문 JSON 저장 session_id={session_id}, path={order_json}")
+                        except Exception as e_order:  # noqa: BLE001
+                            _append_hq_log("WEB", f"[WARN] 세션 주문 JSON 저장 실패 session_id={session_id}: {e_order}")
                         _append_hq_log(
                             "WEB",
                             f"HQ 세션 생성 session_id={session_id}, amount={amount}, installment={installment or '일시불'}",
@@ -3860,6 +3969,11 @@ def agency_admin():
                     except Exception as e:  # noqa: BLE001
                         message = f"세션 생성 중 오류가 발생했습니다: {e}"
                     else:
+                        try:
+                            order_json = _save_session_order_json(session_id, amount, installment)
+                            _append_hq_log("WEB", f"세션 주문 JSON 저장 session_id={session_id}, path={order_json}")
+                        except Exception as e_order:  # noqa: BLE001
+                            _append_hq_log("WEB", f"[WARN] 세션 주문 JSON 저장 실패 session_id={session_id}: {e_order}")
                         _append_hq_log(
                             "WEB",
                             f"AGENCY 세션 생성 agency_id={agency_id}, session_id={session_id}, amount={amount}, installment={installment or '일시불'}",
