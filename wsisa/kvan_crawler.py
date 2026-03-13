@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, InvalidSessionIdException
 
 from auto_kvan import (
+    _append_admin_log,
     _is_server_env,
     create_driver,
     _scrape_dashboard_and_store,
@@ -35,6 +36,14 @@ def _dbg(msg: str) -> None:
     if DEBUG_CRAWLER:
         now = time.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[crawler][DEBUG {now}] {msg}")
+
+
+def _alog(msg: str) -> None:
+    """HQ 어드민 로그 박스에 표시될 크롤러 로그."""
+    try:
+        _append_admin_log("CRAWLER", msg)
+    except Exception:
+        pass
 
 
 def _simple_sign_in(driver: webdriver.Chrome) -> None:
@@ -205,8 +214,10 @@ def run_crawler_loop() -> None:
     driver = create_driver(headless=_is_server_env())
     try:
         print("[crawler] K-VAN 로그인 시작")
+        _alog("K-VAN 로그인 시작")
         _simple_sign_in(driver)
         print("[crawler] 로그인 완료. 주기 크롤링 루프 시작.")
+        _alog("로그인 완료. 주기 크롤링 루프 시작")
         if LOCAL_TEST:
             print("[crawler] LOCAL_TEST 모드: DB 관련 쓰기는 auto_kvan 에서 모두 건너뜁니다.")
         _dbg(f"로그인 직후 current_url={driver.current_url}")
@@ -231,6 +242,7 @@ def run_crawler_loop() -> None:
         while True:
             loop_start = time.strftime("%Y-%m-%d %H:%M:%S")
             print(f"[crawler] 크롤링 사이클 시작: {loop_start}")
+            _alog(f"크롤링 사이클 시작: {loop_start}")
             _dbg(f"사이클 {cycle} 시작, 현재 URL={driver.current_url}")
 
             had_new = False
@@ -302,16 +314,19 @@ def run_crawler_loop() -> None:
 
                 if isinstance(e, RuntimeError) and "[NAV]" in str(e):
                     print(f"[crawler][ERROR] 내비게이션 오류로 크롤링을 중단합니다: {e}")
+                    _alog(f"[ERROR] 내비게이션 오류로 중단: {e}")
                     _dbg(f"내비게이션 RuntimeError 발생: {e!r}, 현재 URL={cur_url}")
                     break
 
                 print(f"[crawler][WARN] 크롤링 중 오류: {e}")
+                _alog(f"[WARN] 크롤링 중 오류: {e}")
                 _dbg(f"크롤링 중 예외 발생: {e!r}, 현재 URL={cur_url}, 재로그인 시도")
                 # 에러 발생 시 재로그인 시도 후 다음 루프에서 재시도
                 try:
                     _simple_sign_in(driver)
                 except Exception as e2:
                     print(f"[crawler][ERROR] 재로그인 시도 중 오류: {e2}")
+                    _alog(f"[ERROR] 재로그인 시도 중 오류: {e2}")
                     _dbg(f"재로그인 단계에서 예외 발생: {e2!r}")
 
             cycle += 1
@@ -330,6 +345,10 @@ def run_crawler_loop() -> None:
                 f"[crawler] 다음 크롤링까지 {delay}초 대기 "
                 f"(active_sessions={active}, had_new={had_new}, empty_cycles={empty_cycles})"
             )
+            _alog(
+                f"다음 크롤링까지 {delay}초 대기 "
+                f"(active_sessions={active}, had_new={had_new}, empty_cycles={empty_cycles})"
+            )
             _wait_with_wakeup(delay)
 
             # backup_interval 이상 지나면, 타임스탬프만 갱신
@@ -337,8 +356,10 @@ def run_crawler_loop() -> None:
             now_ts = time.time()
             if backup_interval > 0 and now_ts - last_backup_ts >= backup_interval:
                 print(f"[crawler] 백업 주기({backup_interval}s) 도달 - 크롤링 주기 정상 동작 확인.")
+                _alog(f"백업 주기({backup_interval}s) 도달 - 크롤링 주기 정상")
                 last_backup_ts = now_ts
     finally:
+        _alog("크롤러 종료 (driver.quit)")
         driver.quit()
 
 

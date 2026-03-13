@@ -209,6 +209,40 @@ SESSION_RESULT_DIR.mkdir(parents=True, exist_ok=True)
 # 어드민 세션 상태 JSON (본사 + 대행사 공용)
 ADMIN_STATE_PATH = DATA_DIR / "admin_state.json"
 
+
+def _admin_state_candidates() -> list[Path]:
+    """환경별 경로 차이를 흡수하기 위해 admin_state.json 후보 경로를 반환."""
+    candidates = [
+        Path(ADMIN_STATE_PATH),
+        (BASE_DIR / "data" / "admin_state.json"),
+        (BASE_DIR / "wsisa" / "data" / "admin_state.json"),
+    ]
+    uniq: list[Path] = []
+    seen: set[str] = set()
+    for p in candidates:
+        k = str(p)
+        if k not in seen:
+            uniq.append(p)
+            seen.add(k)
+    return uniq
+
+
+def _session_order_path_candidates(session_id: str) -> list[Path]:
+    """세션 주문 JSON 후보 경로 목록."""
+    candidates = [
+        SESSION_ORDER_DIR / f"{session_id}.json",
+        (BASE_DIR / "data" / "sessions" / "orders" / f"{session_id}.json"),
+        (BASE_DIR / "wsisa" / "data" / "sessions" / "orders" / f"{session_id}.json"),
+    ]
+    uniq: list[Path] = []
+    seen: set[str] = set()
+    for p in candidates:
+        k = str(p)
+        if k not in seen:
+            uniq.append(p)
+            seen.add(k)
+    return uniq
+
 # 옥션 상품 리스트 (본사 홈페이지 auction.html 기반)
 AUCTION_ITEMS: list[dict] = []
 AUCTION_LOADED = False
@@ -3131,13 +3165,24 @@ def main() -> None:
     if session_id:
         SESSION_ORDER_DIR.mkdir(parents=True, exist_ok=True)
         SESSION_RESULT_DIR.mkdir(parents=True, exist_ok=True)
-        order_path = SESSION_ORDER_DIR / f"{session_id}.json"
+        order_candidates = _session_order_path_candidates(session_id)
+        order_path = order_candidates[0]
+        for p in order_candidates:
+            if p.exists():
+                order_path = p
+                break
         result_json_path = SESSION_RESULT_DIR / f"{session_id}.json"
     else:
         order_path = Path(ORDER_JSON_PATH)
         result_json_path = Path(RESULT_JSON_PATH)
 
     print("JSON 주문 데이터를 읽습니다...")
+    if session_id:
+        _append_admin_log(
+            "AUTO",
+            f"세션 주문 JSON 경로 확인 session_id={session_id}, selected={order_path}, "
+            f"candidates={[str(p) for p in _session_order_path_candidates(session_id)]}",
+        )
     try:
         row = load_order_from_json(str(order_path))
     except FileNotFoundError as e:
@@ -3148,8 +3193,11 @@ def main() -> None:
             try:
                 amount_val = 0
                 installment_val = "일시불"
-                if ADMIN_STATE_PATH.exists():
-                    with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
+                st_path_used: Path | None = None
+                for st_path in _admin_state_candidates():
+                    if not st_path.exists():
+                        continue
+                    with open(st_path, "r", encoding="utf-8") as f:
                         st = json.load(f)
                     sessions = st.get("sessions") or []
                     for s in sessions:
@@ -3157,11 +3205,16 @@ def main() -> None:
                             amt_str = str(s.get("amount") or "").replace(",", "").strip()
                             amount_val = int(amt_str) if amt_str else 0
                             installment_val = str(s.get("installment") or "일시불")
+                            st_path_used = st_path
                             break
+                    if st_path_used:
+                        break
                 if amount_val <= 0:
                     _append_admin_log(
                         "AUTO",
-                        f"[ERROR] 세션 금액이 없어서 링크를 생성할 수 없습니다. session_id={session_id}",
+                        "[ERROR] 세션 금액이 없어서 링크를 생성할 수 없습니다. "
+                        f"session_id={session_id}, order_path={order_path}, "
+                        f"admin_state_candidates={[str(p) for p in _admin_state_candidates()]}",
                     )
                     print(e)
                     return
@@ -3171,7 +3224,8 @@ def main() -> None:
                 _append_admin_log(
                     "AUTO",
                     f"주문 JSON 없이 세션 정보로 링크 생성 시도 "
-                    f"session_id={session_id}, amount={amount_val}, installment={installment_val}",
+                    f"session_id={session_id}, amount={amount_val}, installment={installment_val}, "
+                    f"admin_state_path={st_path_used or '-'}",
                 )
                 row = PaymentRow(
                     login_id=login_id,

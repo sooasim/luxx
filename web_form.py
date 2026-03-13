@@ -55,6 +55,17 @@ DB_NAME = (
 )
 
 
+def _append_hq_log(source: str, message: str) -> None:
+    """HQ 어드민 로그 파일(hq_logs.log)에 한 줄 추가."""
+    try:
+        ADMIN_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(ADMIN_LOG_PATH, "a", encoding="utf-8") as f:
+            ts = datetime.utcnow().isoformat()
+            f.write(f"{ts} [{source}] {message}\n")
+    except Exception:
+        pass
+
+
 def get_db():
     """
     공용 MySQL 커넥션 헬퍼.
@@ -246,13 +257,7 @@ def trigger_auto_kvan_async(session_id: str | None = None) -> None:
         if session_id:
             cmd.append(str(session_id))
         # 백그라운드에서 실행하되, 로그 파일과 서버 로그 양쪽에 상태를 남긴다.
-        try:
-            ADMIN_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-            with open(ADMIN_LOG_PATH, "a", encoding="utf-8") as f:
-                ts = datetime.utcnow().isoformat()
-                f.write(f"{ts} [WEB] auto_kvan 시작 session_id={session_id or '-'}\n")
-        except Exception:
-            pass
+        _append_hq_log("WEB", f"auto_kvan 시작 session_id={session_id or '-'}")
         subprocess.Popen(cmd)
     except Exception as e:  # noqa: BLE001
         # 매크로 실행 실패는 웹 폼 자체 오류는 아니므로 서버 로그에만 남긴다.
@@ -1407,6 +1412,348 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
+def _path_diagnostic(path_value: str | Path) -> dict:
+    """경로 존재/크기/수정시각을 진단용 dict 로 반환."""
+    p = Path(path_value)
+    info: dict = {
+        "path": str(p),
+        "exists": p.exists(),
+        "is_dir": p.is_dir(),
+        "size": "-",
+        "mtime": "-",
+        "error": "",
+    }
+    try:
+        if p.exists() and p.is_file():
+            st = p.stat()
+            info["size"] = st.st_size
+            info["mtime"] = datetime.utcfromtimestamp(st.st_mtime).isoformat()
+    except Exception as e:  # noqa: BLE001
+        info["error"] = str(e)
+    return info
+
+
+def _run_path_self_heal(auto_env_data_dir: Path) -> list[str]:
+    """디렉토리/파일 자동 복구와 쓰기 권한 점검을 수행한다."""
+    report: list[str] = []
+    target_dirs = [
+        DATA_DIR,
+        SESSION_ORDER_DIR,
+        SESSION_RESULT_DIR,
+        auto_env_data_dir,
+        auto_env_data_dir / "sessions",
+        auto_env_data_dir / "sessions" / "orders",
+        auto_env_data_dir / "sessions" / "results",
+    ]
+    for d in target_dirs:
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            report.append(f"[OK] dir ensured: {d}")
+        except Exception as e:  # noqa: BLE001
+            report.append(f"[ERR] dir create failed: {d} ({e})")
+
+    # 필수 파일이 없으면 기본 구조로 생성
+    admin_state_candidates = [
+        Path(ADMIN_STATE_PATH),
+        auto_env_data_dir / "admin_state.json",
+    ]
+    for st_path in admin_state_candidates:
+        try:
+            if not st_path.exists():
+                with open(st_path, "w", encoding="utf-8") as f:
+                    json.dump({"sessions": [], "history": []}, f, ensure_ascii=False, indent=2)
+                report.append(f"[OK] created admin_state: {st_path}")
+        except Exception as e:  # noqa: BLE001
+            report.append(f"[ERR] admin_state create failed: {st_path} ({e})")
+
+    for p in [ADMIN_LOG_PATH, auto_env_data_dir / "hq_logs.log"]:
+        try:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with open(p, "a", encoding="utf-8"):
+                pass
+            report.append(f"[OK] log file ensured: {p}")
+        except Exception as e:  # noqa: BLE001
+            report.append(f"[ERR] log file ensure failed: {p} ({e})")
+
+    # 쓰기 권한 점검 (임시 파일 생성/삭제)
+    write_test_dirs = [
+        SESSION_ORDER_DIR,
+        SESSION_RESULT_DIR,
+        auto_env_data_dir / "sessions" / "orders",
+        auto_env_data_dir / "sessions" / "results",
+    ]
+    for d in write_test_dirs:
+        test_file = d / f".write_test_{int(time.time() * 1000)}.tmp"
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            with open(test_file, "w", encoding="utf-8") as f:
+                f.write("ok")
+            test_file.unlink(missing_ok=True)
+            report.append(f"[OK] write test passed: {d}")
+        except Exception as e:  # noqa: BLE001
+            report.append(f"[ERR] write test failed: {d} ({e})")
+
+    return report
+
+
+@app.route("/debug-paths", methods=["GET", "POST"])
+def debug_paths():
+    """초보 사용자용 경로/연동 상태 점검 페이지 (HQ 로그인 필요)."""
+    if not session.get("hq_logged_in"):
+        return redirect(url_for("hq_login"))
+
+    env_sisa_data_dir = (os.environ.get("SISA_DATA_DIR") or "").strip()
+    auto_base_dir = BASE_DIR / "wsisa"
+    auto_env_data_dir = Path(env_sisa_data_dir) if env_sisa_data_dir else (auto_base_dir.parent / "data")
+    repair_report: list[str] = []
+    repair_message = ""
+
+    if request.method == "POST":
+        action = (request.form.get("action") or "").strip()
+        if action == "self_heal":
+            repair_report = _run_path_self_heal(auto_env_data_dir)
+            _append_hq_log(
+                "WEB",
+                "debug-paths 자동복구 실행: "
+                + "; ".join(repair_report[:12])
+                + ("; ... (truncated)" if len(repair_report) > 12 else ""),
+            )
+            err_count = sum(1 for r in repair_report if r.startswith("[ERR]"))
+            if err_count:
+                repair_message = f"자동복구 완료: 오류 {err_count}건 (아래 보고서 확인)"
+            else:
+                repair_message = "자동복구 완료: 오류 없이 정상 처리되었습니다."
+
+    path_checks: list[dict] = []
+    for p in [
+        BASE_DIR,
+        DATA_DIR,
+        auto_base_dir,
+        Path(ORDER_JSON_PATH),
+        Path(RESULT_JSON_PATH),
+        Path(ADMIN_STATE_PATH),
+        ADMIN_LOG_PATH,
+        SESSION_ORDER_DIR,
+        SESSION_RESULT_DIR,
+        auto_env_data_dir / "admin_state.json",
+        auto_env_data_dir / "sessions" / "orders",
+    ]:
+        path_checks.append(_path_diagnostic(p))
+
+    # 최근 세션 기준으로 주문 JSON 존재 여부를 즉시 확인
+    recent_sessions: list[dict] = []
+    try:
+        state_path = Path(ADMIN_STATE_PATH)
+        if state_path.exists():
+            with open(state_path, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+            sessions_all = saved.get("sessions") or []
+            for s in list(reversed(sessions_all))[:10]:
+                sid = str(s.get("id") or "").strip()
+                if not sid:
+                    continue
+                candidates = [
+                    DATA_DIR / "sessions" / "orders" / f"{sid}.json",
+                    BASE_DIR / "wsisa" / "data" / "sessions" / "orders" / f"{sid}.json",
+                ]
+                exists_any = any(c.exists() for c in candidates)
+                recent_sessions.append(
+                    {
+                        "id": sid,
+                        "amount": str(s.get("amount") or ""),
+                        "status": str(s.get("status") or ""),
+                        "agency_id": str(s.get("agency_id") or ""),
+                        "kvan_link": str(s.get("kvan_link") or ""),
+                        "order_exists": exists_any,
+                        "order_candidates": [str(c) for c in candidates],
+                    }
+                )
+    except Exception as e:  # noqa: BLE001
+        recent_sessions.append({"id": "-", "amount": "-", "status": "-", "agency_id": "-", "kvan_link": "-", "order_exists": False, "order_candidates": [f"admin_state 읽기 실패: {e}"]})
+
+    db_info: dict = {"ok": False, "error": "", "counts": {}, "schemas": {}}
+    try:
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT table_name, column_name
+                FROM information_schema.columns
+                WHERE table_schema = %s
+                  AND table_name IN ('transactions','kvan_links','kvan_transactions','kvan_dashboard')
+                ORDER BY table_name, ordinal_position
+                """,
+                (DB_NAME,),
+            )
+            rows = cur.fetchall()
+            schemas: dict[str, list[str]] = {}
+            for r in rows:
+                t = str(r.get("table_name") or "")
+                c = str(r.get("column_name") or "")
+                if t not in schemas:
+                    schemas[t] = []
+                schemas[t].append(c)
+            db_info["schemas"] = schemas
+
+            for tname in ["transactions", "kvan_links", "kvan_transactions", "kvan_dashboard"]:
+                try:
+                    cur.execute(f"SELECT COUNT(*) AS cnt FROM {tname}")
+                    one = cur.fetchone() or {}
+                    db_info["counts"][tname] = int(one.get("cnt") or 0)
+                except Exception as e_cnt:  # noqa: BLE001
+                    db_info["counts"][tname] = f"조회 실패: {e_cnt}"
+        conn.close()
+        db_info["ok"] = True
+    except Exception as e:  # noqa: BLE001
+        db_info["error"] = str(e)
+
+    template = """
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8" />
+      <title>SISA Debug Paths</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-slate-950 text-slate-100 min-h-screen p-4">
+      <div class="max-w-6xl mx-auto space-y-4">
+        <div class="flex items-center justify-between">
+          <h1 class="text-lg font-semibold">경로/연동 진단</h1>
+          <div class="flex items-center gap-2">
+            <a href="{{ url_for('hq_admin') }}" class="px-3 py-1.5 rounded bg-slate-700 hover:bg-slate-600 text-sm">HQ로 돌아가기</a>
+            <a href="{{ url_for('debug_paths') }}" class="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-sm">다시 진단</a>
+            <form method="post" action="{{ url_for('debug_paths') }}">
+              <input type="hidden" name="action" value="self_heal" />
+              <button type="submit" class="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold">
+                원클릭 자동복구
+              </button>
+            </form>
+          </div>
+        </div>
+        {% if repair_message %}
+        <section class="rounded border border-emerald-500/40 p-3 bg-emerald-900/20 text-emerald-200 text-sm">
+          {{ repair_message }}
+        </section>
+        {% endif %}
+        {% if repair_report %}
+        <section class="rounded border border-slate-700 p-3 bg-slate-900/60">
+          <h2 class="text-sm font-semibold mb-2">자동복구 보고서</h2>
+          <div class="text-xs font-mono space-y-1">
+            {% for line in repair_report %}
+            <div>{{ line }}</div>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+
+        <section class="rounded border border-slate-700 p-3 bg-slate-900/60">
+          <h2 class="text-sm font-semibold mb-2">환경 변수</h2>
+          <div class="text-xs font-mono break-all">SISA_DATA_DIR={{ env_sisa_data_dir or '(비어있음)' }}</div>
+          <div class="text-xs font-mono break-all mt-1">WEB DATA_DIR={{ web_data_dir }}</div>
+          <div class="text-xs font-mono break-all mt-1">AUTO 예상 DATA_DIR={{ auto_data_dir }}</div>
+        </section>
+
+        <section class="rounded border border-slate-700 p-3 bg-slate-900/60">
+          <h2 class="text-sm font-semibold mb-2">주요 경로 체크</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs">
+              <thead class="text-slate-300">
+                <tr>
+                  <th class="text-left px-2 py-1">Path</th>
+                  <th class="text-left px-2 py-1">Exists</th>
+                  <th class="text-left px-2 py-1">Type</th>
+                  <th class="text-left px-2 py-1">Size</th>
+                  <th class="text-left px-2 py-1">MTime(UTC)</th>
+                  <th class="text-left px-2 py-1">Error</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for p in path_checks %}
+                <tr class="border-t border-slate-800">
+                  <td class="px-2 py-1 font-mono break-all">{{ p.path }}</td>
+                  <td class="px-2 py-1">{{ 'Y' if p.exists else 'N' }}</td>
+                  <td class="px-2 py-1">{{ 'dir' if p.is_dir else 'file' }}</td>
+                  <td class="px-2 py-1">{{ p.size }}</td>
+                  <td class="px-2 py-1">{{ p.mtime }}</td>
+                  <td class="px-2 py-1 text-rose-300">{{ p.error }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="rounded border border-slate-700 p-3 bg-slate-900/60">
+          <h2 class="text-sm font-semibold mb-2">최근 세션 연동 체크 (admin_state 기준)</h2>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs">
+              <thead class="text-slate-300">
+                <tr>
+                  <th class="text-left px-2 py-1">Session</th>
+                  <th class="text-left px-2 py-1">Amount</th>
+                  <th class="text-left px-2 py-1">Status</th>
+                  <th class="text-left px-2 py-1">Agency</th>
+                  <th class="text-left px-2 py-1">Order JSON exists</th>
+                  <th class="text-left px-2 py-1">K-VAN Link</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for s in recent_sessions %}
+                <tr class="border-t border-slate-800">
+                  <td class="px-2 py-1 font-mono">{{ s.id }}</td>
+                  <td class="px-2 py-1">{{ s.amount }}</td>
+                  <td class="px-2 py-1">{{ s.status }}</td>
+                  <td class="px-2 py-1">{{ s.agency_id or '-' }}</td>
+                  <td class="px-2 py-1">{{ 'Y' if s.order_exists else 'N' }}</td>
+                  <td class="px-2 py-1 font-mono break-all">{{ s.kvan_link or '-' }}</td>
+                </tr>
+                <tr class="border-b border-slate-800">
+                  <td colspan="6" class="px-2 py-1 text-[11px] text-slate-400">
+                    order candidates: {{ s.order_candidates|join(' | ') }}
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="rounded border border-slate-700 p-3 bg-slate-900/60">
+          <h2 class="text-sm font-semibold mb-2">DB 구조/건수 체크</h2>
+          {% if db_info.ok %}
+          <div class="text-xs text-emerald-300 mb-2">DB 연결 성공</div>
+          {% else %}
+          <div class="text-xs text-rose-300 mb-2">DB 연결 실패: {{ db_info.error }}</div>
+          {% endif %}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            <div class="rounded border border-slate-800 p-2">
+              <div class="font-semibold mb-1">테이블 건수</div>
+              <pre class="whitespace-pre-wrap">{{ db_info.counts }}</pre>
+            </div>
+            <div class="rounded border border-slate-800 p-2">
+              <div class="font-semibold mb-1">컬럼 구조</div>
+              <pre class="whitespace-pre-wrap">{{ db_info.schemas }}</pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </body>
+    </html>
+    """
+    return render_template_string(
+        template,
+        env_sisa_data_dir=env_sisa_data_dir,
+        web_data_dir=str(DATA_DIR),
+        auto_data_dir=str(auto_env_data_dir),
+        repair_message=repair_message,
+        repair_report=repair_report,
+        path_checks=path_checks,
+        recent_sessions=recent_sessions,
+        db_info=db_info,
+    )
+
+
 def _load_hq_state() -> dict:
     """본사 어드민 상태를 MySQL 에서 로드."""
     state = {"applications": [], "agencies": [], "transactions": []}
@@ -1818,6 +2165,10 @@ def admin():
                     except Exception as e:  # noqa: BLE001
                         message = f"상태 저장 중 오류가 발생했습니다: {e}"
                     else:
+                        _append_hq_log(
+                            "WEB",
+                            f"HQ 세션 생성 session_id={session_id}, amount={amount}, installment={installment or '일시불'}",
+                        )
                         # HQ에서 링크를 생성한 시점에도 자동 결제 매크로를 준비
                         try:
                             trigger_auto_kvan_async(session_id=session_id)
@@ -2630,6 +2981,10 @@ def hq_admin():
     # 최근 HQ 로그 파일 tail (하루치 기준, 최대 1000줄 정도만 표시)
     admin_logs: list[str] = []
     try:
+        ADMIN_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if not ADMIN_LOG_PATH.exists():
+            with open(ADMIN_LOG_PATH, "a", encoding="utf-8"):
+                pass
         if ADMIN_LOG_PATH.exists():
             with open(ADMIN_LOG_PATH, "r", encoding="utf-8") as lf:
                 lines = lf.readlines()
@@ -2708,6 +3063,9 @@ def hq_admin():
             <a href="{{ url_for('admin') }}" class="px-3 py-1.5 rounded-lg bg-brand-accent text-brand-blue text-sm font-semibold hover:bg-white transition">
               결제페이지
             </a>
+            <a href="{{ url_for('debug_paths') }}" class="px-3 py-1.5 rounded-lg bg-yellow-400 text-black text-sm font-semibold hover:bg-yellow-300 transition">
+              경로진단
+            </a>
             <a href="{{ url_for('logout') }}" class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/20 transition">
               로그아웃
             </a>
@@ -2755,6 +3113,7 @@ def hq_admin():
                 </form>
               </div>
             </div>
+            <p class="text-[10px] text-white/45 mb-2">로그 파일 경로: {{ admin_log_path }}</p>
             {% if admin_logs %}
             <div class="bg-black/40 rounded-xl border border-white/10 p-3 max-h-56 overflow-y-auto text-[11px] font-mono text-white/80 whitespace-pre-wrap">
               {% for line in admin_logs %}
@@ -3393,6 +3752,7 @@ def hq_admin():
         message=message,
         history_warnings=history_warnings,
         admin_logs=admin_logs,
+        admin_log_path=str(ADMIN_LOG_PATH),
     )
 
 
@@ -3500,6 +3860,10 @@ def agency_admin():
                     except Exception as e:  # noqa: BLE001
                         message = f"세션 생성 중 오류가 발생했습니다: {e}"
                     else:
+                        _append_hq_log(
+                            "WEB",
+                            f"AGENCY 세션 생성 agency_id={agency_id}, session_id={session_id}, amount={amount}, installment={installment or '일시불'}",
+                        )
                         # 대행사가 링크를 생성한 시점에도 자동 결제 매크로를 준비
                         try:
                             trigger_auto_kvan_async(session_id=session_id)
