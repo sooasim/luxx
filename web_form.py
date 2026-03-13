@@ -306,9 +306,11 @@ _env_blocked = os.environ.get("BLOCKED_IPS", "").strip()
 if _env_blocked:
     _BLOCKED_IPS.update(ip.strip() for ip in _env_blocked.split(",") if ip.strip())
 
-# 404 다발 IP 카운트 (프로세스 메모리 기준, 재시작 시 초기화)
+# 404 다발 IP 카운트 (옵션 기능, 기본 비활성화)
 _IP_404_COUNTS: dict[str, int] = {}
 _IP_404_THRESHOLD: int = 3
+# 환경변수 ENABLE_AUTO_IP_BLOCK=1 인 경우에만 404 다발 IP 자동 차단을 켠다.
+_ENABLE_AUTO_IP_BLOCK = os.environ.get("ENABLE_AUTO_IP_BLOCK", "").strip() == "1"
 
 # 봇/스캐너가 찾는 경로 → 최소 응답으로 즉시 404 ("찾는 정보 없음", 트래픽 절약)
 _SCAN_PATH_PREFIXES = (
@@ -1056,6 +1058,15 @@ def home():
     return "<h1>World SISA</h1>", 200
 
 
+@app.route("/auction.html", methods=["GET"])
+def auction_page():
+    """GLOBAL AUCTION 버튼용 정적 옥션 페이지."""
+    path = BASE_DIR / "auction.html"
+    if path.exists():
+        return send_file(path)
+    return "<p>auction.html 파일을 찾을 수 없습니다.</p>", 404
+
+
 @app.route("/seo/overseas-luxury-auction", methods=["GET"])
 def seo_overseas_luxury():
     """해외 중고 명품 경매 대행 전용 SEO 랜딩 페이지."""
@@ -1123,24 +1134,26 @@ def handle_404(error):  # noqa: D401, ANN001
     if path.startswith("/seo/overseas-luxury-auction"):
         return "Not Found", 404
 
-    # IP별 404 카운트 증가
-    ip = _get_client_ip()
-    if ip:
-        current = _IP_404_COUNTS.get(ip, 0) + 1
-        _IP_404_COUNTS[ip] = current
-        if current >= _IP_404_THRESHOLD:
-            _BLOCKED_IPS.add(ip)
+    # (선택) IP별 404 카운트 증가 및 자동 차단
+    # 기본적으로는 _ENABLE_AUTO_IP_BLOCK 이 켜져 있을 때만 동작하도록 한다.
+    if _ENABLE_AUTO_IP_BLOCK:
+        ip = _get_client_ip()
+        if ip:
+            current = _IP_404_COUNTS.get(ip, 0) + 1
+            _IP_404_COUNTS[ip] = current
+            if current >= _IP_404_THRESHOLD:
+                _BLOCKED_IPS.add(ip)
 
-    # 봇(User-Agent)에 대해서도 404를 SEO 페이지 방문으로 전환
+    # 봇(User-Agent)에 대해서만 404를 SEO 페이지 방문으로 전환
     ua = (request.headers.get("User-Agent") or "").lower()
     is_bot = any(keyword in ua for keyword in ("bot", "crawl", "spider", "slurp", "preview", "scanner"))
 
-    # 사람/봇 구분 없이 404 대신 SEO용 컨텐츠로 리다이렉트(소프트 404 방지 목적)
-    if is_bot or True:
+    # 검색 엔진/봇은 404 대신 SEO용 컨텐츠로 리다이렉트(소프트 404 방지 목적)
+    if is_bot:
         return redirect(url_for("seo_overseas_luxury")), 302
 
-    # (이론상 도달하지 않지만 안전망으로 둠)
-    return "Not Found", 404
+    # 일반 사용자는 기본 404 로 처리
+    return "<h1>요청하신 페이지를 찾을 수 없습니다.</h1>", 404
 
 
 @app.route("/payment", methods=["GET", "POST"])
@@ -2016,9 +2029,13 @@ def admin():
                         결제 요청 링크
                       </div>
                       <div class="link-box">
-                        {% set kvan_link = s.kvan_link or (base_url ~ url_for('pay', session_id=s.id)) %}
+                        {% set kvan_link = s.kvan_link %}
+                        {% if kvan_link %}
                         <div class="link-text" id="pay-link-{{ loop.index }}">{{ kvan_link }}</div>
                         <button type="button" class="btn-pill btn-secondary" onclick="copyPayLink('pay-link-{{ loop.index }}')">복사</button>
+                        {% else %}
+                        <div class="hint">K-VAN 링크를 생성 중입니다. 잠시 후 새로고침 해 주세요.</div>
+                        {% endif %}
                       </div>
                       <form method="post" action="{{ url_for('admin') }}" style="margin-top:6px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                         <input type="hidden" name="action" value="close_session" />
@@ -3511,13 +3528,17 @@ def agency_admin():
                   <div class="text-white/70">상태: {{ s.status or '결제중' }}</div>
                 </div>
                 <div class="flex flex-col items-end gap-1 text-[11px]">
-                  {% set kvan_link = s.kvan_link or (base_url ~ '/pay/' ~ s.id) %}
+                  {% set kvan_link = s.kvan_link %}
+                  {% if kvan_link %}
                   <button type="button"
                           onclick="navigator.clipboard && navigator.clipboard.writeText('{{ kvan_link }}'); alert('링크가 복사되었습니다.');"
                           class="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20">
                     링크 복사
                   </button>
                   <span class="font-mono text-white/70 text-[10px]">{{ kvan_link }}</span>
+                  {% else %}
+                  <span class="font-mono text-white/60 text-[10px]">K-VAN 링크를 생성 중입니다. 잠시 후 새로고침 해 주세요.</span>
+                  {% endif %}
                   <form method="post" action="{{ url_for('agency_admin') }}">
                     <input type="hidden" name="action" value="delete_session">
                     <input type="hidden" name="session_id" value="{{ s.id }}">
