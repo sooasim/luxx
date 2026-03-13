@@ -2222,6 +2222,25 @@ def admin():
         for s in sessions
     )
 
+    # 결제중 세션인데 주문 JSON이 없으면 자동 재생성 + 매크로 재트리거
+    for s in sessions:
+        if s.get("status", "결제중") != "결제중":
+            continue
+        if s.get("kvan_link"):
+            continue
+        sid = str(s.get("id") or "")
+        if not sid:
+            continue
+        order_file = SESSION_ORDER_DIR / f"{sid}.json"
+        if not order_file.exists():
+            try:
+                _save_session_order_json(sid, str(s.get("amount") or ""), str(s.get("installment") or "일시불"))
+                _append_hq_log("WEB", f"[AUTO-HEAL] 누락된 주문 JSON 재생성 session_id={sid}")
+                trigger_auto_kvan_async(session_id=sid)
+                _append_hq_log("WEB", f"[AUTO-HEAL] auto_kvan 재트리거 session_id={sid}")
+            except Exception as _e:
+                _append_hq_log("WEB", f"[AUTO-HEAL][WARN] 주문 JSON 재생성 실패 session_id={sid}: {_e}")
+
     # 크롤러가 생성한 DB 기반 정보 (참고용 요약)
     recent_links: list[dict] = []
     recent_tx: list[dict] = []
@@ -3945,6 +3964,24 @@ def agency_admin():
     except Exception as e:
         print(f"[WARN] agency_admin transactions 조회 실패: {e}")
         agency_transactions = []
+
+    # 결제중 세션인데 주문 JSON이 없으면 자동 재생성 + 매크로 재트리거
+    for s in sessions:
+        if s.get("status", "결제중") != "결제중":
+            continue
+        if s.get("kvan_link"):
+            continue
+        sid = str(s.get("id") or "")
+        if not sid:
+            continue
+        order_file = SESSION_ORDER_DIR / f"{sid}.json"
+        if not order_file.exists():
+            try:
+                _save_session_order_json(sid, str(s.get("amount") or ""), str(s.get("installment") or "일시불"))
+                _append_hq_log("WEB", f"[AUTO-HEAL] 대행사 누락 주문 JSON 재생성 session_id={sid}")
+                trigger_auto_kvan_async(session_id=sid)
+            except Exception as _e:
+                _append_hq_log("WEB", f"[AUTO-HEAL][WARN] 대행사 주문 JSON 재생성 실패 session_id={sid}: {_e}")
 
     message = ""
     base_url = request.url_root.rstrip("/")

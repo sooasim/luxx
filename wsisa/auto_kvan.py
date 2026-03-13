@@ -19,8 +19,21 @@ from selenium.webdriver.support import expected_conditions as EC
 import pymysql
 
 # 웹 어드민에서 볼 수 있는 간단한 로그 파일 (HQ 어드민에서 tail 형태로 노출)
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = Path(os.environ.get("SISA_DATA_DIR") or (BASE_DIR / "data"))
+# auto_kvan.py 는 /app/wsisa/ 에 위치하므로 parent.parent = /app
+# Railway/Docker 배포에서는 web_form.py 와 동일한 /app/data 를 공유해야 한다.
+BASE_DIR = Path(__file__).resolve().parent.parent  # /app
+
+# 배포 환경에서 SISA_DATA_DIR 이 설정되지 않은 경우,
+# auto_kvan.py 가 위치한 wsisa 폴더의 부모(/app) 기준 data 폴더를 사용한다.
+# web_form.py 도 동일하게 /app/data 를 사용하므로 파일이 공유된다.
+_raw_data_dir = os.environ.get("SISA_DATA_DIR", "").strip()
+if _raw_data_dir:
+    DATA_DIR = Path(_raw_data_dir)
+else:
+    # /app/data 가 실제로 존재하면 우선 사용 (Railway Docker 구조)
+    _candidate = BASE_DIR / "data"
+    DATA_DIR = _candidate
+
 ADMIN_LOG_PATH = DATA_DIR / "hq_logs.log"
 
 
@@ -242,6 +255,36 @@ def _admin_state_candidates() -> list[Path]:
     return uniq
 
 
+def _resolved_admin_state_path() -> Path:
+    """실제로 존재하는 admin_state.json 경로를 반환.
+    없으면 DATA_DIR 기반 기본 경로를 반환한다.
+    """
+    for p in _admin_state_candidates():
+        if p.exists():
+            return p
+    return Path(ADMIN_STATE_PATH)
+
+
+def _load_admin_state() -> dict:
+    """admin_state.json 을 후보 경로에서 읽어 반환한다."""
+    for p in _admin_state_candidates():
+        if p.exists():
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+    return {"sessions": [], "history": []}
+
+
+def _save_admin_state(state: dict) -> None:
+    """admin_state 를 실제 존재하는 경로에 저장한다."""
+    st_path = _resolved_admin_state_path()
+    st_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(st_path, "w", encoding="utf-8") as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+
+
 def _session_order_path_candidates(session_id: str) -> list[Path]:
     """세션 주문 JSON 후보 경로 목록."""
     candidates = [d / "sessions" / "orders" / f"{session_id}.json" for d in _data_dir_candidates()]
@@ -268,14 +311,8 @@ def _has_active_sessions(window_minutes: int = 10) -> bool:
       크롤러에서 이 함수를 사용한다.
     """
     try:
-        st = None
-        for st_path in _admin_state_candidates():
-            if not st_path.exists():
-                continue
-            with open(st_path, "r", encoding="utf-8") as f:
-                st = json.load(f)
-            break
-        if st is None:
+        st = _load_admin_state()
+        if not st.get("sessions") and not st.get("history"):
             return False
         sessions = st.get("sessions") or []
         history = st.get("history") or []
@@ -1608,6 +1645,25 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                         ),
                     )
                     inserted += 1
+
+                    # 크롤링으로 새로 얻은 링크를 admin_state.json 에도 즉시 반영
+                    # (kvan_session_id 가 있으면 세션 ID 기준으로, 없으면 title 기준으로 매칭)
+                    if link_text:
+                        try:
+                            st_data = _load_admin_state()
+                            matched = False
+                            for s in st_data.get("sessions") or []:
+                                sid = str(s.get("id") or "")
+                                s_title = str(s.get("product_name") or s.get("id") or "")
+                                if (kvan_session_id and sid and sid in kvan_session_id) or \
+                                   (title and s_title and s_title in title):
+                                    if not s.get("kvan_link"):
+                                        s["kvan_link"] = link_text
+                                        matched = True
+                            if matched:
+                                _save_admin_state(st_data)
+                        except Exception:
+                            pass
                 except Exception as e_row:
                     print(f"[WARN] 결제링크 카드 파싱/저장 중 오류: {e_row}")
                     continue
@@ -1646,15 +1702,13 @@ def _sync_popup_transaction_to_internal(
     # admin_state.json 에서 agency_id 찾기
     agency_id: str | None = None
     try:
-        if ADMIN_STATE_PATH.exists():
-            with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
-                st = json.load(f)
-            sessions = st.get("sessions") or []
-            history = st.get("history") or []
-            for s in list(sessions) + list(history):
-                if str(s.get("id")) == str(session_id):
-                    agency_id = (s.get("agency_id") or "").strip() or None
-                    break
+        st = _load_admin_state()
+        sessions = st.get("sessions") or []
+        history = st.get("history") or []
+        for s in list(sessions) + list(history):
+            if str(s.get("id")) == str(session_id):
+                agency_id = (s.get("agency_id") or "").strip() or None
+                break
     except Exception as e:
         print(f"[WARN] popup 기반 agency_id 조회 실패: {e}")
 
@@ -1858,10 +1912,7 @@ def _is_session_already_processed(session_id: str) -> bool:
     if not session_id:
         return False
     try:
-        if not ADMIN_STATE_PATH.exists():
-            return False
-        with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
-            st = json.load(f)
+        st = _load_admin_state()
         history = st.get("history") or []
         for h in history:
             if str(h.get("id")) == str(session_id):
@@ -1881,10 +1932,7 @@ def _mark_session_checked(session_id: str, title: str, has_approval: bool) -> No
     if not session_id:
         return
     try:
-        st = {"sessions": [], "history": []}
-        if ADMIN_STATE_PATH.exists():
-            with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
-                st = json.load(f)
+        st = _load_admin_state()
         sessions = st.get("sessions") or []
         history = st.get("history") or []
 
@@ -1905,8 +1953,7 @@ def _mark_session_checked(session_id: str, title: str, has_approval: bool) -> No
             )
         st["sessions"] = sessions
         st["history"] = history
-        with open(ADMIN_STATE_PATH, "w", encoding="utf-8") as f:
-            json.dump(st, f, ensure_ascii=False, indent=2)
+        _save_admin_state(st)
     except Exception as e:
         print(f"[WARN] _mark_session_checked 실패: {e}")
 
@@ -1914,10 +1961,7 @@ def _mark_session_checked(session_id: str, title: str, has_approval: bool) -> No
 def _mark_session_deleted(session_id: str, title: str) -> None:
     _mark_session_checked(session_id, title, has_approval=False)
     try:
-        if not ADMIN_STATE_PATH.exists():
-            return
-        with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
-            st = json.load(f)
+        st = _load_admin_state()
         sessions = st.get("sessions") or []
         history = st.get("history") or []
         for h in history:
@@ -1925,8 +1969,7 @@ def _mark_session_deleted(session_id: str, title: str) -> None:
                 h["deleted"] = True
         st["sessions"] = sessions
         st["history"] = history
-        with open(ADMIN_STATE_PATH, "w", encoding="utf-8") as f:
-            json.dump(st, f, ensure_ascii=False, indent=2)
+        _save_admin_state(st)
     except Exception as e:
         print(f"[WARN] _mark_session_deleted 실패: {e}")
 
@@ -2292,13 +2335,22 @@ return clickCreateButton();
 
 
 def _store_kvan_link_for_session(session_id: str, link: str) -> None:
-    """admin_state.json 의 해당 세션에 K-VAN 결제 링크를 매핑해서 저장."""
+    """admin_state.json 의 해당 세션에 K-VAN 결제 링크를 매핑해서 저장.
+
+    admin_state.json 이 여러 경로 후보 중 어디에 존재하든 찾아서 업데이트한다.
+    """
     if not session_id or not link:
         return
     try:
-        if not ADMIN_STATE_PATH.exists():
+        state_path: Path | None = None
+        for candidate in _admin_state_candidates():
+            if candidate.exists():
+                state_path = candidate
+                break
+        if state_path is None:
+            _append_admin_log("AUTO", f"[WARN] admin_state.json 없음 – 링크 저장 불가 session_id={session_id}")
             return
-        with open(ADMIN_STATE_PATH, "r", encoding="utf-8") as f:
+        with open(state_path, "r", encoding="utf-8") as f:
             state = json.load(f)
         sessions = state.get("sessions") or []
         history = state.get("history") or []
@@ -2311,10 +2363,14 @@ def _store_kvan_link_for_session(session_id: str, link: str) -> None:
         if updated:
             state["sessions"] = sessions
             state["history"] = history
-            with open(ADMIN_STATE_PATH, "w", encoding="utf-8") as f:
+            with open(state_path, "w", encoding="utf-8") as f:
                 json.dump(state, f, ensure_ascii=False, indent=2)
+            _append_admin_log("AUTO", f"admin_state 링크 저장 완료 session_id={session_id} path={state_path}")
+        else:
+            _append_admin_log("AUTO", f"[WARN] admin_state 에서 세션 못 찾음 session_id={session_id}")
     except Exception as e:  # noqa: BLE001
         print(f"[WARN] admin_state 에 K-VAN 링크 저장 실패: {e}")
+        _append_admin_log("AUTO", f"[WARN] admin_state 링크 저장 실패 session_id={session_id}: {e}")
 
 
 def _fill_payment_link_form_and_get_url(
