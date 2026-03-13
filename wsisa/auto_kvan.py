@@ -854,22 +854,36 @@ def load_order_from_json(path: str) -> PaymentRow:
     with open(path, "r", encoding="utf-8") as f:
         raw = json.load(f)
 
-    # 금액 / 상품명 / 로그인 ID 가 없으면 에러로 처리한다.
+    # ── 필수 필드: amount, login 3종 ─────────────────────────────
     if "amount" not in raw or raw.get("amount") in ("", None, "0"):
         raise ValueError("JSON 데이터에 결제 금액(amount)이 없습니다.")
-    if "product_name" not in raw or not str(raw.get("product_name") or "").strip():
-        raw["product_name"] = "SISA 테스트 상품"
-    if "login_id" not in raw or not str(raw.get("login_id") or "").strip():
-        raw["login_id"] = "m3313"
+    if not str(raw.get("product_name") or "").strip():
+        raw["product_name"] = "SISA 결제링크"
+    if not str(raw.get("login_id") or "").strip():
+        raw["login_id"] = os.environ.get("K_VAN_ID", "m3313")
+    if not str(raw.get("login_password") or "").strip():
+        raw["login_password"] = os.environ.get("K_VAN_PW", "1234")
+    if not str(raw.get("login_pin") or "").strip():
+        raw["login_pin"] = os.environ.get("K_VAN_PIN", "2424")
+    if not str(raw.get("card_type") or "").strip():
+        raw["card_type"] = "personal"
+    if not str(raw.get("installment_months") or "").strip():
+        raw["installment_months"] = "일시불"
 
-    missing = [k for k in HEADERS if k not in raw or raw[k] in ("", None)]
-    if missing:
-        raise ValueError(f"JSON 데이터에 누락된 필드가 있습니다: {missing}")
+    # 카드/고객 정보는 결제링크 생성 전용 모드에서 비어있어도 무방하다 (빈 문자열로 채움)
+    for _opt in ("card_number", "expiry_mm", "expiry_yy", "card_password",
+                 "phone_number", "customer_name", "resident_front"):
+        if _opt not in raw or raw[_opt] is None:
+            raw[_opt] = ""
+    # ─────────────────────────────────────────────────────────────
 
     try:
-        amount_int = int(raw["amount"])
+        amount_int = int(str(raw["amount"]).replace(",", "").strip())
     except (TypeError, ValueError) as e:
         raise ValueError(f"amount 값이 숫자가 아닙니다: {raw['amount']!r}") from e
+
+    if amount_int <= 0:
+        raise ValueError(f"amount 값이 0 이하입니다: {amount_int}")
 
     card_type = str(raw.get("card_type", "personal")).strip().lower()
     if card_type not in ("personal", "business"):
@@ -880,14 +894,14 @@ def load_order_from_json(path: str) -> PaymentRow:
         login_password=str(raw["login_password"]).strip(),
         login_pin=str(raw["login_pin"]).strip(),
         card_type=card_type,
-        card_number=str(raw["card_number"]).strip(),
-        expiry_mm=str(raw["expiry_mm"]).strip(),
-        expiry_yy=str(raw["expiry_yy"]).strip(),
-        card_password=str(raw["card_password"]).strip(),
-        installment_months=str(raw["installment_months"]).strip(),
-        phone_number=str(raw["phone_number"]).strip(),
-        customer_name=str(raw["customer_name"]).strip(),
-        resident_front=str(raw["resident_front"]).strip(),
+        card_number=str(raw.get("card_number", "")).strip(),
+        expiry_mm=str(raw.get("expiry_mm", "")).strip(),
+        expiry_yy=str(raw.get("expiry_yy", "")).strip(),
+        card_password=str(raw.get("card_password", "")).strip(),
+        installment_months=str(raw.get("installment_months", "일시불")).strip(),
+        phone_number=str(raw.get("phone_number", "")).strip(),
+        customer_name=str(raw.get("customer_name", "")).strip(),
+        resident_front=str(raw.get("resident_front", "")).strip(),
         amount=amount_int,
         product_name=str(raw["product_name"]).strip(),
     )
