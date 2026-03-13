@@ -1735,35 +1735,7 @@ def admin():
         except Exception:
             sessions = []
 
-    # K-VAN 연동 DB (대시보드/거래내역/결제링크) 조회
-    kvan_transactions: list[dict] = []
-    kvan_links: list[dict] = []
-    try:
-        conn = get_db()
-        with conn.cursor() as cur:
-            try:
-                cur.execute(
-                    "SELECT captured_at, merchant_name, pg_name, mid, fee_rate, tx_type, "
-                    "amount, cancel_amount, payable_amount, card_company, card_number, "
-                    "installment, approval_no, registered_at "
-                    "FROM kvan_transactions ORDER BY captured_at DESC LIMIT 30"
-                )
-                kvan_transactions = cur.fetchall()
-            except Exception:
-                kvan_transactions = []
-            try:
-                cur.execute(
-                    "SELECT captured_at, title, amount, ttl_label, status, "
-                    "kvan_link, mid, kvan_session_id "
-                    "FROM kvan_links ORDER BY captured_at DESC LIMIT 30"
-                )
-                kvan_links = cur.fetchall()
-            except Exception:
-                kvan_links = []
-        conn.close()
-    except Exception as e:
-        print(f"[WARN] K-VAN 연동 데이터 조회 실패: {e}")
-        kvan_transactions, kvan_links = [], []
+    # /admin 페이지에서는 이제 K-VAN 연동용 거래/링크 리스트를 표시하지 않는다.
 
     if request.method == "POST":
         action = request.form.get("action", "create").strip()
@@ -1877,8 +1849,6 @@ def admin():
           var vp = document.getElementById('viewport-meta');
           if (vp) vp.setAttribute('content', 'width=1280');
         }
-        // 7초마다 자동 새로고침 (K-VAN 연동 데이터 포함)
-        setInterval(function() { window.location.reload(); }, 7000);
       </script>
       <!-- 폰트 / 아이콘 / Tailwind -->
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
@@ -2052,100 +2022,8 @@ def admin():
                 {% endif %}
               </div>
 
-              <!-- K-VAN 연동 거래 내역 (본사용) -->
-              <div class="status-card">
-                <div class="status-title">
-                  <i class="fa-solid fa-credit-card text-indigo-300 text-xs"></i>
-                  K-VAN 결제 / 취소 내역 (최근 30건)
-                </div>
-        <div class="hint" style="margin-top:4px;">
-          ※ K-VAN MID 와 대행사 정보가 agencies.kvan_mid 로 연결된 경우, 해당 결제는 자동으로
-          대행사별 거래/정산 내역에 반영됩니다. 매핑이 없으면 '미지정' 거래로 처리될 수 있으니
-          문제가 계속되면 관리자에게 문의해 주세요.
-        </div>
-                {% if kvan_transactions %}
-                  <div style="max-height:260px; overflow-y:auto; font-size:11px; margin-top:4px;">
-                    <table style="width:100%; border-collapse:collapse;">
-                      <thead>
-                        <tr style="border-bottom:1px solid rgba(148,163,184,0.4);">
-                          <th style="padding:4px; text-align:left;">가맹점명</th>
-                          <th style="padding:4px; text-align:left;">PG사/MID</th>
-                          <th style="padding:4px; text-align:right;">결제유형</th>
-                          <th style="padding:4px; text-align:right;">결제금액</th>
-                          <th style="padding:4px; text-align:right;">취소금액</th>
-                          <th style="padding:4px; text-align:right;">승인번호</th>
-                          <th style="padding:4px; text-align:left;">등록일</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for t in kvan_transactions %}
-                          <tr style="border-bottom:1px dashed rgba(55,65,81,0.8);">
-                            <td style="padding:3px 4px;">{{ t.merchant_name }}</td>
-                            <td style="padding:3px 4px;">
-                              {{ t.pg_name }} / {{ t.mid }}
-                              {% if t.fee_rate %}
-                                <span style="color:#9ca3af;"> ({{ t.fee_rate }})</span>
-                              {% endif %}
-                            </td>
-                            <td style="padding:3px 4px; text-align:right;">{{ t.tx_type }}</td>
-                            <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(t.amount or 0) }}</td>
-                            <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(t.cancel_amount or 0) }}</td>
-                            <td style="padding:3px 4px; text-align:right;">{{ t.approval_no }}</td>
-                            <td style="padding:3px 4px; font-size:10px;">{{ t.registered_at }}</td>
-                          </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                {% else %}
-                  <div class="hint">아직 크롤링된 K-VAN 결제/취소 내역이 없습니다.</div>
-                {% endif %}
-              </div>
-
-              <!-- K-VAN 결제링크 관리 (본사용) -->
-              <div class="status-card">
-                <div class="status-title">
-                  <i class="fa-solid fa-link text-sky-300 text-xs"></i>
-                  K-VAN 결제링크 관리 (최근 30건)
-                </div>
-                {% if kvan_links %}
-                  <div style="max-height:220px; overflow-y:auto; font-size:11px; margin-top:4px;">
-                    {% for l in kvan_links %}
-                      <div style="margin:6px 0; padding:7px 8px; border-radius:10px; background:#020617; border:1px solid #111827;">
-                        <div class="status-row">
-                          <span class="status-label">제목</span>
-                          <span class="status-value">{{ l.title }}</span>
-                        </div>
-                        <div class="status-row">
-                          <span class="status-label">금액</span>
-                          <span class="status-value">{{ "{:,}".format(l.amount or 0) }} 원</span>
-                        </div>
-                        <div class="status-row">
-                          <span class="status-label">유효시간</span>
-                          <span class="status-value">{{ l.ttl_label }}</span>
-                        </div>
-                        <div class="status-row">
-                          <span class="status-label">상태</span>
-                          <span class="status-value">{{ l.status }}</span>
-                        </div>
-                        <div class="status-row">
-                          <span class="status-label">MID / 세션</span>
-                          <span class="status-value">{{ l.mid }} / {{ l.kvan_session_id }}</span>
-                        </div>
-                        <div class="status-title" style="margin-top:4px;">
-                          <i class="fa-solid fa-arrow-up-right-from-square text-blue-300 text-[10px]"></i>
-                          링크
-                        </div>
-                        <div class="link-box">
-                          <div class="link-text" style="font-size:10px;">{{ l.kvan_link }}</div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  </div>
-                {% else %}
-                  <div class="hint">아직 크롤링된 결제링크 정보가 없습니다.</div>
-                {% endif %}
-              </div>
+              <!-- K-VAN 연동 거래 내역 / 결제링크 관리는 HQ 대시보드에서만 표시하고,
+                   /admin 페이지에서는 결제 세션 생성/관리 UI 만 제공한다. -->
 
               <div class="status-card">
                 <div class="status-title">
@@ -2267,8 +2145,6 @@ def admin():
         history=history,
         message=message,
         base_url=base_url,
-        kvan_transactions=kvan_transactions,
-        kvan_links=kvan_links,
     )
 
 
