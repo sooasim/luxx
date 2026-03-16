@@ -559,8 +559,7 @@ def _detect_crawler_refresh_done(since_iso: str) -> tuple[bool, str]:
     return False, latest_line
 
 
-@app.route("/api/crawler-refresh-status", methods=["GET"])
-def api_crawler_refresh_status():
+def _crawler_refresh_status_payload():
     """새로고침 요청 이후 크롤러 사이클 완료 여부를 반환."""
     since = (request.args.get("since") or "").strip()
     done, latest = _detect_crawler_refresh_done(since)
@@ -697,6 +696,11 @@ HEADERS: List[str] = [
 
 app = Flask(__name__)
 app.secret_key = "worldsisa-form-secret"
+
+
+@app.route("/api/crawler-refresh-status", methods=["GET"])
+def api_crawler_refresh_status():
+    return _crawler_refresh_status_payload()
 
 # 약관 파일 경로 (프로젝트 루트의 terms.html)
 TERMS_FILE = BASE_DIR / "terms.html"

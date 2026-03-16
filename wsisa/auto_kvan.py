@@ -64,7 +64,7 @@ def _step_end(label: str, t0: float) -> None:
     print(f"[STEP] {label} 완료 ({dt:.2f}s)")
 
 
-SIGN_IN_URL = "https://store.k-van.app/sign-in"
+SIGN_IN_URL = "https://store.k-van.app/"
 FACE_TO_FACE_URL = "https://store.k-van.app/face-to-face-payment"
 
 def _has_payment_links_quick(driver: webdriver.Chrome, retries: int = 5, delay: float = 1.0) -> bool:

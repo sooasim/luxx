@@ -62,7 +62,7 @@ python auto_kvan.py
 
 브라우저가 자동으로 열리고:
 
-- `https://store.k-van.app/sign-in` 에 접속
+- `https://store.k-van.app/` 에 접속
 - 엑셀의 첫 번째 행 정보로 로그인
 - `https://store.k-van.app/face-to-face-payment` 로 이동하여 각 행마다 폼 자동 입력
 
