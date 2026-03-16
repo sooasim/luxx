@@ -307,6 +307,25 @@ def ensure_runtime_files() -> None:
         print(f"[WARN] runtime 파일 준비 실패: {e}")
 
 
+def _create_code_backup() -> None:
+    """앱 시작 시 핵심 파이썬 파일을 날짜별 스냅샷으로 백업한다."""
+    try:
+        backup_dir = DATA_DIR / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        today = datetime.utcnow().strftime("%Y%m%d")
+        for src in [BASE_DIR / "web_form.py", BASE_DIR / "wsisa" / "auto_kvan.py"]:
+            if not src.exists():
+                continue
+            dest = backup_dir / f"{src.stem}_{today}.py"
+            if dest.exists():
+                continue  # 하루 1회만 백업
+            import shutil
+            shutil.copy2(str(src), str(dest))
+            print(f"[BACKUP] {src.name} → {dest}")
+    except Exception as e:  # noqa: BLE001
+        print(f"[WARN] 코드 백업 실패: {e}")
+
+
 # K-VAN 은 동일 계정 동시 로그인을 허용하지 않는다.
 # 여러 세션이 동시에 링크 생성을 요청하면 한 번에 하나씩 직렬 처리해야 한다.
 # 큐 파일: DATA_DIR/kvan_queue.json  (session_id 목록)
@@ -490,6 +509,12 @@ try:
     ensure_runtime_files()
 except Exception as e:  # noqa: BLE001
     print(f"[WARN] ensure_runtime_files at import 실패: {e}")
+
+# 코드 스냅샷 백업 (하루 1회)
+try:
+    _create_code_backup()
+except Exception as e:  # noqa: BLE001
+    print(f"[WARN] 코드 백업 at import 실패: {e}")
 
 # 차단할 IP (공인 IP만). 환경변수 BLOCKED_IPS 로 지정 (쉼표 구분).
 _BLOCKED_IPS: set[str] = set()
@@ -2417,6 +2442,39 @@ def admin():
                         # new=1 쿼리스트링으로 "새 링크 생성" 플래그를 전달
                         return redirect(url_for("admin", new="1"))
 
+        elif action == "retry_kvan":
+            sid = request.form.get("session_id", "").strip()
+            if sid:
+                # 실패 상태 → 결제중으로 초기화 후 재시도
+                state_path = Path(ADMIN_STATE_PATH)
+                if state_path.exists():
+                    try:
+                        with open(state_path, "r", encoding="utf-8") as f:
+                            saved = json.load(f)
+                        for s in saved.get("sessions") or []:
+                            if str(s.get("id")) == sid:
+                                s["status"] = "결제중"
+                                s.pop("error_reason", None)
+                                s.pop("failed_at", None)
+                                s.pop("kvan_link", None)
+                                break
+                        with open(state_path, "w", encoding="utf-8") as f:
+                            json.dump(saved, f, ensure_ascii=False, indent=2)
+                    except Exception as e:  # noqa: BLE001
+                        _append_hq_log("WEB", f"[WARN] retry 상태 초기화 실패: {e}")
+                # 주문 JSON 재생성 + 큐에 재등록
+                try:
+                    for s in sessions:
+                        if str(s.get("id")) == sid:
+                            _save_session_order_json(sid, str(s.get("amount") or ""), str(s.get("installment") or "일시불"))
+                            break
+                    trigger_auto_kvan_async(session_id=sid)
+                    _append_hq_log("WEB", f"retry_kvan 재요청 session_id={sid}")
+                    message = f"세션 {sid} 링크 생성을 다시 요청했습니다."
+                except Exception as e:  # noqa: BLE001
+                    message = f"재요청 중 오류: {e}"
+            return redirect(url_for("admin"))
+
         elif action == "close_session":
             sid = request.form.get("session_id", "").strip()
             memo = request.form.get("memo", "").strip()
@@ -2659,6 +2717,20 @@ def admin():
                         {% if kvan_link %}
                         <div class="link-text" id="pay-link-{{ loop.index }}">{{ kvan_link }}</div>
                         <button type="button" class="btn-pill btn-secondary" onclick="copyPayLink('pay-link-{{ loop.index }}')">복사</button>
+                        {% elif s.status == '링크생성실패' %}
+                        <div style="background:#450a0a;border:1px solid #7f1d1d;border-radius:8px;padding:8px 10px;margin-bottom:4px;">
+                          <div style="color:#fca5a5;font-size:11px;font-weight:600;">⚠ 링크 생성 실패</div>
+                          {% if s.error_reason %}
+                          <div style="color:#fecaca;font-size:10px;margin-top:2px;">{{ s.error_reason }}</div>
+                          {% endif %}
+                          <form method="post" action="{{ url_for('admin') }}" style="margin-top:6px;">
+                            <input type="hidden" name="action" value="retry_kvan" />
+                            <input type="hidden" name="session_id" value="{{ s.id }}" />
+                            <button type="submit" style="background:#dc2626;color:white;border:none;border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;">
+                              🔄 다시 링크 생성
+                            </button>
+                          </form>
+                        </div>
                         {% else %}
                         <div class="hint">K-VAN 링크를 생성 중입니다. 잠시 후 새로고침 해 주세요.</div>
                         {% endif %}
@@ -4139,6 +4211,36 @@ def agency_admin():
                     sessions.append(new_session)
                     # 새로고침 시 중복 생성 방지
                     return redirect(url_for("agency_admin"))
+        elif action == "retry_kvan":
+            sid = (request.form.get("session_id") or "").strip()
+            if sid:
+                state_path = Path(ADMIN_STATE_PATH)
+                if state_path.exists():
+                    try:
+                        with open(state_path, "r", encoding="utf-8") as f:
+                            saved = json.load(f)
+                        for s in saved.get("sessions") or []:
+                            if str(s.get("id")) == sid:
+                                s["status"] = "결제중"
+                                s.pop("error_reason", None)
+                                s.pop("failed_at", None)
+                                s.pop("kvan_link", None)
+                                break
+                        with open(state_path, "w", encoding="utf-8") as f:
+                            json.dump(saved, f, ensure_ascii=False, indent=2)
+                    except Exception as e:  # noqa: BLE001
+                        _append_hq_log("WEB", f"[WARN] agency retry 상태 초기화 실패: {e}")
+                try:
+                    for s in sessions:
+                        if str(s.get("id")) == sid:
+                            _save_session_order_json(sid, str(s.get("amount") or ""), str(s.get("installment") or "일시불"))
+                            break
+                    trigger_auto_kvan_async(session_id=sid)
+                    _append_hq_log("WEB", f"agency retry_kvan 재요청 session_id={sid}")
+                    message = "링크 생성을 다시 요청했습니다."
+                except Exception as e:  # noqa: BLE001
+                    message = f"재요청 중 오류: {e}"
+            return redirect(url_for("agency_admin"))
         elif action == "refresh_kvan":
             # 대행사 어드민에서 수동으로 K-VAN 크롤링 매크로를 한 번 더 실행
             try:
@@ -4330,6 +4432,21 @@ def agency_admin():
                     링크 복사
                   </button>
                   <span class="font-mono text-white/70 text-[10px]">{{ kvan_link }}</span>
+                  {% elif s.status == '링크생성실패' %}
+                  <div class="rounded-lg px-2 py-2 text-[10px]" style="background:#450a0a;border:1px solid #7f1d1d;">
+                    <div class="text-red-300 font-semibold">⚠ 링크 생성 실패</div>
+                    {% if s.error_reason %}
+                    <div class="text-red-200 mt-1">{{ s.error_reason[:80] }}</div>
+                    {% endif %}
+                    <form method="post" action="{{ url_for('agency_admin') }}" class="mt-2">
+                      <input type="hidden" name="action" value="retry_kvan">
+                      <input type="hidden" name="session_id" value="{{ s.id }}">
+                      <button type="submit"
+                              class="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-[10px]">
+                        🔄 다시 링크 생성
+                      </button>
+                    </form>
+                  </div>
                   {% else %}
                   <span class="font-mono text-white/60 text-[10px]">K-VAN 링크를 생성 중입니다. 잠시 후 자동으로 표시됩니다.</span>
                   {% endif %}
