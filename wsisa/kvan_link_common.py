@@ -125,6 +125,32 @@ def fetch_agency_company_name(agency_id: str) -> str:
     return aid
 
 
+def ensure_kvan_links_link_created_at(conn) -> None:
+    """링크 최초 등록 시각(크롤링마다 바뀌는 captured_at 과 구분). 컬럼 추가 + 기존 행 백필."""
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'kvan_links'
+                  AND COLUMN_NAME = 'link_created_at'
+                """
+            )
+            if not (cur.fetchall() or []):
+                cur.execute(
+                    "ALTER TABLE kvan_links ADD COLUMN link_created_at DATETIME NULL DEFAULT NULL"
+                )
+            cur.execute(
+                "UPDATE kvan_links SET link_created_at = captured_at WHERE link_created_at IS NULL"
+            )
+        conn.commit()
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+
+
 def ensure_kvan_links_internal_session_column(conn) -> None:
     try:
         with conn.cursor() as cur:
@@ -182,6 +208,7 @@ def upsert_kvan_link_creation_seed(
     try:
         conn = kvan_db_connect()
         ensure_kvan_links_internal_session_column(conn)
+        ensure_kvan_links_link_created_at(conn)
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT id, agency_id, internal_session_id FROM kvan_links WHERE kvan_link = %s LIMIT 1",
@@ -195,6 +222,7 @@ def upsert_kvan_link_creation_seed(
                       kvan_session_id = %s,
                       agency_id = COALESCE(NULLIF(TRIM(%s), ''), agency_id),
                       internal_session_id = COALESCE(NULLIF(TRIM(%s), ''), internal_session_id),
+                      link_created_at = COALESCE(link_created_at, NOW()),
                       title = CASE
                         WHEN title IS NULL OR TRIM(title) = '' THEN %s
                         ELSE title END,
@@ -216,10 +244,10 @@ def upsert_kvan_link_creation_seed(
                 cur.execute(
                     """
                     INSERT INTO kvan_links (
-                      captured_at, title, amount, ttl_label, status,
+                      captured_at, link_created_at, title, amount, ttl_label, status,
                       kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                     )
-                    VALUES (NOW(), %s, %s, '', %s, %s, '', %s, %s, %s, %s)
+                    VALUES (NOW(), NOW(), %s, %s, '', %s, %s, '', %s, %s, %s, %s)
                     """,
                     (
                         title,
@@ -256,11 +284,12 @@ def load_kvan_link_preserved_by_url(urls: list[str]) -> dict[str, dict]:
     try:
         conn = kvan_db_connect()
         ensure_kvan_links_internal_session_column(conn)
+        ensure_kvan_links_link_created_at(conn)
         with conn.cursor() as cur:
             ph = ",".join(["%s"] * len(urls))
             cur.execute(
                 f"""
-                SELECT kvan_link, agency_id, internal_session_id, title
+                SELECT kvan_link, agency_id, internal_session_id, title, link_created_at, captured_at
                 FROM kvan_links WHERE kvan_link IN ({ph})
                 """,
                 tuple(urls),

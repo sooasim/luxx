@@ -228,6 +228,7 @@ def init_db() -> None:
                 CREATE TABLE IF NOT EXISTS kvan_links (
                   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                   captured_at DATETIME NOT NULL,
+                  link_created_at DATETIME NULL DEFAULT NULL,
                   title VARCHAR(255) DEFAULT '',
                   amount BIGINT DEFAULT 0,
                   ttl_label VARCHAR(100) DEFAULT '',
@@ -303,6 +304,26 @@ def init_db() -> None:
             try:
                 cur.execute(
                     "ALTER TABLE kvan_links ADD COLUMN internal_session_id VARCHAR(64) DEFAULT ''"
+                )
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    """
+                    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'kvan_links'
+                      AND COLUMN_NAME = 'link_created_at'
+                    """
+                )
+                if not (cur.fetchall() or []):
+                    cur.execute(
+                        "ALTER TABLE kvan_links ADD COLUMN link_created_at DATETIME NULL DEFAULT NULL"
+                    )
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    "UPDATE kvan_links SET link_created_at = captured_at WHERE link_created_at IS NULL"
                 )
             except Exception:
                 pass
@@ -549,19 +570,22 @@ def _hq_enrich_kvan_links_for_admin(kvan_links: list, agencies: list) -> list[di
         r["_title_short"] = (r.get("title") or r.get("product_name") or "-") or "-"
         kl = (r.get("kvan_link") or "") or ""
         r["_link_preview"] = (kl[:72] + "…") if len(kl) > 72 else kl
+        lc = r.get("link_created_at")
+        ca = r.get("captured_at")
+        r["_created_display"] = lc or ca or "-"
         out.append(r)
     return out
 
 
 def _hq_purge_old_kvan_links(conn, days: int = 3) -> None:
-    """캡처 시각 기준 N일 지난 kvan_links 자동 삭제."""
+    """생성시각(link_created_at) 우선, 없으면 캡처 시각 기준 N일 지난 kvan_links 자동 삭제."""
     try:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 DELETE FROM kvan_links
-                WHERE captured_at IS NOT NULL
-                  AND captured_at < DATE_SUB(NOW(), INTERVAL %s DAY)
+                WHERE COALESCE(link_created_at, captured_at) IS NOT NULL
+                  AND COALESCE(link_created_at, captured_at) < DATE_SUB(NOW(), INTERVAL %s DAY)
                 """,
                 (days,),
             )
@@ -2905,7 +2929,7 @@ def admin():
             try:
                 cur.execute(
                     """
-                    SELECT captured_at, title, amount, ttl_label, status, kvan_link, raw_text
+                    SELECT link_created_at, captured_at, title, amount, ttl_label, status, kvan_link, raw_text
                     FROM kvan_links
                     WHERE kvan_link IS NOT NULL AND TRIM(kvan_link) <> ''
                       AND COALESCE(NULLIF(TRIM(agency_id), ''), '') = ''
@@ -2916,7 +2940,7 @@ def admin():
                           AND COALESCE(status, '') NOT LIKE '%취소 가능%'
                         )
                       )
-                    ORDER BY captured_at DESC
+                    ORDER BY COALESCE(link_created_at, captured_at) DESC, id DESC
                     LIMIT 200
                     """
                 )
@@ -2925,7 +2949,7 @@ def admin():
                 try:
                     cur.execute(
                         """
-                        SELECT captured_at, title, amount, ttl_label, status, kvan_link, raw_text
+                        SELECT link_created_at, captured_at, title, amount, ttl_label, status, kvan_link, raw_text
                         FROM kvan_links
                         WHERE kvan_link IS NOT NULL AND TRIM(kvan_link) <> ''
                           AND NOT (
@@ -2935,7 +2959,7 @@ def admin():
                               AND COALESCE(status, '') NOT LIKE '%취소 가능%'
                             )
                           )
-                        ORDER BY captured_at DESC
+                        ORDER BY COALESCE(link_created_at, captured_at) DESC, id DESC
                         LIMIT 200
                         """
                     )
@@ -2954,6 +2978,7 @@ def admin():
                     r.get("title"), r.get("amount")
                 )
                 r["status_display"] = _admin_kvan_status_display(r)
+                r["_created_display"] = r.get("link_created_at") or r.get("captured_at") or "-"
                 recent_links.append(r)
             try:
                 cur.execute(
@@ -3563,13 +3588,13 @@ def admin():
                   <i class="fa-solid fa-database text-sky-300 text-xs"></i>
                   K-VAN 링크 DB 요약 (최근 10건)
                 </div>
-                <div class="box-schema">본사(<code>agency_id</code> 없음) <code>kvan_links</code> 최근 10건 — 대행사 코드·MID 등은 표시하지 않습니다.</div>
+                <div class="box-schema">본사(<code>agency_id</code> 없음) <code>kvan_links</code> 최근 10건 — 표시 시각은 <code>link_created_at</code> 우선(없으면 <code>captured_at</code>).</div>
                 {% if recent_links %}
-                  <div style="max-height:200px; overflow-y:auto; font-size:11px; margin-top:4px;">
+                  <div style="max-height:min(50vh,420px); overflow-y:auto; font-size:11px; margin-top:4px;">
                     <table class="table-sticky" style="width:100%; border-collapse:collapse;">
                       <thead>
                         <tr style="border-bottom:1px solid rgba(148,163,184,0.4);">
-                          <th style="padding:3px 4px; text-align:left;">생성시각</th>
+                          <th style="padding:3px 4px; text-align:left;">생성시간</th>
                           <th style="padding:3px 4px; text-align:left;">제목</th>
                           <th style="padding:3px 4px; text-align:right;">금액</th>
                           <th style="padding:3px 4px; text-align:left;">상태</th>
@@ -3579,7 +3604,7 @@ def admin():
                       <tbody>
                         {% for l in recent_links %}
                         <tr style="border-bottom:1px dashed rgba(55,65,81,0.8);">
-                          <td style="padding:3px 4px; font-size:10px;">{{ l.captured_at }}</td>
+                          <td style="padding:3px 4px; font-size:10px;">{{ l._created_display }}</td>
                           <td style="padding:3px 4px;">{{ l.title }}</td>
                           <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(l.amount_display or 0) }}원</td>
                           <td style="padding:3px 4px;">{{ l.status_display }}</td>
@@ -4278,7 +4303,12 @@ def hq_admin():
         conn = get_db()
         _hq_purge_old_kvan_links(conn, days=3)
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM kvan_links ORDER BY captured_at DESC")
+            cur.execute(
+                """
+                SELECT * FROM kvan_links
+                ORDER BY COALESCE(link_created_at, captured_at) DESC, id DESC
+                """
+            )
             kvan_links = cur.fetchall()
         conn.close()
     except Exception as e:
@@ -5089,9 +5119,9 @@ def hq_admin():
                 <a href="{{ url_for('hq_export_excel', scope='kvan_links') }}" class="px-3 py-1 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/25">엑셀</a>
               </div>
             </div>
-            <div class="box-schema"><code>kvan_links</code>: 링크 생성 시 <code>agency_id</code>·<code>internal_session_id</code>·KEY 가 DB에 시드되고, 크롤러는 <code>TRUNCATE</code> 없이 병합 갱신합니다. 소유 표시는 DB <code>agency_id</code> 및 <code>admin_state</code> 대조(MID 미사용). 배포 후에도 반영이 없으면 Railway 재시작·최신 커밋 배포를 확인하세요.</div>
+                <div class="box-schema"><code>kvan_links</code>: <code>link_created_at</code>은 링크가 DB에 처음 들어온 시각(재크롤 시 유지), <code>captured_at</code>은 마지막 스냅샷 갱신 시각입니다. 소유(본사/대행사)는 DB <code>agency_id</code> 및 <code>admin_state</code> 대조(MID 미사용). 크롤러는 <code>TRUNCATE</code> 없이 병합 갱신합니다.</div>
             {% if kvan_links_display %}
-            <div class="overflow-x-auto max-h-[min(60vh,400px)] overflow-y-auto border border-white/20 rounded-xl">
+            <div class="overflow-x-auto max-h-[min(85vh,720px)] overflow-y-auto border border-white/20 rounded-xl">
               <table class="min-w-full text-[11px] border-collapse">
                 <thead class="text-white/70 bg-black/40 sticky top-0 z-10">
                   <tr>
@@ -5104,7 +5134,7 @@ def hq_admin():
                     <th class="px-2 py-1.5 text-right border-b border-white/15">금액</th>
                     <th class="px-2 py-1.5 text-left border-b border-white/15">제목</th>
                     <th class="px-2 py-1.5 text-left border-b border-white/15">상태</th>
-                    <th class="px-2 py-1.5 text-left border-b border-white/15">캡처</th>
+                    <th class="px-2 py-1.5 text-left border-b border-white/15">생성시간</th>
                     <th class="px-2 py-1.5 text-left border-b border-white/15">링크</th>
                     <th class="px-2 py-1.5 text-center border-b border-white/15">삭제</th>
                   </tr>
@@ -5129,7 +5159,7 @@ def hq_admin():
                     <td class="px-2 py-1.5 text-right text-amber-200 whitespace-nowrap">{{ row._amount_int }} 원</td>
                     <td class="px-2 py-1.5 max-w-[200px] truncate text-white/90" title="{{ row._title_short }}">{{ row._title_short }}</td>
                     <td class="px-2 py-1.5 text-white/70">{{ row.get('status') or '-' }}</td>
-                    <td class="px-2 py-1.5 text-white/55 whitespace-nowrap">{{ row.get('captured_at') or '-' }}</td>
+                    <td class="px-2 py-1.5 text-white/55 whitespace-nowrap">{{ row._created_display }}</td>
                     <td class="px-2 py-1.5 font-mono text-[9px] text-blue-200/90 max-w-[220px] truncate">
                       {% if row.get('kvan_link') %}
                       <a href="{{ row.kvan_link }}" target="_blank" rel="noopener" class="underline hover:text-white">{{ row._link_preview }}</a>
@@ -6262,7 +6292,12 @@ def hq_export_excel():
         try:
             conn = get_db()
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM kvan_links ORDER BY captured_at DESC")
+                cur.execute(
+                    """
+                    SELECT * FROM kvan_links
+                    ORDER BY COALESCE(link_created_at, captured_at) DESC, id DESC
+                    """
+                )
                 rows = cur.fetchall()
             conn.close()
         except Exception:

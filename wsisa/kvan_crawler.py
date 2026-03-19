@@ -39,6 +39,7 @@ from typing import Optional, List, Dict, Any
 import pymysql
 from kvan_link_common import (
     ensure_kvan_links_internal_session_column,
+    ensure_kvan_links_link_created_at,
     load_kvan_link_preserved_by_url,
     parse_amount_won,
     upsert_kvan_link_creation_seed,
@@ -682,6 +683,7 @@ class KVStore:
                 CREATE TABLE IF NOT EXISTS kvan_links (
                   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                   captured_at DATETIME NOT NULL,
+                  link_created_at DATETIME NULL DEFAULT NULL,
                   title VARCHAR(255) DEFAULT '',
                   amount BIGINT DEFAULT 0,
                   ttl_label VARCHAR(100) DEFAULT '',
@@ -797,6 +799,26 @@ class KVStore:
                     )
             except Exception:
                 pass
+            try:
+                cur.execute(
+                    """
+                    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'kvan_links'
+                      AND COLUMN_NAME = 'link_created_at'
+                    """
+                )
+                if not (cur.fetchall() or []):
+                    cur.execute(
+                        "ALTER TABLE kvan_links ADD COLUMN link_created_at DATETIME NULL DEFAULT NULL"
+                    )
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    "UPDATE kvan_links SET link_created_at = captured_at WHERE link_created_at IS NULL"
+                )
+            except Exception:
+                pass
         conn.commit()
         conn.close()
 
@@ -823,6 +845,7 @@ class KVStore:
         preserved = load_kvan_link_preserved_by_url(new_urls)
         conn = get_db()
         ensure_kvan_links_internal_session_column(conn)
+        ensure_kvan_links_link_created_at(conn)
         with conn.cursor() as cur:
             ph = ",".join(["%s"] * len(new_urls))
             cur.execute(
@@ -841,6 +864,7 @@ class KVStore:
                     prev.get("internal_session_id") or ""
                 ).strip()
                 title = (row.get("title") or "").strip() or (prev.get("title") or "").strip()
+                link_created_at = prev.get("link_created_at")
                 amount = row.get("amount", 0)
                 try:
                     ai = int(amount)
@@ -857,12 +881,13 @@ class KVStore:
                 cur.execute(
                     """
                     INSERT INTO kvan_links (
-                      captured_at, title, amount, ttl_label, status,
+                      captured_at, link_created_at, title, amount, ttl_label, status,
                       kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                     )
-                    VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    VALUES (NOW(), IFNULL(%s, NOW()), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """,
                     (
+                        link_created_at,
                         title,
                         ai,
                         row.get("ttl_label", ""),
@@ -886,7 +911,7 @@ class KVStore:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, captured_at, title, amount, ttl_label, status,
+                SELECT id, captured_at, link_created_at, title, amount, ttl_label, status,
                        kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                 FROM kvan_links
                 ORDER BY id DESC

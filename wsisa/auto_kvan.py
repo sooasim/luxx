@@ -1683,6 +1683,7 @@ def _ensure_kvan_links_table() -> None:
                 CREATE TABLE IF NOT EXISTS kvan_links (
                   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                   captured_at DATETIME NOT NULL,
+                  link_created_at DATETIME NULL DEFAULT NULL,
                   title VARCHAR(255) DEFAULT '',
                   amount BIGINT DEFAULT 0,
                   ttl_label VARCHAR(100) DEFAULT '',
@@ -1705,6 +1706,26 @@ def _ensure_kvan_links_table() -> None:
             try:
                 cur.execute(
                     "ALTER TABLE kvan_links ADD COLUMN internal_session_id VARCHAR(64) DEFAULT ''"
+                )
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    """
+                    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'kvan_links'
+                      AND COLUMN_NAME = 'link_created_at'
+                    """
+                )
+                if not (cur.fetchall() or []):
+                    cur.execute(
+                        "ALTER TABLE kvan_links ADD COLUMN link_created_at DATETIME NULL DEFAULT NULL"
+                    )
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    "UPDATE kvan_links SET link_created_at = captured_at WHERE link_created_at IS NULL"
                 )
             except Exception:
                 pass
@@ -1885,12 +1906,13 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                     )
 
                     cur.execute(
-                        "SELECT agency_id, internal_session_id FROM kvan_links WHERE kvan_link = %s LIMIT 1",
+                        "SELECT agency_id, internal_session_id, link_created_at FROM kvan_links WHERE kvan_link = %s LIMIT 1",
                         (link_text,),
                     )
                     prev_kl = cur.fetchone() or {}
                     pres_ag = (prev_kl.get("agency_id") or "").strip()
                     pres_int = (prev_kl.get("internal_session_id") or "").strip()
+                    pres_lc = prev_kl.get("link_created_at")
                     if not row_agency_id and pres_ag:
                         row_agency_id = pres_ag
                     internal_sid = pres_int
@@ -1904,6 +1926,7 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                         """
                         INSERT INTO kvan_links (
                           captured_at,
+                          link_created_at,
                           title,
                           amount,
                           ttl_label,
@@ -1915,9 +1938,10 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                           internal_session_id,
                           raw_text
                         )
-                        VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        VALUES (NOW(), IFNULL(%s, NOW()), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                         """,
                         (
+                            pres_lc,
                             title,
                             amount,
                             ttl_label,
@@ -1998,22 +2022,24 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                                 status = "만료"
                         row_agency_fb = (_get_agency_id_for_session(sid) or "").strip()
                         cur.execute(
-                            "SELECT agency_id, internal_session_id FROM kvan_links WHERE kvan_link = %s LIMIT 1",
+                            "SELECT agency_id, internal_session_id, link_created_at FROM kvan_links WHERE kvan_link = %s LIMIT 1",
                             (link_text,),
                         )
                         prev_fb = cur.fetchone() or {}
                         if not row_agency_fb:
                             row_agency_fb = (prev_fb.get("agency_id") or "").strip()
                         internal_fb = (prev_fb.get("internal_session_id") or "").strip() or _lookup_internal_session_id_for_kvan_key(sid)
+                        pres_lc_fb = prev_fb.get("link_created_at")
                         cur.execute("DELETE FROM kvan_links WHERE kvan_link = %s", (link_text,))
                         cur.execute(
                             """
                             INSERT INTO kvan_links (
-                              captured_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
+                              captured_at, link_created_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                             )
-                            VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            VALUES (NOW(), IFNULL(%s, NOW()), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                             """,
                             (
+                                pres_lc_fb,
                                 title,
                                 amount,
                                 ttl_label,
