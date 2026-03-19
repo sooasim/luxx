@@ -21,8 +21,7 @@ from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 import pymysql
 
-# 링크 생성 속도 최적화: 대기 시간 배율 (1.0=기본, 0.5=약 2배 빠름). 에러 시 1.0으로 올려서 사용.
-LINK_CREATION_WAIT_FACTOR = 0.5
+# 링크 생성 속도 배율은 아래 _is_server_env() 정의 이후 LINK_CREATION_WAIT_FACTOR 로 설정한다.
 
 # 웹 어드민에서 볼 수 있는 간단한 로그 파일 (HQ 어드민에서 tail 형태로 노출)
 # auto_kvan.py 는 /app/wsisa/ 에 위치하므로 parent.parent = /app
@@ -63,6 +62,34 @@ def _is_server_env() -> bool:
         or s in truthy
         or k in truthy
     )
+
+
+def _read_link_creation_wait_factor_env() -> float:
+    """환경변수만 읽은 기본 배율 (서버 추가 배율 적용 전)."""
+    try:
+        return float(
+            os.environ.get(
+                "K_VAN_LINK_CREATION_WAIT_FACTOR",
+                os.environ.get("LINK_CREATION_WAIT_FACTOR", "0.45"),
+            )
+        )
+    except (TypeError, ValueError):
+        return 0.45
+
+
+def _compute_link_creation_wait_factor() -> float:
+    """
+    링크 생성 대기 배율 (낮을수록 대기 짧음).
+    서버 환경에서는 기본적으로 20% 더 빠르게(×0.8) 동작한다.
+    """
+    base = _read_link_creation_wait_factor_env()
+    if _is_server_env():
+        base *= 0.8
+    return max(0.15, min(1.5, base))
+
+
+# 링크 생성 속도: 대기 시간 배율. 에러·미검출 시 환경변수로 1.0~0.8 권장.
+LINK_CREATION_WAIT_FACTOR = _compute_link_creation_wait_factor()
 
 
 def _step_start(label: str) -> float:
@@ -1668,10 +1695,17 @@ def _ensure_kvan_links_table() -> None:
                   kvan_link VARCHAR(512) DEFAULT '',
                   mid VARCHAR(100) DEFAULT '',
                   kvan_session_id VARCHAR(100) DEFAULT '',
+                  agency_id VARCHAR(64) DEFAULT '',
                   raw_text TEXT
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
                 """
             )
+            try:
+                cur.execute(
+                    "ALTER TABLE kvan_links ADD COLUMN agency_id VARCHAR(64) DEFAULT ''"
+                )
+            except Exception:
+                pass
         conn.commit()
         conn.close()
     except Exception as e:
@@ -1828,6 +1862,19 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                                 resolved_session_id = m.group(1)
                                 break
 
+                    sid_ag = (resolved_session_id or "").strip()
+                    if not sid_ag:
+                        m = re.search(r"(KEY[0-9A-Za-z]+)", str(kvan_session_id or ""))
+                        if m:
+                            sid_ag = m.group(1)
+                    if not sid_ag and link_text:
+                        m2 = re.search(r"(KEY[0-9A-Za-z]+)", link_text, re.IGNORECASE)
+                        if m2:
+                            sid_ag = m2.group(1)
+                    row_agency_id = (
+                        (_get_agency_id_for_session(sid_ag) or "").strip() if sid_ag else ""
+                    )
+
                     # 동일 링크가 매 사이클 누적 저장되지 않도록 기존 행을 제거 후 최신 스냅샷 저장
                     cur.execute("DELETE FROM kvan_links WHERE kvan_link = %s", (link_text,))
 
@@ -1842,9 +1889,10 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                           kvan_link,
                           mid,
                           kvan_session_id,
+                          agency_id,
                           raw_text
                         )
-                        VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s)
+                        VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s)
                         """,
                         (
                             title,
@@ -1854,6 +1902,7 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                             link_text,
                             mid,
                             resolved_session_id or kvan_session_id,
+                            row_agency_id,
                             card_text,
                         ),
                     )
@@ -1919,15 +1968,26 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                             expire_at = _extract_expire_at_from_lines(lines)
                             if expire_at is not None and expire_at < _kvan_now():
                                 status = "만료"
+                        row_agency_fb = (_get_agency_id_for_session(sid) or "").strip()
                         cur.execute("DELETE FROM kvan_links WHERE kvan_link = %s", (link_text,))
                         cur.execute(
                             """
                             INSERT INTO kvan_links (
-                              captured_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id, raw_text
+                              captured_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id, agency_id, raw_text
                             )
-                            VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s)
+                            VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                             """,
-                            (title, amount, ttl_label, status, link_text, mid, sid, row_text),
+                            (
+                                title,
+                                amount,
+                                ttl_label,
+                                status,
+                                link_text,
+                                mid,
+                                sid,
+                                row_agency_fb,
+                                row_text,
+                            ),
                         )
                         inserted += 1
                         try:

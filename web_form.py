@@ -5,7 +5,7 @@ import re
 import time
 from typing import List
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse, urlunparse
 from datetime import datetime, timedelta
 import os
 from io import BytesIO
@@ -235,6 +235,7 @@ def init_db() -> None:
                   kvan_link VARCHAR(512) DEFAULT '',
                   mid VARCHAR(100) DEFAULT '',
                   kvan_session_id VARCHAR(100) DEFAULT '',
+                  agency_id VARCHAR(64) DEFAULT '',
                   raw_text TEXT
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                 """
@@ -291,6 +292,12 @@ def init_db() -> None:
                 pass
             try:
                 cur.execute("ALTER TABLE transactions ADD COLUMN kvan_registered_at VARCHAR(50)")
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    "ALTER TABLE kvan_links ADD COLUMN agency_id VARCHAR(64) DEFAULT ''"
+                )
             except Exception:
                 pass
         conn.commit()
@@ -370,52 +377,152 @@ def _hq_load_admin_state_json() -> dict:
     return {"sessions": [], "history": []}
 
 
-def _hq_link_matches_session(link: str, key_or_sid: str) -> bool:
-    """admin_state의 kvan_link와 세션 키(KEY…) / sessionId 매칭 (auto_kvan과 유사)."""
-    link = (link or "").strip()
-    key = (key_or_sid or "").strip()
-    if not key or not link:
+def _hq_link_matches_kvan_session_id(link: str, session_id: str) -> bool:
+    """
+    auto_kvan / kvan_crawler 의 _link_matches_kvan_session_id 와 동일 규칙.
+    (URL 인코딩, sessionId 쿼리, /p/KEY…, KEY 토큰, 접두 생략 변형까지 대조)
+    """
+    if not link or not session_id:
         return False
-    if key in link:
-        return True
-    uk, ul = unquote(key), unquote(link)
-    if uk in ul or key in ul:
+    sid = str(session_id).strip()
+    link_raw = link.strip()
+    if not sid or not link_raw:
+        return False
+    sid_l = sid.lower()
+    link_l = link_raw.lower()
+
+    def _eq(a: str, b: str) -> bool:
+        aa = unquote(str(a).strip())
+        bb = unquote(str(b).strip())
+        return aa == bb or aa.lower() == bb.lower()
+
+    if sid in link_raw or sid_l in link_l:
         return True
     try:
-        q = parse_qs(urlparse(link).query)
-        for sid in (q.get("sessionId") or []) + (q.get("sessionid") or []):
-            if sid and (key in sid or sid in key):
+        q = parse_qs(urlparse(link_raw).query)
+        for v in q.get("sessionId") or []:
+            if _eq(v, sid):
+                return True
+        for v in q.get("sessionid") or []:
+            if _eq(v, sid):
                 return True
     except Exception:
         pass
+    for pat in (
+        r"sessionId=(KEY[^&]+?)&type=KEYED",
+        r"sessionid=(KEY[^&]+?)&type=KEYED",
+        r"sessionId=(KEY[^&]+?)(?:&|$)",
+    ):
+        m = re.search(pat, link_raw, re.IGNORECASE)
+        if m and _eq(m.group(1), sid):
+            return True
+    m = re.search(r"/p/(KEY[A-Za-z0-9]+)", link_raw, re.IGNORECASE)
+    if m and _eq(m.group(1), sid):
+        return True
+    for tok in re.findall(r"KEY[A-Za-z0-9]+", link_raw, re.IGNORECASE):
+        if _eq(tok, sid):
+            return True
+    if sid_l.startswith("key") and len(sid_l) > 3:
+        suffix = sid_l[3:]
+        for tok in re.findall(r"KEY([A-Za-z0-9]+)", link_raw, re.IGNORECASE):
+            if tok.lower() == suffix:
+                return True
+    elif not sid_l.startswith("key") and re.match(r"^[A-Za-z0-9]+$", sid):
+        for tok in re.findall(r"KEY([A-Za-z0-9]+)", link_raw, re.IGNORECASE):
+            if tok.lower() == sid_l:
+                return True
     return False
+
+
+def _hq_collect_session_keys_from_row(row: dict) -> list[str]:
+    """kvan_links 한 행에서 admin_state 와 대조할 세션 키 후보 (중복 제거)."""
+    out: list[str] = []
+    link = (row.get("kvan_link") or "").strip()
+    ks = (row.get("kvan_session_id") or "").strip()
+    if ks:
+        out.append(ks)
+        m = re.search(r"(KEY[0-9A-Za-z]+)", ks)
+        if m and m.group(1) not in out:
+            out.append(m.group(1))
+    if link:
+        for tok in re.findall(r"KEY[0-9A-Za-z]+", link, re.IGNORECASE):
+            if tok not in out:
+                out.append(tok)
+        try:
+            q = parse_qs(urlparse(link).query)
+            for v in (q.get("sessionId") or []) + (q.get("sessionid") or []):
+                vv = unquote((v or "").strip())
+                if vv and vv not in out:
+                    out.append(vv)
+        except Exception:
+            pass
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for k in out:
+        k = (k or "").strip()
+        if not k or k in seen:
+            continue
+        seen.add(k)
+        uniq.append(k)
+    return uniq
+
+
+def _hq_agency_label_from_row_db(row: dict, agency_by_id: dict) -> str | None:
+    """kvan_links.agency_id 가 있으면 업체명/본사 라벨."""
+    aid = str(row.get("agency_id") or "").strip()
+    if not aid:
+        return None
+    if aid in agency_by_id:
+        return str(agency_by_id[aid].get("company_name") or aid)
+    return aid
 
 
 def _hq_kvan_link_owner_display(
     row: dict,
     admin_st: dict,
     agency_by_id: dict,
+    mid_to_company: dict[str, str],
 ) -> str:
-    """결제링크 행의 소유 표시: 대행사 업체명 또는 본사 / 미매칭."""
+    """결제링크 행의 소유 표시: DB agency_id → admin_state 세션/id/링크 대조 → MID 폴백."""
+    db_label = _hq_agency_label_from_row_db(row, agency_by_id)
+    if db_label:
+        return db_label
+
     link = (row.get("kvan_link") or "").strip()
-    ks = (row.get("kvan_session_id") or "").strip()
-    key = ks
-    if not key and link:
-        m = re.search(r"(KEY[A-Za-z0-9]+)", link)
-        if m:
-            key = m.group(1)
+    keys = _hq_collect_session_keys_from_row(row)
     combined = (admin_st.get("sessions") or []) + (admin_st.get("history") or [])
+
+    def _fmt_session(s: dict) -> str:
+        aid = str(s.get("agency_id") or "").strip()
+        if aid and aid in agency_by_id:
+            return str(agency_by_id[aid].get("company_name") or aid)
+        if not aid:
+            return "본사"
+        return aid
+
     for s in combined:
+        sid = str(s.get("id") or "").strip()
+        for key in keys:
+            if sid and key and sid == key:
+                return _fmt_session(s)
         s_link = (s.get("kvan_link") or "").strip()
-        if not s_link:
-            continue
-        if key and _hq_link_matches_session(s_link, key):
-            aid = str(s.get("agency_id") or "").strip()
-            if aid and aid in agency_by_id:
-                return str(agency_by_id[aid].get("company_name") or aid)
-            if not aid:
-                return "본사"
-            return aid
+        for key in keys:
+            if s_link and key and _hq_link_matches_kvan_session_id(s_link, key):
+                return _fmt_session(s)
+        if link and sid and _hq_link_matches_kvan_session_id(link, sid):
+            return _fmt_session(s)
+
+    # MID 텍스트 줄에서 숫자/문자 MID 추출 후 agencies.kvan_mid 매칭
+    mid_raw = (row.get("mid") or "").strip()
+    if mid_raw and mid_to_company:
+        tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9._-]{3,}", mid_raw)
+        for t in tokens:
+            if t in mid_to_company:
+                return mid_to_company[t]
+        compact = re.sub(r"\s+", "", mid_raw)
+        for km, name in mid_to_company.items():
+            if km and km in compact:
+                return name
     return "미매칭"
 
 
@@ -424,10 +531,30 @@ def _hq_enrich_kvan_links_for_admin(kvan_links: list, agencies: list) -> list[di
     agency_by_id = {
         str(ag.get("id")): ag for ag in agencies if ag.get("id") is not None
     }
+    mid_to_company: dict[str, str] = {}
+    for ag in agencies:
+        km = (ag.get("kvan_mid") or "").strip()
+        if not km:
+            continue
+        name = str(ag.get("company_name") or ag.get("id") or km)
+        mid_to_company[km] = name
+        if ":" in km:
+            mid_to_company[km.split(":", 1)[-1].strip()] = name
     out: list[dict] = []
     for row in kvan_links:
         r = dict(row)
-        r["_owner_display"] = _hq_kvan_link_owner_display(r, admin_st, agency_by_id)
+        r["_owner_display"] = _hq_kvan_link_owner_display(
+            r, admin_st, agency_by_id, mid_to_company
+        )
+        keys = _hq_collect_session_keys_from_row(r)
+        r["_session_key_display"] = keys[0] if keys else (r.get("kvan_session_id") or "-")
+        ow = r["_owner_display"]
+        if ow == "본사":
+            r["_kind_display"] = "본사"
+        elif ow == "미매칭":
+            r["_kind_display"] = "미확인"
+        else:
+            r["_kind_display"] = "대행사"
         amt = r.get("amount")
         try:
             r["_amount_int"] = int(amt) if amt is not None and str(amt).strip() != "" else 0
@@ -455,6 +582,63 @@ def _hq_purge_old_kvan_links(conn, days: int = 3) -> None:
         conn.commit()
     except Exception as e:  # noqa: BLE001
         print(f"[WARN] kvan_links 자동 삭제(보관 {days}일) 실패: {e}")
+
+
+def _normalize_kvan_payment_url(url: str) -> str:
+    """동일 결제 링크 비교용 (스킴/호스트 소문자, 경로 끝 슬래시 정리)."""
+    u = (url or "").strip()
+    if not u:
+        return ""
+    try:
+        p = urlparse(u)
+        scheme = (p.scheme or "https").lower()
+        netloc = (p.netloc or "").lower()
+        path = (p.path or "").rstrip("/") or "/"
+        query = p.query or ""
+        return urlunparse((scheme, netloc, path, "", query, ""))
+    except Exception:
+        return u.strip().lower()
+
+
+def _admin_kvan_row_amount_display(title: str | None, raw_amt) -> int:
+    """
+    kvan_links.amount 가 OCR/파싱 오류로 비정상(수십억)일 때 제목 텍스트의 N원 패턴으로 보정.
+    """
+    try:
+        a = int(raw_amt or 0)
+    except (TypeError, ValueError):
+        a = 0
+    tit = title or ""
+    found: list[int] = []
+    for m in re.finditer(r"([\d,，\s]+)\s*원", tit):
+        try:
+            v = int(re.sub(r"[^\d]", "", m.group(1)))
+            if v > 0:
+                found.append(v)
+        except ValueError:
+            continue
+    reasonable = [v for v in found if 0 < v <= 100_000_000]
+    if reasonable:
+        return reasonable[-1]
+    if a > 100_000_000 and found:
+        return min(found)
+    if a > 100_000_000:
+        return 0
+    return max(0, a)
+
+
+def _admin_kvan_status_display(row: dict) -> str:
+    st = (row.get("status") or "").strip()
+    if st:
+        return st
+    tl = (row.get("ttl_label") or "").strip()
+    if tl:
+        return (tl[:120] + "…") if len(tl) > 120 else tl
+    rt = row.get("raw_text") or ""
+    for token in ("사용중", "사용 중", "대기", "만료", "완료", "취소", "결제완료"):
+        if token in rt:
+            return token
+    return "확인중"
 
 
 def _load_payment_notifications(agency_id: str | None = None) -> list[dict]:
@@ -2725,19 +2909,20 @@ def admin():
             except Exception as _e:
                 _append_hq_log("WEB", f"[AUTO-HEAL][WARN] 주문 JSON 재생성 실패 session_id={sid}: {_e}")
 
-    # 크롤러가 생성한 DB 기반 정보 (참고용 요약)
+    # 크롤러가 생성한 DB 기반 정보 (참고용 요약) + 본사 전용 kvan_links 맵(진행 세션과 동기화)
     recent_links: list[dict] = []
     recent_tx: list[dict] = []
+    hq_link_by_norm: dict[str, dict] = {}
     try:
         conn = get_db()
         with conn.cursor() as cur:
             try:
-                # 삭제/만료/취소 상태는 최근 DB 요약에서 제외(어드민에서 혼동 방지)
                 cur.execute(
                     """
-                    SELECT captured_at, title, amount, ttl_label, status, kvan_link
+                    SELECT captured_at, title, amount, ttl_label, status, kvan_link, raw_text
                     FROM kvan_links
-                    WHERE kvan_link IS NOT NULL AND kvan_link != ''
+                    WHERE kvan_link IS NOT NULL AND TRIM(kvan_link) <> ''
+                      AND COALESCE(NULLIF(TRIM(agency_id), ''), '') = ''
                       AND NOT (
                         COALESCE(status, '') LIKE '%만료%'
                         OR (
@@ -2746,12 +2931,44 @@ def admin():
                         )
                       )
                     ORDER BY captured_at DESC
-                    LIMIT 10
+                    LIMIT 200
                     """
                 )
-                recent_links = cur.fetchall()
+                hq_rows = cur.fetchall() or []
             except Exception:
-                recent_links = []
+                try:
+                    cur.execute(
+                        """
+                        SELECT captured_at, title, amount, ttl_label, status, kvan_link, raw_text
+                        FROM kvan_links
+                        WHERE kvan_link IS NOT NULL AND TRIM(kvan_link) <> ''
+                          AND NOT (
+                            COALESCE(status, '') LIKE '%만료%'
+                            OR (
+                              COALESCE(status, '') LIKE '%취소%'
+                              AND COALESCE(status, '') NOT LIKE '%취소 가능%'
+                            )
+                          )
+                        ORDER BY captured_at DESC
+                        LIMIT 200
+                        """
+                    )
+                    hq_rows = cur.fetchall() or []
+                except Exception:
+                    hq_rows = []
+            for row in hq_rows:
+                r = dict(row)
+                kn = _normalize_kvan_payment_url(r.get("kvan_link") or "")
+                if kn and kn not in hq_link_by_norm:
+                    hq_link_by_norm[kn] = r
+            recent_links = []
+            for row in (hq_rows or [])[:10]:
+                r = dict(row)
+                r["amount_display"] = _admin_kvan_row_amount_display(
+                    r.get("title"), r.get("amount")
+                )
+                r["status_display"] = _admin_kvan_status_display(r)
+                recent_links.append(r)
             try:
                 cur.execute(
                     """
@@ -2767,6 +2984,26 @@ def admin():
         conn.close()
     except Exception as e:  # noqa: BLE001
         print(f"[WARN] /admin DB 요약 조회 실패: {e}")
+
+    # 진행 중(결제중) 세션: K-VAN DB 에 링크가 없으면(삭제됨) 목록에서 제외. 표시는 DB 스냅샷과 동일 필드 사용.
+    active_sessions_synced: list[dict] = []
+    for s in active_sessions:
+        kl = (s.get("kvan_link") or "").strip()
+        if not kl:
+            active_sessions_synced.append(dict(s))
+            continue
+        nk = _normalize_kvan_payment_url(kl)
+        dbrow = hq_link_by_norm.get(nk)
+        if not dbrow:
+            continue
+        sc = dict(s)
+        sc["_kv_title"] = (dbrow.get("title") or "").strip()
+        sc["_kv_amount"] = _admin_kvan_row_amount_display(
+            dbrow.get("title"), dbrow.get("amount")
+        )
+        sc["_kv_status"] = _admin_kvan_status_display(dbrow)
+        active_sessions_synced.append(sc)
+    active_sessions = active_sessions_synced
 
     # /admin 페이지에서는 이제 K-VAN 연동용 거래/링크 리스트를 표시하지 않는다.
 
@@ -3171,7 +3408,7 @@ def admin():
                     </button>
                   </form>
                 </div>
-                <div class="box-schema"><code>admin_state.sessions</code> (진행 중 = 결제중만 표시)</div>
+                <div class="box-schema"><code>kvan_links</code>와 동기화: 링크가 DB에서 삭제되면 목록에서 제외. 금액·상태·제목은 DB 스냅샷과 동일.</div>
                 {% if active_sessions %}
                   {% for s in active_sessions %}
                     <div style="margin:8px 0; padding:10px 11px; border-radius:12px; background:#020617; border:1px solid #111827;">
@@ -3179,9 +3416,21 @@ def admin():
                         <span class="status-label">세션 ID</span>
                         <span class="status-value">{{ s.id }}</span>
                       </div>
+                      {% if s.get('_kv_title') %}
+                      <div class="status-row">
+                        <span class="status-label">제목 (K-VAN)</span>
+                        <span class="status-value" style="font-size:11px;">{{ s._kv_title }}</span>
+                      </div>
+                      {% endif %}
                       <div class="status-row">
                         <span class="status-label">결제금액</span>
-                        <span class="status-value">{{ s.amount or '고정 안 됨' }}</span>
+                        <span class="status-value">
+                          {% if '_kv_amount' in s %}
+                            {{ "{:,}".format(s._kv_amount) }}원
+                          {% else %}
+                            {{ s.amount or '고정 안 됨' }}
+                          {% endif %}
+                        </span>
                       </div>
                       <div class="status-row">
                         <span class="status-label">할부개월</span>
@@ -3191,6 +3440,9 @@ def admin():
                         <span class="status-label">상태</span>
                         <span class="status-value">
                           <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#065f46;color:#a7f3d0;border:1px solid #047857;">결제중</span>
+                          {% if s.get('_kv_status') %}
+                          <span style="margin-left:6px;font-size:11px;color:#cbd5e1;">· {{ s._kv_status }}</span>
+                          {% endif %}
                         </span>
                       </div>
                       {% if s.status == '만료' %}
@@ -3325,7 +3577,7 @@ def admin():
                   <i class="fa-solid fa-database text-sky-300 text-xs"></i>
                   K-VAN 링크 DB 요약 (최근 10건)
                 </div>
-                <div class="box-schema"><code>kvan_links</code> 항목: <code>captured_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id</code></div>
+                <div class="box-schema">본사(<code>agency_id</code> 없음) <code>kvan_links</code> 최근 10건 — 대행사 코드·MID 등은 표시하지 않습니다.</div>
                 {% if recent_links %}
                   <div style="max-height:200px; overflow-y:auto; font-size:11px; margin-top:4px;">
                     <table class="table-sticky" style="width:100%; border-collapse:collapse;">
@@ -3343,8 +3595,8 @@ def admin():
                         <tr style="border-bottom:1px dashed rgba(55,65,81,0.8);">
                           <td style="padding:3px 4px; font-size:10px;">{{ l.captured_at }}</td>
                           <td style="padding:3px 4px;">{{ l.title }}</td>
-                          <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(l.amount or 0) }} 원</td>
-                          <td style="padding:3px 4px;">{{ l.status }}</td>
+                          <td style="padding:3px 4px; text-align:right;">{{ "{:,}".format(l.amount_display or 0) }}원</td>
+                          <td style="padding:3px 4px;">{{ l.status_display }}</td>
                           <td style="padding:3px 4px; font-size:10px; word-break:break-all;">
                             {{ l.kvan_link }}
                           </td>
@@ -4851,7 +5103,7 @@ def hq_admin():
                 <a href="{{ url_for('hq_export_excel', scope='kvan_links') }}" class="px-3 py-1 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/25">엑셀</a>
               </div>
             </div>
-            <div class="box-schema"><code>kvan_links</code> 표시: <code>소유(업체/본사), 금액, title, status, captured_at, kvan_link</code> · 캡처 3일 초과 분은 페이지 로드 시 자동 삭제</div>
+            <div class="box-schema"><code>kvan_links</code>: 세션 KEY·구분(본사/대행사)·소유(업체명)은 <code>agency_id</code> DB값 + <code>admin_state</code> 세션/id/URL 대조 + MID 매칭. 캡처 3일 초과 행은 로드 시 삭제.</div>
             {% if kvan_links_display %}
             <div class="overflow-x-auto max-h-[min(60vh,400px)] overflow-y-auto border border-white/20 rounded-xl">
               <table class="min-w-full text-[11px] border-collapse">
@@ -4860,7 +5112,9 @@ def hq_admin():
                     <th class="px-2 py-1.5 text-center border-b border-white/15 w-8">
                       <input type="checkbox" title="전체" onclick="document.querySelectorAll('.kvan-lnk-chk').forEach(function(c){c.checked=this.checked;}.bind(this));" />
                     </th>
-                    <th class="px-2 py-1.5 text-left border-b border-white/15">소유</th>
+                    <th class="px-2 py-1.5 text-left border-b border-white/15">세션(KEY)</th>
+                    <th class="px-2 py-1.5 text-center border-b border-white/15">구분</th>
+                    <th class="px-2 py-1.5 text-left border-b border-white/15">소유(업체명)</th>
                     <th class="px-2 py-1.5 text-right border-b border-white/15">금액</th>
                     <th class="px-2 py-1.5 text-left border-b border-white/15">제목</th>
                     <th class="px-2 py-1.5 text-left border-b border-white/15">상태</th>
@@ -4875,9 +5129,19 @@ def hq_admin():
                     <td class="px-2 py-1.5 text-center">
                       <input type="checkbox" class="kvan-lnk-chk" form="formBulkKvanLinks" name="link_ids" value="{{ row.get('id') or '' }}" />
                     </td>
+                    <td class="px-2 py-1.5 font-mono text-[9px] text-cyan-200/90 max-w-[140px] truncate" title="{{ row._session_key_display }}">{{ row._session_key_display }}</td>
+                    <td class="px-2 py-1.5 text-center">
+                      {% if row._kind_display == '본사' %}
+                      <span class="px-1.5 py-0.5 rounded bg-sky-500/25 text-sky-200 text-[9px]">본사</span>
+                      {% elif row._kind_display == '대행사' %}
+                      <span class="px-1.5 py-0.5 rounded bg-violet-500/25 text-violet-200 text-[9px]">대행사</span>
+                      {% else %}
+                      <span class="px-1.5 py-0.5 rounded bg-white/10 text-white/60 text-[9px]">미확인</span>
+                      {% endif %}
+                    </td>
                     <td class="px-2 py-1.5 text-emerald-200/90 font-medium whitespace-nowrap max-w-[120px] truncate" title="{{ row._owner_display }}">{{ row._owner_display }}</td>
                     <td class="px-2 py-1.5 text-right text-amber-200 whitespace-nowrap">{{ row._amount_int }} 원</td>
-                    <td class="px-2 py-1.5 max-w-[200px] truncate text-white/90" title="{{ row._title_short }}"><span class="text-white/50">[{{ row._owner_display }}]</span> {{ row._title_short }}</td>
+                    <td class="px-2 py-1.5 max-w-[200px] truncate text-white/90" title="{{ row._title_short }}">{{ row._title_short }}</td>
                     <td class="px-2 py-1.5 text-white/70">{{ row.get('status') or '-' }}</td>
                     <td class="px-2 py-1.5 text-white/55 whitespace-nowrap">{{ row.get('captured_at') or '-' }}</td>
                     <td class="px-2 py-1.5 font-mono text-[9px] text-blue-200/90 max-w-[220px] truncate">

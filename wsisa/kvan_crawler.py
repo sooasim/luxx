@@ -668,6 +668,7 @@ class KVStore:
                   kvan_link VARCHAR(512) DEFAULT '',
                   mid VARCHAR(100) DEFAULT '',
                   kvan_session_id VARCHAR(100) DEFAULT '',
+                  agency_id VARCHAR(64) DEFAULT '',
                   raw_text TEXT
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
                 """
@@ -744,6 +745,22 @@ class KVStore:
             except Exception:
                 # 컬럼 추가가 실패해도 기존 로직이 최소 동작은 하도록 무시
                 pass
+            try:
+                cur.execute(
+                    """
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'kvan_links'
+                      AND COLUMN_NAME = 'agency_id'
+                    """
+                )
+                if not (cur.fetchall() or []):
+                    cur.execute(
+                        "ALTER TABLE kvan_links ADD COLUMN agency_id VARCHAR(64) DEFAULT ''"
+                    )
+            except Exception:
+                pass
         conn.commit()
         conn.close()
 
@@ -760,9 +777,9 @@ class KVStore:
                     """
                     INSERT INTO kvan_links (
                       captured_at, title, amount, ttl_label, status,
-                      kvan_link, mid, kvan_session_id, raw_text
+                      kvan_link, mid, kvan_session_id, agency_id, raw_text
                     )
-                    VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s)
+                    VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """,
                     (
                         row.get("title", ""),
@@ -772,6 +789,7 @@ class KVStore:
                         row.get("kvan_link", ""),
                         row.get("mid", ""),
                         row.get("kvan_session_id", ""),
+                        (row.get("agency_id") or "").strip(),
                         row.get("raw_text", ""),
                     ),
                 )
@@ -787,7 +805,7 @@ class KVStore:
             cur.execute(
                 """
                 SELECT id, captured_at, title, amount, ttl_label, status,
-                       kvan_link, mid, kvan_session_id, raw_text
+                       kvan_link, mid, kvan_session_id, agency_id, raw_text
                 FROM kvan_links
                 ORDER BY id DESC
                 """
@@ -2297,6 +2315,13 @@ def _parse_link_card(card) -> Optional[dict]:
     if not kvan_link and session_id:
         kvan_link = f"https://store.k-van.app/p/{session_id}?sessionId={session_id}&type=KEYED"
 
+    aid = ""
+    try:
+        got = _get_agency_id_for_session(session_id)
+        aid = (got or "").strip()
+    except Exception:
+        aid = ""
+
     return {
         "captured_at": datetime.utcnow().isoformat(),
         "title": title,
@@ -2306,6 +2331,7 @@ def _parse_link_card(card) -> Optional[dict]:
         "kvan_link": kvan_link,
         "mid": mid,
         "kvan_session_id": session_id,
+        "agency_id": aid,
         "raw_text": card_text,
     }
 
