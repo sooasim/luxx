@@ -1150,6 +1150,9 @@ def _parse_amount(text: str) -> int:
 def _scrape_dashboard_and_store(driver: webdriver.Chrome) -> None:
     """로그인 후 대시보드 화면에서 매출 요약 정보를 크롤링하여 DB에 저장.
 
+    운영 크롤러(kvan_crawler.py run_crawler_loop)가 동일 작업을 주기적으로 수행한다.
+    링크 생성용 main() 경로에서는 호출하지 않는다.
+
     로컬 테스트 모드(LOCAL_TEST=True)에서는 DB 에 쓰지 않고 바로 리턴한다.
     """
     if LOCAL_TEST:
@@ -4490,6 +4493,8 @@ def append_transaction_to_hq(
 def main() -> None:
     """
     auto_kvan 링크 생성 메인 엔트리 (우선 목적: 결제 링크 생성).
+
+    주기적 크롤링(결제링크/거래내역/대시보드 DB)은 `kvan_crawler.py --mode crawl` 을 사용한다.
 
     - 세션 ID 또는 기본 JSON 을 읽어 K-VAN 결제 링크를 생성한다.
     - 전체 실행 시간이 30분(1800초)을 넘으면 안전하게 종료한다.

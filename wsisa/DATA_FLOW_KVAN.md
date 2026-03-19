@@ -25,10 +25,11 @@
 
 **결제 승인 팝업 동기화(매크로 내):** `transactions` INSERT/UPDATE + `payment_notifications.json` (공통 `append_payment_notification`).
 
-## 3) 크롤러 `kvan_crawler.py` — 주기 루프
+## 3) 크롤러 `kvan_crawler.py` — 주기 루프 (`python kvan_crawler.py` 기본 `--mode crawl`)
 
 | 순서 | 동작 | DB/파일 |
 |------|------|---------|
+| 0 | 로그인 직후 + `K_VAN_CRAWL_INTERVAL` 백업 주기마다 스토어 루트 대시보드 스크랩 | MySQL `kvan_dashboard` |
 | 1 | 만료·거래없음 링크 즉시 삭제 | `admin_state`, `kvan_links` |
 | 1b | 만료+거래있음 | `admin_state` history + **`expired_with_transactions.json`** |
 | 2 | `/payment-link` 스크랩 | MySQL `kvan_links` |

@@ -5,7 +5,7 @@ K-VAN 통합 실행 파일
 - 서버: Railway MySQL 사용
 - 기본 실행 모드: crawl
 - create 모드: 결제 링크 생성
-- crawl 모드: 로그인 → /payment-link → 만료+거래없음 즉시 삭제 → 링크/거래 동기화
+- crawl 모드: 로그인 → (대시보드 요약 DB) → /payment-link → 만료+거래없음 즉시 삭제 → 링크/거래 동기화
 
 스케줄(로컬/서버 동일, 환경변수로 조절):
     K_VAN_IDLE_SLEEP_SEC         장시간 대기(기본 180)
@@ -2800,6 +2800,186 @@ def _scrape_transactions_and_store(driver: webdriver.Chrome, store: KVStore) -> 
     return len(snapshot_rows)
 
 
+def _scrape_dashboard_and_store(driver: webdriver.Chrome) -> None:
+    """
+    가맹점 홈(대시보드)에서 월/전일 매출·정산·크레딧 요약을 읽어 kvan_dashboard 테이블에 INSERT.
+    (구 auto_kvan.py 에만 있던 로직 — 링크 생성 전용 main() 에서는 호출되지 않아 크롤러로 이전)
+    """
+    if _use_json_store():
+        print("[INFO] kvan_dashboard: JSON 저장소 모드 — 대시보드 DB 스킵")
+        return
+    try:
+        time.sleep(0.5)
+        wait = WebDriverWait(driver, 3)
+
+        def find_block(label_text: str):
+            try:
+                label_el = wait.until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, f"//*[normalize-space(text())='{label_text}']")
+                    )
+                )
+                return label_el.find_element(By.XPATH, "./ancestor::div[1]")
+            except TimeoutException:
+                return None
+
+        monthly_block = find_block("월 매출")
+        yesterday_block = find_block("전일 매출")
+        settlement_block = find_block("정산 예정 금액")
+        credit_block = find_block("나의 크레딧")
+
+        monthly_sales = monthly_approved_cnt = monthly_approved_amt = 0
+        monthly_canceled_cnt = monthly_canceled_amt = 0
+
+        if monthly_block:
+            try:
+                amt_el = monthly_block.find_element(By.XPATH, ".//*[contains(text(),'원')]")
+                monthly_sales = _parse_amount(amt_el.text)
+            except Exception:
+                pass
+            try:
+                approve_el = monthly_block.find_element(
+                    By.XPATH, ".//*[contains(normalize-space(text()),'승인')]/ancestor::div[1]"
+                )
+                nums = approve_el.text.splitlines()
+                if len(nums) >= 2:
+                    monthly_approved_cnt = _parse_amount(nums[0])
+                    monthly_approved_amt = _parse_amount(nums[1])
+            except Exception:
+                pass
+            try:
+                cancel_el = monthly_block.find_element(
+                    By.XPATH, ".//*[contains(normalize-space(text()),'취소')]/ancestor::div[1]"
+                )
+                nums = cancel_el.text.splitlines()
+                if len(nums) >= 2:
+                    monthly_canceled_cnt = _parse_amount(nums[0])
+                    monthly_canceled_amt = _parse_amount(nums[1])
+            except Exception:
+                pass
+
+        yesterday_sales = yesterday_approved_cnt = yesterday_approved_amt = 0
+        yesterday_canceled_cnt = yesterday_canceled_amt = 0
+        if yesterday_block:
+            try:
+                amt_el = yesterday_block.find_element(By.XPATH, ".//*[contains(text(),'원')]")
+                yesterday_sales = _parse_amount(amt_el.text)
+            except Exception:
+                pass
+            try:
+                approve_el = yesterday_block.find_element(
+                    By.XPATH, ".//*[contains(normalize-space(text()),'승인')]/ancestor::div[1]"
+                )
+                nums = approve_el.text.splitlines()
+                if len(nums) >= 2:
+                    yesterday_approved_cnt = _parse_amount(nums[0])
+                    yesterday_approved_amt = _parse_amount(nums[1])
+            except Exception:
+                pass
+            try:
+                cancel_el = yesterday_block.find_element(
+                    By.XPATH, ".//*[contains(normalize-space(text()),'취소')]/ancestor::div[1]"
+                )
+                nums = cancel_el.text.splitlines()
+                if len(nums) >= 2:
+                    yesterday_canceled_cnt = _parse_amount(nums[0])
+                    yesterday_canceled_amt = _parse_amount(nums[1])
+            except Exception:
+                pass
+
+        settlement_expected = today_settlement_expected = 0
+        if settlement_block:
+            try:
+                amt_el = settlement_block.find_element(By.XPATH, ".//*[contains(text(),'원')]")
+                settlement_expected = _parse_amount(amt_el.text)
+            except Exception:
+                pass
+            try:
+                today_el = settlement_block.find_element(
+                    By.XPATH,
+                    ".//*[contains(normalize-space(text()),'금일 정산 예정금')]/following::div[1]",
+                )
+                today_settlement_expected = _parse_amount(today_el.text)
+            except Exception:
+                pass
+
+        credit_amount = 0
+        if credit_block:
+            try:
+                amt_el = credit_block.find_element(By.XPATH, ".//*[contains(text(),'원')]")
+                credit_amount = _parse_amount(amt_el.text)
+            except Exception:
+                pass
+
+        recent_summary = ""
+        try:
+            recent_container = driver.find_element(
+                By.XPATH,
+                "//*[contains(normalize-space(text()),'최근 거래 내역')]/ancestor::section[1]",
+            )
+            recent_summary = recent_container.text.strip()
+        except Exception:
+            pass
+
+        conn = get_db()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO kvan_dashboard (
+                  captured_at,
+                  monthly_sales_amount,
+                  monthly_approved_count,
+                  monthly_approved_amount,
+                  monthly_canceled_count,
+                  monthly_canceled_amount,
+                  yesterday_sales_amount,
+                  yesterday_approved_count,
+                  yesterday_approved_amount,
+                  yesterday_canceled_count,
+                  yesterday_canceled_amount,
+                  settlement_expected_amount,
+                  today_settlement_expected_amount,
+                  credit_amount,
+                  recent_tx_summary
+                )
+                VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    monthly_sales,
+                    monthly_approved_cnt,
+                    monthly_approved_amt,
+                    monthly_canceled_cnt,
+                    monthly_canceled_amt,
+                    yesterday_sales,
+                    yesterday_approved_cnt,
+                    yesterday_approved_amt,
+                    yesterday_canceled_cnt,
+                    yesterday_canceled_amt,
+                    settlement_expected,
+                    today_settlement_expected,
+                    credit_amount,
+                    recent_summary,
+                ),
+            )
+        conn.commit()
+        conn.close()
+        print("[INFO] 대시보드 요약을 kvan_dashboard 에 저장했습니다.")
+        _alog("대시보드 요약 kvan_dashboard 저장")
+    except Exception as e:
+        print(f"[WARN] 대시보드 크롤링/DB 저장 실패: {e}")
+        _alog(f"[WARN] 대시보드 크롤링 실패: {e}")
+
+
+def _dashboard_home_and_scrape(driver: webdriver.Chrome) -> None:
+    """스토어 루트로 이동 후 대시보드 스크랩. 이후 호출측에서 /payment-link 로 복귀."""
+    try:
+        driver.get(SIGN_IN_URL)
+        time.sleep(0.6)
+        _scrape_dashboard_and_store(driver)
+    except Exception as e:
+        _alog(f"[WARN] 대시보드 홈 이동/스크랩: {e}")
+
+
 # =========================================================
 # 팝업 / 삭제
 # =========================================================
@@ -3351,6 +3531,9 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
         print("[crawler] 로그인 완료. 주기 크롤링 루프 시작.")
         _alog("로그인 완료. 주기 크롤링 루프 시작")
 
+        # 로그인 직후 1회: 대시보드 매출 요약 → kvan_dashboard (본사 HQ 스키마와 동일)
+        _dashboard_home_and_scrape(driver)
+
         if _go_to_payment_link(driver):
             try:
                 deleted_boot = _delete_expired_no_tx_links_fast(driver, store, max_delete=FAST_DELETE_PER_PASS)
@@ -3512,6 +3695,12 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
                 print(f"[crawler] 백업 주기({backup_interval}s) 도달 - 정상 동작 확인")
                 _alog(f"백업 주기({backup_interval}s) 도달 - 정상 동작")
                 last_backup_ts = now_ts
+                try:
+                    _dashboard_home_and_scrape(driver)
+                    if not _go_to_payment_link(driver):
+                        _alog("[WARN] 백업 주기 후 /payment-link 복귀 실패")
+                except Exception as e_dash:
+                    _alog(f"[WARN] 백업 주기 대시보드 스크랩: {e_dash}")
 
         return 0
 
