@@ -37,6 +37,12 @@ from urllib.parse import urlparse, parse_qs, unquote
 from typing import Optional, List, Dict, Any
 
 import pymysql
+from kvan_link_common import (
+    ensure_kvan_links_internal_session_column,
+    load_kvan_link_preserved_by_url,
+    parse_amount_won,
+    upsert_kvan_link_creation_seed,
+)
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -276,6 +282,21 @@ def _get_agency_id_for_session(session_id: str) -> Optional[str]:
         return None
     except Exception:
         return None
+
+
+def _lookup_internal_session_id_for_kvan_key(kvan_key: str) -> str:
+    kk = (kvan_key or "").strip()
+    if not kk:
+        return ""
+    try:
+        st = _load_admin_state()
+        for s in (st.get("sessions") or []) + (st.get("history") or []):
+            link = (s.get("kvan_link") or "").strip()
+            if link and _link_matches_kvan_session_id(link, kk):
+                return str(s.get("id") or "").strip()
+        return ""
+    except Exception:
+        return ""
 
 
 def _session_order_path_candidates(session_id: str) -> list[Path]:
@@ -669,6 +690,7 @@ class KVStore:
                   mid VARCHAR(100) DEFAULT '',
                   kvan_session_id VARCHAR(100) DEFAULT '',
                   agency_id VARCHAR(64) DEFAULT '',
+                  internal_session_id VARCHAR(64) DEFAULT '',
                   raw_text TEXT
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
                 """
@@ -761,6 +783,20 @@ class KVStore:
                     )
             except Exception:
                 pass
+            try:
+                cur.execute(
+                    """
+                    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'kvan_links'
+                      AND COLUMN_NAME = 'internal_session_id'
+                    """
+                )
+                if not (cur.fetchall() or []):
+                    cur.execute(
+                        "ALTER TABLE kvan_links ADD COLUMN internal_session_id VARCHAR(64) DEFAULT ''"
+                    )
+            except Exception:
+                pass
         conn.commit()
         conn.close()
 
@@ -769,27 +805,73 @@ class KVStore:
             _json_save_rows("kvan_links", rows)
             return
 
+        if not rows:
+            print(
+                "[INFO] /payment-link 스냅샷 0건 — kvan_links 는 건드리지 않습니다(빈 응답으로 DB 초기화 방지)."
+            )
+            return
+
+        new_urls: list[str] = []
+        for r in rows:
+            u = (r.get("kvan_link") or "").strip()
+            if u:
+                new_urls.append(u)
+        if not new_urls:
+            print("[WARN] kvan_links 병합: 유효한 kvan_link 가 없어 DB 를 변경하지 않습니다.")
+            return
+
+        preserved = load_kvan_link_preserved_by_url(new_urls)
         conn = get_db()
+        ensure_kvan_links_internal_session_column(conn)
         with conn.cursor() as cur:
-            cur.execute("TRUNCATE TABLE kvan_links")
+            ph = ",".join(["%s"] * len(new_urls))
+            cur.execute(
+                f"DELETE FROM kvan_links WHERE kvan_link NOT IN ({ph})",
+                tuple(new_urls),
+            )
             for row in rows:
+                link = (row.get("kvan_link") or "").strip()
+                if not link:
+                    continue
+                prev = preserved.get(link, {})
+                agency_id = (row.get("agency_id") or "").strip() or (
+                    prev.get("agency_id") or ""
+                ).strip()
+                internal_session_id = (row.get("internal_session_id") or "").strip() or (
+                    prev.get("internal_session_id") or ""
+                ).strip()
+                title = (row.get("title") or "").strip() or (prev.get("title") or "").strip()
+                amount = row.get("amount", 0)
+                try:
+                    ai = int(amount)
+                except (TypeError, ValueError):
+                    ai = 0
+                if ai <= 0:
+                    try:
+                        pi = int(prev.get("amount") or 0)
+                        if pi > 0:
+                            ai = pi
+                    except (TypeError, ValueError):
+                        pass
+                cur.execute("DELETE FROM kvan_links WHERE kvan_link = %s", (link,))
                 cur.execute(
                     """
                     INSERT INTO kvan_links (
                       captured_at, title, amount, ttl_label, status,
-                      kvan_link, mid, kvan_session_id, agency_id, raw_text
+                      kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                     )
-                    VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """,
                     (
-                        row.get("title", ""),
-                        row.get("amount", 0),
+                        title,
+                        ai,
                         row.get("ttl_label", ""),
                         row.get("status", ""),
-                        row.get("kvan_link", ""),
+                        link,
                         row.get("mid", ""),
                         row.get("kvan_session_id", ""),
-                        (row.get("agency_id") or "").strip(),
+                        agency_id,
+                        internal_session_id,
                         row.get("raw_text", ""),
                     ),
                 )
@@ -805,7 +887,7 @@ class KVStore:
             cur.execute(
                 """
                 SELECT id, captured_at, title, amount, ttl_label, status,
-                       kvan_link, mid, kvan_session_id, agency_id, raw_text
+                       kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                 FROM kvan_links
                 ORDER BY id DESC
                 """
@@ -1510,12 +1592,7 @@ def _safe_text(el) -> str:
 
 
 def _parse_amount(text: str) -> int:
-    text = (text or "").replace("원", "").replace(",", "").strip()
-    digits = re.sub(r"[^\d-]", "", text)
-    try:
-        return int(digits) if digits else 0
-    except Exception:
-        return 0
+    return parse_amount_won(text or "")
 
 
 def _card_prefix4(card_number: str) -> str:
@@ -2217,6 +2294,7 @@ try {
 def _store_kvan_link_for_session(session_id: str, link: str) -> None:
     if not session_id or not link:
         return
+    session_blob: Optional[dict] = None
     try:
         state = _load_admin_state()
         updated = False
@@ -2224,10 +2302,20 @@ def _store_kvan_link_for_session(session_id: str, link: str) -> None:
             if str(s.get("id")) == str(session_id):
                 s["kvan_link"] = link
                 updated = True
+                session_blob = dict(s)
                 break
         if updated:
             _save_admin_state(state)
             _append_admin_log("AUTO", f"admin_state 링크 저장 완료 session_id={session_id}")
+            try:
+                upsert_kvan_link_creation_seed(
+                    link,
+                    str(session_id),
+                    session_blob or {},
+                    skip_db=LOCAL_TEST,
+                )
+            except Exception as e_seed:
+                _append_admin_log("AUTO", f"[WARN] kvan_links 시드 실패: {e_seed}")
     except Exception as e:
         print(f"[WARN] admin_state 링크 저장 실패: {e}")
 
@@ -2278,7 +2366,18 @@ def _parse_link_card(card) -> Optional[dict]:
     if not session_id:
         return None
 
-    title = lines[0] if lines else ""
+    title = ""
+    for ln in lines:
+        if "상호명" in ln:
+            title = ln
+            break
+    if not title:
+        for ln in lines:
+            if "상품명" in ln:
+                title = ln
+                break
+    if not title:
+        title = lines[0] if lines else ""
     amount = 0
     ttl_label = ""
     status = ""
@@ -2321,6 +2420,7 @@ def _parse_link_card(card) -> Optional[dict]:
         aid = (got or "").strip()
     except Exception:
         aid = ""
+    internal_sid = _lookup_internal_session_id_for_kvan_key(session_id)
 
     return {
         "captured_at": datetime.utcnow().isoformat(),
@@ -2332,6 +2432,7 @@ def _parse_link_card(card) -> Optional[dict]:
         "mid": mid,
         "kvan_session_id": session_id,
         "agency_id": aid,
+        "internal_session_id": internal_sid,
         "raw_text": card_text,
     }
 

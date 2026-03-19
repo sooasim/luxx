@@ -21,6 +21,12 @@ from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 import pymysql
 
+from kvan_link_common import (
+    extract_kvan_session_key_from_url,
+    parse_amount_won,
+    upsert_kvan_link_creation_seed,
+)
+
 # 링크 생성 속도 배율은 아래 _is_server_env() 정의 이후 LINK_CREATION_WAIT_FACTOR 로 설정한다.
 
 # 웹 어드민에서 볼 수 있는 간단한 로그 파일 (HQ 어드민에서 tail 형태로 노출)
@@ -90,6 +96,11 @@ def _compute_link_creation_wait_factor() -> float:
 
 # 링크 생성 속도: 대기 시간 배율. 에러·미검출 시 환경변수로 1.0~0.8 권장.
 LINK_CREATION_WAIT_FACTOR = _compute_link_creation_wait_factor()
+
+
+def _expired_debug(msg: str) -> None:
+    if str(os.environ.get("K_VAN_EXPIRED_DEBUG", "")).strip().lower() in ("1", "true", "yes", "y"):
+        print(msg)
 
 
 def _step_start(label: str) -> float:
@@ -1129,11 +1140,7 @@ def create_driver(headless: bool | None = None) -> webdriver.Chrome:
 
 
 def _parse_amount(text: str) -> int:
-    text = (text or "").replace("원", "").replace(",", "").strip()
-    try:
-        return int(text) if text else 0
-    except ValueError:
-        return 0
+    return parse_amount_won(text or "")
 
 
 def _scrape_dashboard_and_store(driver: webdriver.Chrome) -> None:
@@ -1696,6 +1703,7 @@ def _ensure_kvan_links_table() -> None:
                   mid VARCHAR(100) DEFAULT '',
                   kvan_session_id VARCHAR(100) DEFAULT '',
                   agency_id VARCHAR(64) DEFAULT '',
+                  internal_session_id VARCHAR(64) DEFAULT '',
                   raw_text TEXT
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
                 """
@@ -1703,6 +1711,12 @@ def _ensure_kvan_links_table() -> None:
             try:
                 cur.execute(
                     "ALTER TABLE kvan_links ADD COLUMN agency_id VARCHAR(64) DEFAULT ''"
+                )
+            except Exception:
+                pass
+            try:
+                cur.execute(
+                    "ALTER TABLE kvan_links ADD COLUMN internal_session_id VARCHAR(64) DEFAULT ''"
                 )
             except Exception:
                 pass
@@ -1809,15 +1823,22 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
 
                     card_text = container.text.strip()
 
-                    # 제목/상품명: 첫 줄 또는 '상품명' 이라는 단어가 포함된 줄
+                    # 제목: 상호명(가맹점) → 상품명 → 첫 줄 (K-VAN UI 기준)
                     lines = [ln.strip() for ln in card_text.splitlines() if ln.strip()]
-                    title = lines[0] if lines else ""
+                    title = ""
                     for ln in lines:
-                        if "상품명" in ln:
+                        if "상호명" in ln:
                             title = ln
                             break
+                    if not title:
+                        for ln in lines:
+                            if "상품명" in ln:
+                                title = ln
+                                break
+                    if not title:
+                        title = lines[0] if lines else ""
 
-                    # 금액: '원' 이 포함된 숫자
+                    # 금액: '원' 포함 줄에서 숫자 추출 (라벨/복수 금액 대응)
                     amount = 0
                     for ln in lines:
                         if "원" in ln:
@@ -1875,6 +1896,19 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                         (_get_agency_id_for_session(sid_ag) or "").strip() if sid_ag else ""
                     )
 
+                    cur.execute(
+                        "SELECT agency_id, internal_session_id FROM kvan_links WHERE kvan_link = %s LIMIT 1",
+                        (link_text,),
+                    )
+                    prev_kl = cur.fetchone() or {}
+                    pres_ag = (prev_kl.get("agency_id") or "").strip()
+                    pres_int = (prev_kl.get("internal_session_id") or "").strip()
+                    if not row_agency_id and pres_ag:
+                        row_agency_id = pres_ag
+                    internal_sid = pres_int
+                    if not internal_sid and sid_ag:
+                        internal_sid = _lookup_internal_session_id_for_kvan_key(sid_ag)
+
                     # 동일 링크가 매 사이클 누적 저장되지 않도록 기존 행을 제거 후 최신 스냅샷 저장
                     cur.execute("DELETE FROM kvan_links WHERE kvan_link = %s", (link_text,))
 
@@ -1890,9 +1924,10 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                           mid,
                           kvan_session_id,
                           agency_id,
+                          internal_session_id,
                           raw_text
                         )
-                        VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                         """,
                         (
                             title,
@@ -1903,12 +1938,13 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                             mid,
                             resolved_session_id or kvan_session_id,
                             row_agency_id,
+                            internal_sid,
                             card_text,
                         ),
                     )
                     inserted += 1
                     if (status or "").strip() == "만료":
-                        print(f"[EXPIRED_DEBUG] 스크래핑: kvan_links INSERT status='만료' (kvan_session_id={resolved_session_id or kvan_session_id or ''})")
+                        _expired_debug(f"[EXPIRED_DEBUG] 스크래핑: kvan_links INSERT status='만료' (kvan_session_id={resolved_session_id or kvan_session_id or ''})")
 
                     # 크롤링으로 새로 얻은 링크를 admin_state.json 에도 즉시 반영
                     # (sessionId 가 있으면 세션 ID 기준으로 우선 매칭)
@@ -1954,7 +1990,9 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                         ttl_label = ""
                         mid = ""
                         for ln in lines:
-                            if not title and "원" in ln:
+                            if not title and "상호명" in ln:
+                                title = ln
+                            if not title and "상품명" in ln:
                                 title = ln
                             if not amount and "원" in ln:
                                 amount = _parse_amount(ln) or 0
@@ -1964,18 +2002,28 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                                 status = _extract_status_from_link_lines([ln])
                             if not mid and "MID" in ln.upper():
                                 mid = ln
+                        if not title:
+                            title = lines[0] if lines else ""
                         if "만료" not in (status or ""):
                             expire_at = _extract_expire_at_from_lines(lines)
                             if expire_at is not None and expire_at < _kvan_now():
                                 status = "만료"
                         row_agency_fb = (_get_agency_id_for_session(sid) or "").strip()
+                        cur.execute(
+                            "SELECT agency_id, internal_session_id FROM kvan_links WHERE kvan_link = %s LIMIT 1",
+                            (link_text,),
+                        )
+                        prev_fb = cur.fetchone() or {}
+                        if not row_agency_fb:
+                            row_agency_fb = (prev_fb.get("agency_id") or "").strip()
+                        internal_fb = (prev_fb.get("internal_session_id") or "").strip() or _lookup_internal_session_id_for_kvan_key(sid)
                         cur.execute("DELETE FROM kvan_links WHERE kvan_link = %s", (link_text,))
                         cur.execute(
                             """
                             INSERT INTO kvan_links (
-                              captured_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id, agency_id, raw_text
+                              captured_at, title, amount, ttl_label, status, kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                             )
-                            VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                            VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                             """,
                             (
                                 title,
@@ -1986,6 +2034,7 @@ def _scrape_payment_links_and_store(driver: webdriver.Chrome) -> None:
                                 mid,
                                 sid,
                                 row_agency_fb,
+                                internal_fb,
                                 row_text,
                             ),
                         )
@@ -2109,12 +2158,12 @@ def mark_expired_sessions_from_kvan_links() -> None:
     - admin_state 의 진행중 세션은 즉시 제거하고, history에
       status='만료', deleted_in_kvan=True 로 남긴다.
     """
-    print("[EXPIRED_DEBUG] mark_expired_sessions_from_kvan_links 진입")
+    _expired_debug("[EXPIRED_DEBUG] mark_expired_sessions_from_kvan_links 진입")
     for attempt in range(1, 4):
         conn = None
         try:
             conn = _get_db_with_retry()
-            print(f"[EXPIRED_DEBUG] DB 연결 성공 (attempt={attempt})")
+            _expired_debug(f"[EXPIRED_DEBUG] DB 연결 성공 (attempt={attempt})")
             expired_urls: set[str] = set()
             # 만료+거래있음 세션은 삭제 제외 (어드민 알림용으로 유지)
             excluded_sids: set[str] = set()
@@ -2127,7 +2176,7 @@ def mark_expired_sessions_from_kvan_links() -> None:
                             excluded_sids.add(sid)
                 except Exception:
                     pass
-            print(f"[EXPIRED_DEBUG] 제외 세션(만료+거래있음) 수: {len(excluded_sids)}, sid_sample={list(excluded_sids)[:3]}")
+            _expired_debug(f"[EXPIRED_DEBUG] 제외 세션(만료+거래있음) 수: {len(excluded_sids)}, sid_sample={list(excluded_sids)[:3]}")
 
             with conn.cursor() as cur:
                 cur.execute(
@@ -2138,7 +2187,7 @@ def mark_expired_sessions_from_kvan_links() -> None:
                     """,
                 )
                 rows = cur.fetchall() or []
-            print(f"[EXPIRED_DEBUG] kvan_links 전체 행 수: {len(rows)}")
+            _expired_debug(f"[EXPIRED_DEBUG] kvan_links 전체 행 수: {len(rows)}")
             for i, row in enumerate(rows):
                 url = (row.get("kvan_link") or "").strip()
                 status_text = str(row.get("status") or "").strip()
@@ -2146,20 +2195,20 @@ def mark_expired_sessions_from_kvan_links() -> None:
                 is_exp = _is_expired_link_status(status_text)
                 in_excl = sid in excluded_sids
                 if i < 5:
-                    print(f"[EXPIRED_DEBUG]   row[{i}] status={repr(status_text)}, sid={sid[:24] if sid else ''}..., is_expired={is_exp}, excluded={in_excl}")
+                    _expired_debug(f"[EXPIRED_DEBUG]   row[{i}] status={repr(status_text)}, sid={sid[:24] if sid else ''}..., is_expired={is_exp}, excluded={in_excl}")
                 if url and is_exp and not in_excl:
                     expired_urls.add(url)
             if len(rows) > 5:
-                print(f"[EXPIRED_DEBUG]   ... 외 {len(rows)-5}건 (동일 조건으로 expired_urls 집합에 반영)")
-            print(f"[EXPIRED_DEBUG] 만료로 판별된 URL 수(expired_urls): {len(expired_urls)}, sample={list(expired_urls)[:2]}")
+                _expired_debug(f"[EXPIRED_DEBUG]   ... 외 {len(rows)-5}건 (동일 조건으로 expired_urls 집합에 반영)")
+            _expired_debug(f"[EXPIRED_DEBUG] 만료로 판별된 URL 수(expired_urls): {len(expired_urls)}, sample={list(expired_urls)[:2]}")
             if not expired_urls:
-                print("[EXPIRED_DEBUG] expired_urls 비어 있음 → 삭제할 대상 없음, return")
+                _expired_debug("[EXPIRED_DEBUG] expired_urls 비어 있음 → 삭제할 대상 없음, return")
                 conn.close()
                 return
             st = _load_admin_state()
             sessions = list(st.get("sessions") or [])
             history = list(st.get("history") or [])
-            print(f"[EXPIRED_DEBUG] admin_state sessions 수: {len(sessions)}, history 수: {len(history)}")
+            _expired_debug(f"[EXPIRED_DEBUG] admin_state sessions 수: {len(sessions)}, history 수: {len(history)}")
             remaining_sessions: list[dict] = []
             removed_count = 0
             now_iso = datetime.utcnow().isoformat()
@@ -2169,7 +2218,7 @@ def mark_expired_sessions_from_kvan_links() -> None:
                 if link and link in expired_urls:
                     removed_count += 1
                     if removed_count <= 3:
-                        print(f"[EXPIRED_DEBUG]   admin_state 매칭 제거 session_id={s.get('id')}, link_len={len(link)}")
+                        _expired_debug(f"[EXPIRED_DEBUG]   admin_state 매칭 제거 session_id={s.get('id')}, link_len={len(link)}")
                     sid = str(s.get("id") or "")
                     s["status"] = "만료"
                     s["deleted"] = True
@@ -2198,9 +2247,9 @@ def mark_expired_sessions_from_kvan_links() -> None:
                         tuple(expired_urls),
                     )
                     deleted_count = cur.rowcount
-                print(f"[EXPIRED_DEBUG] DELETE FROM kvan_links 실행 완료, 삭제된 행 수: {deleted_count}")
+                _expired_debug(f"[EXPIRED_DEBUG] DELETE FROM kvan_links 실행 완료, 삭제된 행 수: {deleted_count}")
             else:
-                print("[EXPIRED_DEBUG] expired_urls 비어 있어 DELETE 미실행")
+                _expired_debug("[EXPIRED_DEBUG] expired_urls 비어 있어 DELETE 미실행")
             conn.commit()
             conn.close()
             if removed_count:
@@ -2602,7 +2651,7 @@ def _mark_session_deleted(session_id: str, title: str) -> None:
         # 만료+거래없음 → kvan_links에서 해당 행 삭제 대상으로 표시 (status='만료' 반영 후 mark_expired_sessions_from_kvan_links가 DELETE)
         if not LOCAL_TEST and session_id:
             try:
-                print(f"[EXPIRED_DEBUG] _mark_session_deleted: 서버 모드, kvan_links UPDATE 시도 session_id={session_id[:24]}...")
+                _expired_debug(f"[EXPIRED_DEBUG] _mark_session_deleted: 서버 모드, kvan_links UPDATE 시도 session_id={session_id[:24]}...")
                 conn = _get_db_with_retry()
                 try:
                     with conn.cursor() as cur:
@@ -2616,16 +2665,16 @@ def _mark_session_deleted(session_id: str, title: str) -> None:
                         )
                         updated = cur.rowcount
                     conn.commit()
-                    print(f"[EXPIRED_DEBUG] _mark_session_deleted: kvan_links UPDATE 완료, 반영 행 수: {updated}")
+                    _expired_debug(f"[EXPIRED_DEBUG] _mark_session_deleted: kvan_links UPDATE 완료, 반영 행 수: {updated}")
                 finally:
                     conn.close()
             except Exception as e_db:
                 print(f"[WARN] _mark_session_deleted kvan_links 반영 실패: {e_db}")
         else:
             if LOCAL_TEST:
-                print(f"[EXPIRED_DEBUG] _mark_session_deleted: LOCAL_TEST=true → kvan_links UPDATE 스킵 session_id={session_id[:24] if session_id else ''}...")
+                _expired_debug(f"[EXPIRED_DEBUG] _mark_session_deleted: LOCAL_TEST=true → kvan_links UPDATE 스킵 session_id={session_id[:24] if session_id else ''}...")
             elif not session_id:
-                print("[EXPIRED_DEBUG] _mark_session_deleted: session_id 없음 → kvan_links UPDATE 스킵")
+                _expired_debug("[EXPIRED_DEBUG] _mark_session_deleted: session_id 없음 → kvan_links UPDATE 스킵")
     except Exception as e:
         print(f"[WARN] _mark_session_deleted 실패: {e}")
 
@@ -2784,6 +2833,22 @@ def _get_agency_id_for_session(session_id: str) -> str | None:
         return None
     except Exception:
         return None
+
+
+def _lookup_internal_session_id_for_kvan_key(kvan_key: str) -> str:
+    """K-VAN KEY… 에 매칭되는 admin_state 세션의 내부 id (숫자 세션 등)."""
+    kk = (kvan_key or "").strip()
+    if not kk:
+        return ""
+    try:
+        st = _load_admin_state()
+        for s in (st.get("sessions") or []) + (st.get("history") or []):
+            link = (s.get("kvan_link") or "").strip()
+            if link and _link_matches_kvan_session_id(link, kk):
+                return str(s.get("id") or "").strip()
+        return ""
+    except Exception:
+        return ""
 
 
 def _scan_payment_link_popups_and_sync(
@@ -3110,17 +3175,17 @@ return out;
                     rows = dialog.find_elements(By.XPATH, ".//table//tbody//tr")
                     if not has_no_history and len(rows) == 0:
                         has_no_history = True
-                        print(f"[EXPIRED_DEBUG] 만료 카드: tbody tr 0개 → 거래없음으로 간주 session_id={session_id[:24]}...")
+                        _expired_debug(f"[EXPIRED_DEBUG] 만료 카드: tbody tr 0개 → 거래없음으로 간주 session_id={session_id[:24]}...")
                     elif not has_no_history and rows:
                         first_row_text = (rows[0].text or "").strip()
                         if "없습니다" in first_row_text or "없음" in first_row_text:
                             has_no_history = True
-                            print(f"[EXPIRED_DEBUG] 만료 카드: 첫 행이 '없음' 문구 → 거래없음으로 간주 session_id={session_id[:24]}..., first_row={first_row_text[:60]}")
+                            _expired_debug(f"[EXPIRED_DEBUG] 만료 카드: 첫 행이 '없음' 문구 → 거래없음으로 간주 session_id={session_id[:24]}..., first_row={first_row_text[:60]}")
                     if not has_no_history:
-                        print(f"[EXPIRED_DEBUG] 만료 카드 팝업: popup_text_len={len(popup_text)}, tbody_rows={len(rows)}, has_no_history=False → 만료+거래있음 처리 session_id={session_id[:24]}...")
+                        _expired_debug(f"[EXPIRED_DEBUG] 만료 카드 팝업: popup_text_len={len(popup_text)}, tbody_rows={len(rows)}, has_no_history=False → 만료+거래있음 처리 session_id={session_id[:24]}...")
                     if has_no_history:
                         _close_dialog(driver, dialog)
-                        print(f"[EXPIRED_DEBUG] 만료+거래없음 → _mark_session_deleted 호출 session_id={session_id}, LOCAL_TEST={LOCAL_TEST}")
+                        _expired_debug(f"[EXPIRED_DEBUG] 만료+거래없음 → _mark_session_deleted 호출 session_id={session_id}, LOCAL_TEST={LOCAL_TEST}")
                         _mark_session_deleted(session_id, product_title)
                         expired_count += 1
                         _append_admin_log("CRAWLER", f"만료+거래없음 세션 삭제 session_id={session_id}")
@@ -3415,6 +3480,7 @@ def _store_kvan_link_for_session(session_id: str, link: str) -> None:
     """
     if not session_id or not link:
         return
+    session_blob: dict | None = None
     try:
         state_path: Path | None = None
         for candidate in _admin_state_candidates():
@@ -3433,6 +3499,7 @@ def _store_kvan_link_for_session(session_id: str, link: str) -> None:
             if str(s.get("id")) == str(session_id):
                 s["kvan_link"] = link
                 updated = True
+                session_blob = dict(s)
                 break
         if updated:
             state["sessions"] = sessions
@@ -3440,6 +3507,15 @@ def _store_kvan_link_for_session(session_id: str, link: str) -> None:
             with open(state_path, "w", encoding="utf-8") as f:
                 json.dump(state, f, ensure_ascii=False, indent=2)
             _append_admin_log("AUTO", f"admin_state 링크 저장 완료 session_id={session_id} path={state_path}")
+            try:
+                upsert_kvan_link_creation_seed(
+                    link,
+                    str(session_id),
+                    session_blob or {},
+                    skip_db=LOCAL_TEST,
+                )
+            except Exception as e_seed:  # noqa: BLE001
+                _append_admin_log("AUTO", f"[WARN] kvan_links 시드 DB 저장 실패: {e_seed}")
         else:
             _append_admin_log("AUTO", f"[WARN] admin_state 에서 세션 못 찾음 session_id={session_id}")
     except Exception as e:  # noqa: BLE001

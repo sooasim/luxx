@@ -300,6 +300,12 @@ def init_db() -> None:
                 )
             except Exception:
                 pass
+            try:
+                cur.execute(
+                    "ALTER TABLE kvan_links ADD COLUMN internal_session_id VARCHAR(64) DEFAULT ''"
+                )
+            except Exception:
+                pass
         conn.commit()
         conn.close()
     except Exception as e:  # noqa: BLE001
@@ -437,6 +443,9 @@ def _hq_link_matches_kvan_session_id(link: str, session_id: str) -> bool:
 def _hq_collect_session_keys_from_row(row: dict) -> list[str]:
     """kvan_links 한 행에서 admin_state 와 대조할 세션 키 후보 (중복 제거)."""
     out: list[str] = []
+    internal = (row.get("internal_session_id") or "").strip()
+    if internal:
+        out.append(internal)
     link = (row.get("kvan_link") or "").strip()
     ks = (row.get("kvan_session_id") or "").strip()
     if ks:
@@ -481,9 +490,8 @@ def _hq_kvan_link_owner_display(
     row: dict,
     admin_st: dict,
     agency_by_id: dict,
-    mid_to_company: dict[str, str],
 ) -> str:
-    """결제링크 행의 소유 표시: DB agency_id → admin_state 세션/id/링크 대조 → MID 폴백."""
+    """결제링크 행의 소유 표시: DB agency_id → admin_state 세션·내부 id·링크 대조 (MID 미사용: 동일 MID 다계정 구분 불가)."""
     db_label = _hq_agency_label_from_row_db(row, agency_by_id)
     if db_label:
         return db_label
@@ -512,17 +520,6 @@ def _hq_kvan_link_owner_display(
         if link and sid and _hq_link_matches_kvan_session_id(link, sid):
             return _fmt_session(s)
 
-    # MID 텍스트 줄에서 숫자/문자 MID 추출 후 agencies.kvan_mid 매칭
-    mid_raw = (row.get("mid") or "").strip()
-    if mid_raw and mid_to_company:
-        tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9._-]{3,}", mid_raw)
-        for t in tokens:
-            if t in mid_to_company:
-                return mid_to_company[t]
-        compact = re.sub(r"\s+", "", mid_raw)
-        for km, name in mid_to_company.items():
-            if km and km in compact:
-                return name
     return "미매칭"
 
 
@@ -531,20 +528,11 @@ def _hq_enrich_kvan_links_for_admin(kvan_links: list, agencies: list) -> list[di
     agency_by_id = {
         str(ag.get("id")): ag for ag in agencies if ag.get("id") is not None
     }
-    mid_to_company: dict[str, str] = {}
-    for ag in agencies:
-        km = (ag.get("kvan_mid") or "").strip()
-        if not km:
-            continue
-        name = str(ag.get("company_name") or ag.get("id") or km)
-        mid_to_company[km] = name
-        if ":" in km:
-            mid_to_company[km.split(":", 1)[-1].strip()] = name
     out: list[dict] = []
     for row in kvan_links:
         r = dict(row)
         r["_owner_display"] = _hq_kvan_link_owner_display(
-            r, admin_st, agency_by_id, mid_to_company
+            r, admin_st, agency_by_id
         )
         keys = _hq_collect_session_keys_from_row(r)
         r["_session_key_display"] = keys[0] if keys else (r.get("kvan_session_id") or "-")
@@ -555,11 +543,9 @@ def _hq_enrich_kvan_links_for_admin(kvan_links: list, agencies: list) -> list[di
             r["_kind_display"] = "미확인"
         else:
             r["_kind_display"] = "대행사"
-        amt = r.get("amount")
-        try:
-            r["_amount_int"] = int(amt) if amt is not None and str(amt).strip() != "" else 0
-        except (TypeError, ValueError):
-            r["_amount_int"] = 0
+        r["_amount_int"] = _admin_kvan_row_amount_display(
+            r.get("title"), r.get("amount")
+        )
         r["_title_short"] = (r.get("title") or r.get("product_name") or "-") or "-"
         kl = (r.get("kvan_link") or "") or ""
         r["_link_preview"] = (kl[:72] + "…") if len(kl) > 72 else kl
@@ -5103,7 +5089,7 @@ def hq_admin():
                 <a href="{{ url_for('hq_export_excel', scope='kvan_links') }}" class="px-3 py-1 rounded-full bg-white/10 border border-white/30 text-white hover:bg-white/25">엑셀</a>
               </div>
             </div>
-            <div class="box-schema"><code>kvan_links</code>: 세션 KEY·구분(본사/대행사)·소유(업체명)은 <code>agency_id</code> DB값 + <code>admin_state</code> 세션/id/URL 대조 + MID 매칭. 캡처 3일 초과 행은 로드 시 삭제.</div>
+            <div class="box-schema"><code>kvan_links</code>: 링크 생성 시 <code>agency_id</code>·<code>internal_session_id</code>·KEY 가 DB에 시드되고, 크롤러는 <code>TRUNCATE</code> 없이 병합 갱신합니다. 소유 표시는 DB <code>agency_id</code> 및 <code>admin_state</code> 대조(MID 미사용). 배포 후에도 반영이 없으면 Railway 재시작·최신 커밋 배포를 확인하세요.</div>
             {% if kvan_links_display %}
             <div class="overflow-x-auto max-h-[min(60vh,400px)] overflow-y-auto border border-white/20 rounded-xl">
               <table class="min-w-full text-[11px] border-collapse">
