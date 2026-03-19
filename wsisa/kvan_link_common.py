@@ -205,6 +205,134 @@ def parse_amount_won(text: str) -> int:
     return max(reasonable) if reasonable else max(candidates)
 
 
+def _norm_kvan_header(h: str) -> str:
+    return re.sub(r"\s+", " ", (h or "").replace("\n", " ").strip())
+
+
+def kvan_transactions_header_indices(headers: list[str]) -> dict[str, int]:
+    """
+    K-VAN '결제 및 취소내역' 테이블 헤더 → 컬럼 인덱스.
+    UI 변경(거래 유형 / 거래일시 등)에 대응해 복수 별칭을 둔다.
+    """
+    hnorm = [_norm_kvan_header(x) for x in headers]
+
+    def find(*subs: str) -> int:
+        for sub in subs:
+            s = sub.strip()
+            for i, h in enumerate(hnorm):
+                if s in h:
+                    return i
+        return -1
+
+    return {
+        "merchant": find("가맹점명", "가맹점", "상점명"),
+        "pg": find("PG사", "PG"),
+        "mid": find("MID"),
+        "fee": find("수수료율", "수수료"),
+        "tx_trade": find("거래 유형", "거래유형"),
+        "tx_pay": find("결제 유형", "결제유형"),
+        "amount": find("결제 금액", "결제금액"),
+        "cancel": find("취소 금액", "취소금액"),
+        "payable": find("지급예정금액", "지급 예정금액"),
+        "cardco": find("카드사"),
+        "cardno": find("카드번호"),
+        "inst": find("할부"),
+        "approval": find("승인번호", "승인 번호"),
+        "registered": find(
+            "거래일시",
+            "거래 일시",
+            "등록일",
+            "등록 일",
+            "거래일",
+        ),
+    }
+
+
+def parse_kvan_transactions_cell_amount(text: str) -> int:
+    """테이블 셀의 '20,000' / '-' / '1,000원' 형태."""
+    t = (text or "").strip()
+    if not t or t == "-":
+        return 0
+    if "원" in t:
+        return parse_amount_won(t)
+    digits = re.sub(r"[^\d]", "", t.replace(",", "").replace("，", ""))
+    if not digits:
+        return 0
+    try:
+        v = int(digits)
+        return v if 0 <= v <= 1_000_000_000_000 else 0
+    except ValueError:
+        return 0
+
+
+def kvan_transactions_row_to_snapshot(
+    headers: list[str],
+    cell_texts: list[str],
+    row_num: int,
+    *,
+    captured_iso: str,
+) -> dict | None:
+    """
+    한 행 → kvan_transactions / 크롤러 스냅샷 dict.
+    승인번호가 있거나 결제금액>0 인 행만 유효.
+    """
+    ix = kvan_transactions_header_indices(headers)
+
+    def getc(key: str) -> str:
+        i = ix.get(key, -1)
+        if i is None or i < 0:
+            return ""
+        return cell_texts[i].strip() if i < len(cell_texts) else ""
+
+    if not any((x or "").strip() for x in cell_texts):
+        return None
+
+    tx_trade = getc("tx_trade")
+    tx_pay = getc("tx_pay")
+    tx_type = (tx_trade if tx_trade and tx_trade != "-" else tx_pay) or ""
+
+    approval = getc("approval")
+    amount = parse_kvan_transactions_cell_amount(getc("amount"))
+
+    if not approval and amount <= 0:
+        return None
+
+    return {
+        "id": row_num,
+        "captured_at": captured_iso,
+        "merchant_name": getc("merchant"),
+        "pg_name": getc("pg"),
+        "mid": getc("mid"),
+        "fee_rate": getc("fee"),
+        "tx_type": tx_type,
+        "amount": amount,
+        "cancel_amount": parse_kvan_transactions_cell_amount(getc("cancel")),
+        "payable_amount": parse_kvan_transactions_cell_amount(getc("payable")),
+        "card_company": getc("cardco"),
+        "card_number": getc("cardno"),
+        "installment": getc("inst"),
+        "approval_no": approval,
+        "registered_at": getc("registered"),
+        "raw_text": " | ".join(cell_texts),
+    }
+
+
+def build_kvan_transactions_snapshots(
+    headers: list[str],
+    body_cell_rows: list[list[str]],
+    *,
+    captured_iso: str,
+) -> list[dict]:
+    out: list[dict] = []
+    for i, cells in enumerate(body_cell_rows, start=1):
+        rec = kvan_transactions_row_to_snapshot(
+            headers, cells, i, captured_iso=captured_iso
+        )
+        if rec:
+            out.append(rec)
+    return out
+
+
 def fetch_agency_company_name(agency_id: str) -> str:
     """agencies.company_name 조회. 없거나 본사면 본사."""
     aid = (agency_id or "").strip()

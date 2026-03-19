@@ -38,6 +38,7 @@ from typing import Optional, List, Dict, Any
 
 import pymysql
 from kvan_link_common import (
+    build_kvan_transactions_snapshots,
     ensure_kvan_links_internal_session_column,
     ensure_kvan_links_link_created_at,
     load_kvan_link_preserved_by_url,
@@ -1009,9 +1010,22 @@ class KVStore:
         conn.commit()
         conn.close()
 
-    def replace_kvan_transactions(self, rows: list[dict]) -> None:
+    def replace_kvan_transactions(
+        self, rows: list[dict], *, force_empty: bool = False
+    ) -> None:
+        """
+        force_empty=False 이고 rows 가 비면 TRUNCATE 하지 않는다(타임아웃·파싱 실패로 DB 전량 삭제 방지).
+        화면에 거래 0건이 확실할 때만 force_empty=True 로 빈 스냅샷을 반영한다.
+        """
         if self.use_json:
+            if not rows and not force_empty:
+                print("[INFO] kvan_transactions(json): 빈 스냅샷 무시, 이전 파일 유지")
+                return
             _json_save_rows("kvan_transactions", rows)
+            return
+
+        if not rows and not force_empty:
+            print("[INFO] kvan_transactions(MySQL): 빈 스냅샷 — TRUNCATE 생략(기존 행 유지)")
             return
 
         conn = get_db()
@@ -2597,74 +2611,109 @@ def _scrape_transactions_and_store(driver: webdriver.Chrome, store: KVStore) -> 
     else:
         driver.get("https://store.k-van.app/transactions")
 
+    def _cell_txt(s: str) -> str:
+        return re.sub(r"\s+", " ", (s or "").replace("\n", " ").strip())
+
     try:
-        WebDriverWait(driver, 6).until(EC.presence_of_element_located((By.XPATH, "//table//tbody//tr")))
+        time.sleep(0.25)
+        WebDriverWait(driver, 16).until(
+            EC.presence_of_element_located((By.XPATH, "//table//thead//th"))
+        )
+        try:
+            driver.execute_script(
+                "window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));"
+            )
+            time.sleep(0.35)
+        except Exception:
+            pass
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, "//table//tbody//tr"))
+        )
     except TimeoutException:
-        print("[INFO] /transactions 테이블이 비어 있거나 아직 렌더링되지 않았습니다.")
-        store.replace_kvan_transactions([])
+        print(
+            "[WARN] /transactions 테이블 로딩 타임아웃 — kvan_transactions 는 비우지 않고 유지합니다."
+        )
         return 0
 
-    header_cells = driver.find_elements(By.XPATH, "//table//thead//tr[1]//th")
-    headers = [h.text.strip() for h in header_cells]
+    header_rows = driver.find_elements(By.XPATH, "//table//thead//tr")
+    header_candidates: list[list[str]] = []
+    for hr in header_rows:
+        try:
+            cells = hr.find_elements(By.XPATH, ".//th|.//td")
+            txts = [_cell_txt(c.text) for c in cells if (c.text or "").strip()]
+            if txts:
+                header_candidates.append(txts)
+        except Exception:
+            continue
 
-    def idx(sub: str) -> int:
-        for i, h in enumerate(headers):
-            if sub in h:
-                return i
-        return -1
+    def _score_header_labels(txts: list[str]) -> int:
+        joined = " ".join(txts)
+        score = len(txts)
+        if "승인번호" in joined:
+            score += 80
+        if "결제 금액" in joined or "결제금액" in joined:
+            score += 40
+        if "거래일시" in joined or "등록일" in joined:
+            score += 35
+        if "거래 유형" in joined or "거래유형" in joined:
+            score += 25
+        if "MID" in joined:
+            score += 10
+        return score
 
-    idx_merchant = idx("가맹점명")
-    idx_pg = idx("PG사")
-    idx_mid = idx("MID")
-    idx_fee = idx("수수료율")
-    idx_type = idx("결제 유형")
-    idx_amt = idx("결제 금액")
-    idx_cancel = idx("취소 금액")
-    idx_payable = idx("지급예정금액")
-    idx_cardco = idx("카드사")
-    idx_cardno = idx("카드번호")
-    idx_inst = idx("할부")
-    idx_approval = idx("승인번호")
-    idx_reg = idx("등록일")
+    best_headers: list[str] = []
+    if header_candidates:
+        best_headers = max(header_candidates, key=_score_header_labels)
 
-    snapshot_rows: list[dict] = []
-    rows = driver.find_elements(By.XPATH, "//table//tbody//tr")
+    if not best_headers:
+        print("[WARN] /transactions thead 헤더를 찾지 못함 — DB 유지")
+        return 0
 
-    for i, tr in enumerate(rows, start=1):
+    print(
+        f"[INFO] /transactions 헤더 {len(best_headers)}컬럼: "
+        f"{best_headers[:min(12, len(best_headers))]}"
+        f"{'…' if len(best_headers) > 12 else ''}"
+    )
+
+    body_rows: list[list[str]] = []
+    trs = driver.find_elements(By.XPATH, "//table//tbody//tr")
+    for tr in trs:
         try:
             cells = tr.find_elements(By.XPATH, ".//td")
-            texts = [c.text.strip() for c in cells]
+            texts = [_cell_txt(c.text) for c in cells]
             if not any(texts):
                 continue
-
-            def get(i_: int) -> str:
-                return texts[i_] if 0 <= i_ < len(texts) else ""
-
-            snapshot_rows.append(
-                {
-                    "id": i,
-                    "captured_at": datetime.utcnow().isoformat(),
-                    "merchant_name": get(idx_merchant),
-                    "pg_name": get(idx_pg),
-                    "mid": get(idx_mid),
-                    "fee_rate": get(idx_fee),
-                    "tx_type": get(idx_type),
-                    "amount": _parse_amount(get(idx_amt)),
-                    "cancel_amount": _parse_amount(get(idx_cancel)),
-                    "payable_amount": _parse_amount(get(idx_payable)),
-                    "card_company": get(idx_cardco),
-                    "card_number": get(idx_cardno),
-                    "installment": get(idx_inst),
-                    "approval_no": get(idx_approval),
-                    "registered_at": get(idx_reg),
-                    "raw_text": " | ".join(texts),
-                }
-            )
+            body_rows.append(texts)
+        except StaleElementReferenceException:
+            continue
         except Exception as e_row:
-            print(f"[WARN] 거래내역 파싱 오류: {e_row}")
+            print(f"[WARN] 거래내역 행 읽기 오류: {e_row}")
+
+    captured_iso = datetime.utcnow().isoformat()
+    snapshot_rows = build_kvan_transactions_snapshots(
+        best_headers, body_rows, captured_iso=captured_iso
+    )
+
+    if not snapshot_rows and body_rows:
+        print(
+            f"[WARN] /transactions tbody {len(body_rows)}행이 있으나 유효 파싱 0건 — "
+            "헤더·열 불일치 가능. kvan_transactions DB 유지."
+        )
+        try:
+            print(f"[DEBUG] 첫 행 셀 {len(body_rows[0])}개: {body_rows[0][:10]}")
+        except Exception:
+            pass
+        return 0
+
+    if not snapshot_rows and not body_rows:
+        store.replace_kvan_transactions([], force_empty=True)
+        print("[INFO] /transactions 거래 행 0건 — kvan_transactions 비움")
+        return 0
 
     store.replace_kvan_transactions(snapshot_rows)
-    print(f"[INFO] /transactions 에서 {len(snapshot_rows)}건 저장 완료 (json={store.use_json})")
+    print(
+        f"[INFO] /transactions 에서 {len(snapshot_rows)}건 저장 완료 (json={store.use_json})"
+    )
     return len(snapshot_rows)
 
 

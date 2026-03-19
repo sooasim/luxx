@@ -22,6 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import pymysql
 
 from kvan_link_common import (
+    build_kvan_transactions_snapshots,
     extract_kvan_session_key_from_url,
     parse_amount_won,
     parse_kvan_link_ui_created_at,
@@ -1353,133 +1354,157 @@ def _ensure_kvan_transactions_table() -> None:
 def _scrape_transactions_and_store(driver: webdriver.Chrome) -> None:
     """
     K-VAN 결제/취소 거래내역 페이지(/transactions)의 테이블을 크롤링하여
-    kvan_transactions 테이블에 저장.
+    kvan_transactions 테이블에 저장 (kvan_crawler 와 동일 파싱 규칙).
     """
     if LOCAL_TEST:
         print("[LOCAL_TEST] /transactions 크롤링/DB 저장을 건너뜁니다.")
-        # 페이지 이동과 화면 구조만 빠르게 확인 (항상 실제 새로고침)
         if "transactions" in driver.current_url:
             driver.refresh()
         else:
             driver.get("https://store.k-van.app/transactions")
         return
 
+    def _cell_txt(s: str) -> str:
+        return re.sub(r"\s+", " ", (s or "").replace("\n", " ").strip())
+
     try:
         _ensure_kvan_transactions_table()
-        # 첫 방문 또는 재방문 시 항상 최신 데이터를 보도록 새로고침/이동
         if "transactions" in driver.current_url:
             driver.refresh()
         else:
             driver.get("https://store.k-van.app/transactions")
-        wait = WebDriverWait(driver, 10)
-
-        # 실제 테이블이 렌더링될 때까지 대기 (tbody > tr)
-        wait.until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//table//tbody//tr")
+        time.sleep(0.25)
+        try:
+            WebDriverWait(driver, 16).until(
+                EC.presence_of_element_located((By.XPATH, "//table//thead//th"))
             )
+            try:
+                driver.execute_script(
+                    "window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));"
+                )
+                time.sleep(0.35)
+            except Exception:
+                pass
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//table//tbody//tr"))
+            )
+        except TimeoutException:
+            print(
+                "[WARN] /transactions 테이블 로딩 타임아웃 — kvan_transactions 는 비우지 않고 유지합니다."
+            )
+            return
+
+        header_rows = driver.find_elements(By.XPATH, "//table//thead//tr")
+        header_candidates: list[list[str]] = []
+        for hr in header_rows:
+            try:
+                cells = hr.find_elements(By.XPATH, ".//th|.//td")
+                txts = [_cell_txt(c.text) for c in cells if (c.text or "").strip()]
+                if txts:
+                    header_candidates.append(txts)
+            except Exception:
+                continue
+
+        def _score_header_labels(txts: list[str]) -> int:
+            joined = " ".join(txts)
+            score = len(txts)
+            if "승인번호" in joined:
+                score += 80
+            if "결제 금액" in joined or "결제금액" in joined:
+                score += 40
+            if "거래일시" in joined or "등록일" in joined:
+                score += 35
+            if "거래 유형" in joined or "거래유형" in joined:
+                score += 25
+            if "MID" in joined:
+                score += 10
+            return score
+
+        best_headers: list[str] = []
+        if header_candidates:
+            best_headers = max(header_candidates, key=_score_header_labels)
+        if not best_headers:
+            print("[WARN] /transactions 헤더 없음 — 저장 생략")
+            return
+
+        body_rows: list[list[str]] = []
+        for tr in driver.find_elements(By.XPATH, "//table//tbody//tr"):
+            try:
+                cells = tr.find_elements(By.XPATH, ".//td")
+                texts = [_cell_txt(c.text) for c in cells]
+                if not any(texts):
+                    continue
+                body_rows.append(texts)
+            except Exception:
+                continue
+
+        captured_iso = datetime.utcnow().isoformat()
+        snapshot_rows = build_kvan_transactions_snapshots(
+            best_headers, body_rows, captured_iso=captured_iso
         )
-
-        # 헤더 텍스트를 기준으로 컬럼 인덱스 매핑
-        header_cells = driver.find_elements(By.XPATH, "//table//thead//tr[1]//th")
-        headers = [h.text.strip() for h in header_cells]
-
-        def idx(sub: str) -> int:
-            for i, h in enumerate(headers):
-                if sub in h:
-                    return i
-            return -1
-
-        idx_merchant = idx("가맹점명")
-        idx_pg = idx("PG사")
-        idx_mid = idx("MID")
-        idx_fee = idx("수수료율")
-        idx_type = idx("결제 유형")
-        idx_amt = idx("결제 금액")
-        idx_cancel = idx("취소 금액")
-        idx_payable = idx("지급예정금액")
-        idx_cardco = idx("카드사")
-        idx_cardno = idx("카드번호")
-        idx_inst = idx("할부")
-        idx_approval = idx("승인번호")
-        idx_reg = idx("등록일")
-
-        rows = driver.find_elements(By.XPATH, "//table//tbody//tr")
-        if not rows:
-            print("[INFO] /transactions 테이블에 표시된 거래 내역이 없습니다.")
+        if not snapshot_rows and body_rows:
+            print(
+                f"[WARN] /transactions {len(body_rows)}행 파싱 0건 — 열 매핑 확인 필요. "
+                f"헤더={best_headers[:10]} — kvan_transactions DB 유지"
+            )
+            try:
+                print(f"[DEBUG] 첫 행 셀 {len(body_rows[0])}개: {body_rows[0][:12]}")
+            except Exception:
+                pass
+            return
+        if not snapshot_rows and not body_rows:
+            print("[INFO] /transactions 거래 행 0건 — kvan_transactions 비움")
+            conn = get_db()
+            with conn.cursor() as cur:
+                cur.execute("TRUNCATE TABLE kvan_transactions")
+            conn.commit()
+            conn.close()
             return
 
         conn = get_db()
         inserted = 0
         with conn.cursor() as cur:
-            for tr in rows:
-                try:
-                    cells = tr.find_elements(By.XPATH, ".//td")
-                    texts = [c.text.strip() for c in cells]
-                    if not any(texts):
-                        continue
-
-                    def get(i: int) -> str:
-                        return texts[i] if 0 <= i < len(texts) else ""
-
-                    merchant = get(idx_merchant)
-                    pg_name = get(idx_pg)
-                    mid = get(idx_mid)
-                    fee_rate = get(idx_fee)
-                    tx_type = get(idx_type)
-                    amount = _parse_amount(get(idx_amt))
-                    cancel_amount = _parse_amount(get(idx_cancel))
-                    payable_amount = _parse_amount(get(idx_payable))
-                    card_company = get(idx_cardco)
-                    card_number = get(idx_cardno)
-                    installment = get(idx_inst)
-                    approval_no = get(idx_approval)
-                    registered_at = get(idx_reg)
-                    raw_text = " | ".join(texts)
-
-                    cur.execute(
-                        """
-                        INSERT INTO kvan_transactions (
-                          captured_at,
-                          merchant_name,
-                          pg_name,
-                          mid,
-                          fee_rate,
-                          tx_type,
-                          amount,
-                          cancel_amount,
-                          payable_amount,
-                          card_company,
-                          card_number,
-                          installment,
-                          approval_no,
-                          registered_at,
-                          raw_text
-                        )
-                        VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                        """,
-                        (
-                            merchant,
-                            pg_name,
-                            mid,
-                            fee_rate,
-                            tx_type,
-                            amount,
-                            cancel_amount,
-                            payable_amount,
-                            card_company,
-                            card_number,
-                            installment,
-                            approval_no,
-                            registered_at,
-                            raw_text,
-                        ),
+            cur.execute("TRUNCATE TABLE kvan_transactions")
+            for rec in snapshot_rows:
+                cur.execute(
+                    """
+                    INSERT INTO kvan_transactions (
+                      captured_at,
+                      merchant_name,
+                      pg_name,
+                      mid,
+                      fee_rate,
+                      tx_type,
+                      amount,
+                      cancel_amount,
+                      payable_amount,
+                      card_company,
+                      card_number,
+                      installment,
+                      approval_no,
+                      registered_at,
+                      raw_text
                     )
-                    inserted += 1
-                except Exception as e_row:
-                    print(f"[WARN] 거래내역 한 행 파싱/저장 중 오류: {e_row}")
-                    continue
-
+                    VALUES (NOW(), %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        rec.get("merchant_name", ""),
+                        rec.get("pg_name", ""),
+                        rec.get("mid", ""),
+                        rec.get("fee_rate", ""),
+                        rec.get("tx_type", ""),
+                        rec.get("amount", 0),
+                        rec.get("cancel_amount", 0),
+                        rec.get("payable_amount", 0),
+                        rec.get("card_company", ""),
+                        rec.get("card_number", ""),
+                        rec.get("installment", ""),
+                        rec.get("approval_no", ""),
+                        rec.get("registered_at", ""),
+                        rec.get("raw_text", ""),
+                    ),
+                )
+                inserted += 1
         conn.commit()
         conn.close()
         print(f"[INFO] /transactions 에서 {inserted}건의 거래내역을 kvan_transactions 에 저장했습니다.")
@@ -4633,6 +4658,28 @@ def main() -> None:
                 signal_crawler_wakeup()
             except Exception as e:
                 print(f"[WAKEUP][WARN] 크롤러 깨우기 신호 전송 중 오류: {e}")
+            # 서버에서 링크 생성 직후 같은 세션으로 /transactions 를 한 번 읽어
+            # 어드민·대행사 화면에 빨리 반영 (크롤러 주기를 기다리지 않음).
+            # 끄려면 K_VAN_AFTER_LINK_SCRAPE_TX=0
+            _after = os.environ.get("K_VAN_AFTER_LINK_SCRAPE_TX", "1").strip().lower()
+            if _is_server_env() and _after not in ("0", "false", "no", "off"):
+                try:
+                    _append_admin_log(
+                        "AUTO",
+                        "링크 생성 후 /transactions 즉시 스크랩·transactions 동기화 시도",
+                    )
+                    _scrape_transactions_and_store(driver)
+                    ok = _sync_kvan_to_transactions()
+                    _append_admin_log(
+                        "AUTO",
+                        f"/transactions 스크랩·동기화 완료 (sync_returned={ok})",
+                    )
+                except Exception as e_tx:  # noqa: BLE001
+                    print(f"[WARN] 링크 생성 후 거래내역 스크랩/동기화 실패: {e_tx}")
+                    _append_admin_log(
+                        "AUTO",
+                        f"[WARN] 링크 생성 후 /transactions 스크랩·동기화 실패: {e_tx}",
+                    )
         else:
             status = "error"
             msg = "결제 링크 생성에 실패했거나 링크를 찾지 못했습니다."
