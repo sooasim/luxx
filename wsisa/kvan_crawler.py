@@ -38,6 +38,7 @@ from typing import Optional, List, Dict, Any
 
 import pymysql
 from kvan_link_common import (
+    append_payment_notification,
     build_kvan_transactions_snapshots,
     ensure_kvan_links_internal_session_column,
     ensure_kvan_links_link_created_at,
@@ -78,6 +79,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 ADMIN_LOG_PATH = DATA_DIR / "hq_logs.log"
 WAKEUP_FLAG_PATH = DATA_DIR / "crawler_wakeup.flag"
 HEARTBEAT_PATH = DATA_DIR / "kvan_crawler.heartbeat"
+PAYMENT_NOTIFICATIONS_PATH = DATA_DIR / "payment_notifications.json"
 
 ORDER_JSON_PATH = DATA_DIR / "current_order.json"
 RESULT_JSON_PATH = DATA_DIR / "last_result.json"
@@ -88,6 +90,8 @@ SESSION_ORDER_DIR.mkdir(parents=True, exist_ok=True)
 SESSION_RESULT_DIR.mkdir(parents=True, exist_ok=True)
 
 ADMIN_STATE_PATH = DATA_DIR / "admin_state.json"
+# 본사 HQ 어드민 "만료된 결제 링크 (거래 내역 있음)" 섹션 데이터 (web_form.py 와 동일 파일명)
+EXPIRED_WITH_TRANSACTIONS_PATH = DATA_DIR / "expired_with_transactions.json"
 LOCAL_DB_DIR = DATA_DIR / "local_db"
 LOCAL_DB_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -482,6 +486,10 @@ def _mark_session_deleted(session_id: str, title: str) -> None:
 
 
 def _mark_session_expired_with_transactions(session_id: str, title: str) -> None:
+    """
+    만료+거래있음: admin_state history 반영 + HQ 알림용 expired_with_transactions.json 기록.
+    (auto_kvan.py 와 동일. 이전에는 크롤러가 JSON을 쓰지 않아 본사 어드민 목록이 항상 비었음.)
+    """
     try:
         st = _load_admin_state()
         sessions = list(st.get("sessions") or [])
@@ -500,6 +508,8 @@ def _mark_session_expired_with_transactions(session_id: str, title: str) -> None
         if moved is None:
             moved = {"id": session_id}
 
+        agency_id = str(moved.get("agency_id") or "").strip()
+
         moved["status"] = "만료"
         moved["has_transaction"] = True
         moved["deleted"] = False
@@ -511,6 +521,46 @@ def _mark_session_expired_with_transactions(session_id: str, title: str) -> None
         st["sessions"] = remaining_sessions
         st["history"] = history
         _save_admin_state(st)
+
+        try:
+            items: list[dict] = []
+            if EXPIRED_WITH_TRANSACTIONS_PATH.exists():
+                try:
+                    items = json.loads(
+                        EXPIRED_WITH_TRANSACTIONS_PATH.read_text(encoding="utf-8")
+                    )
+                except Exception:
+                    items = []
+            if not isinstance(items, list):
+                items = []
+            sid_key = str(session_id or "").strip()
+            if sid_key:
+                items = [
+                    x
+                    for x in items
+                    if str(x.get("session_id") or "").strip() != sid_key
+                ]
+            items.append(
+                {
+                    "session_id": session_id,
+                    "title": (title or "")[:200],
+                    "agency_id": agency_id,
+                    "finished_at": now_iso,
+                    "seen": False,
+                }
+            )
+            items = items[-200:]
+            EXPIRED_WITH_TRANSACTIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+            EXPIRED_WITH_TRANSACTIONS_PATH.write_text(
+                json.dumps(items, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            _append_admin_log(
+                "CRAWLER",
+                f"만료+거래있음 세션 기록 session_id={session_id} (어드민 알림 JSON)",
+            )
+        except Exception as e_json:
+            print(f"[WARN] 만료+거래있음 목록(JSON) 저장 실패: {e_json}")
     except Exception as e:
         print(f"[WARN] _mark_session_expired_with_transactions 실패: {e}")
 
@@ -1140,6 +1190,13 @@ class KVStore:
                         "kvan_registered_at": registered_at,
                     }
                 )
+                append_payment_notification(
+                    PAYMENT_NOTIFICATIONS_PATH,
+                    agency_id=agency_id or "",
+                    amount=amount,
+                    tx_id=new_tx_id,
+                    customer_name=customer_name or "",
+                )
             _json_save_rows("transactions", tx_rows)
             return
 
@@ -1186,6 +1243,13 @@ class KVStore:
                     )
                     """,
                     (new_tx_id, agency_id, amount, customer_name or "", prefix4, message, approval_no, registered_at),
+                )
+                append_payment_notification(
+                    PAYMENT_NOTIFICATIONS_PATH,
+                    agency_id=agency_id or "",
+                    amount=amount,
+                    tx_id=new_tx_id,
+                    customer_name=customer_name or "",
                 )
         conn.commit()
         conn.close()
@@ -1517,6 +1581,14 @@ class KVStore:
                             if prefix4:
                                 prefix_to_agency.setdefault(prefix4, resolved_agency_id)
                         inserted += 1
+                        if tx_status == "success" and int(amt or 0) > 0:
+                            append_payment_notification(
+                                PAYMENT_NOTIFICATIONS_PATH,
+                                agency_id=resolved_agency_id or "",
+                                amount=int(amt),
+                                tx_id=new_tx_id,
+                                customer_name="",
+                            )
 
                 conn.commit()
                 conn.close()

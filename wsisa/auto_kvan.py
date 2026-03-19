@@ -22,6 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import pymysql
 
 from kvan_link_common import (
+    append_payment_notification,
     build_kvan_transactions_snapshots,
     extract_kvan_session_key_from_url,
     infer_kvan_transaction_header_cell_label,
@@ -2516,29 +2517,15 @@ def _append_payment_notification(
     tx_id: str,
     customer_name: str,
 ) -> None:
-    """결제 완료 시 알림 큐 파일에 추가한다. (카카오/문자 연동은 추후 확장)"""
-    if not tx_id or amount <= 0:
-        return
+    """결제 완료 시 알림 큐 (web_form / 크롤러와 동일 파일·포맷)."""
     try:
-        path = DATA_DIR / "payment_notifications.json"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        items: list[dict] = []
-        if path.exists():
-            try:
-                items = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
-                items = []
-        items.append({
-            "agency_id": agency_id or "",
-            "amount": amount,
-            "tx_id": tx_id,
-            "customer_name": customer_name or "",
-            "created_at": datetime.utcnow().isoformat(),
-            "seen": False,
-        })
-        # 최근 500건만 유지
-        items = items[-500:]
-        path.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        append_payment_notification(
+            DATA_DIR / "payment_notifications.json",
+            agency_id=agency_id or "",
+            amount=int(amount or 0),
+            tx_id=tx_id or "",
+            customer_name=customer_name or "",
+        )
     except Exception as e:
         print(f"[WARN] 결제 알림 큐 추가 실패: {e}")
 

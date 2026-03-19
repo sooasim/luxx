@@ -508,6 +508,48 @@ def _hq_load_admin_state_json() -> dict:
     return load_admin_state_json_for_web()
 
 
+def _hq_merge_expired_with_tx_from_admin_history(items: list) -> list:
+    """
+    만료+거래있음 알림은 expired_with_transactions.json 기준이나,
+    과거 크롤러는 JSON을 쓰지 않고 admin_state 만 갱신한 경우가 있어 목록이 비었다.
+    history 에 남은 만료+has_transaction 세션을 병합해 본사 화면에 표시한다.
+    """
+    if not isinstance(items, list):
+        items = []
+    try:
+        admin_st = _hq_load_admin_state_json()
+    except Exception:
+        return items
+    seen = {
+        str(x.get("session_id") or "").strip()
+        for x in items
+        if str(x.get("session_id") or "").strip()
+    }
+    out = list(items)
+    for h in admin_st.get("history") or []:
+        if not isinstance(h, dict):
+            continue
+        if not h.get("has_transaction"):
+            continue
+        st = str(h.get("status") or "").strip()
+        if "만료" not in st:
+            continue
+        sid = str(h.get("id") or "").strip()
+        if not sid or sid in seen:
+            continue
+        seen.add(sid)
+        out.append(
+            {
+                "session_id": sid,
+                "title": str(h.get("checked_title") or h.get("title") or "")[:200],
+                "agency_id": str(h.get("agency_id") or ""),
+                "finished_at": str(h.get("finished_at") or ""),
+                "seen": True,
+            }
+        )
+    return out
+
+
 def _hq_link_matches_kvan_session_id(link: str, session_id: str) -> bool:
     """
     auto_kvan / kvan_crawler 의 _link_matches_kvan_session_id 와 동일 규칙.
@@ -2135,12 +2177,14 @@ def pay(session_id: str):
     order_path = SESSION_ORDER_DIR / f"{session_id}.json"
     result_path = SESSION_RESULT_DIR / f"{session_id}.json"
 
-    # 관리자 상태에서 현재 세션 정보 읽기 (금액/할부 고정용)
+    # 관리자 상태에서 세션 정보 읽기 (금액/할부 고정용) — 진행 중 sessions + 종료 history 모두 조회
     fixed_amount = False
     try:
         admin_state = load_admin_state_json_for_web()
-        sessions = admin_state.get("sessions") or []
-        for s in sessions:
+        merged_sessions = list(admin_state.get("sessions") or []) + list(
+            admin_state.get("history") or []
+        )
+        for s in merged_sessions:
             if str(s.get("id")) == str(session_id):
                 amount_str = str(s.get("amount", "") or "")
                 if amount_str:
@@ -4443,8 +4487,13 @@ def hq_admin():
             raw = EXPIRED_WITH_TRANSACTIONS_PATH.read_text(encoding="utf-8")
             data = json.loads(raw)
             expired_with_transactions = data if isinstance(data, list) else []
+        else:
+            expired_with_transactions = []
     except Exception:
         expired_with_transactions = []
+    expired_with_transactions = _hq_merge_expired_with_tx_from_admin_history(
+        expired_with_transactions
+    )
     expired_with_tx_unseen = sum(1 for x in expired_with_transactions if not x.get("seen"))
     expired_with_transactions_reversed = list(reversed(expired_with_transactions))  # 최신순 표시
 
