@@ -6104,6 +6104,31 @@ def agency_admin():
             });
           });
         })();
+        /** 거래 내역 표: 날짜·상태 클라이언트 필터 (본 페이지에 정의해야 함) */
+        function filterAgencyTransactions() {
+          var startInput = document.getElementById("agencyTxStart");
+          var endInput = document.getElementById("agencyTxEnd");
+          var statusSel = document.getElementById("agencyTxStatus");
+          var startDate = startInput && startInput.value ? startInput.value : "";
+          var endDate = endInput && endInput.value ? endInput.value : "";
+          var statusVal = statusSel ? (statusSel.value || "all") : "all";
+          var rows = document.querySelectorAll("#agencyTxBody tr");
+          rows.forEach(function (row) {
+            var date = row.getAttribute("data-date") || "";
+            var status = (row.getAttribute("data-status") || "").toLowerCase();
+            var show = true;
+            if (startDate && (!date || date < startDate)) show = false;
+            if (show && endDate && (!date || date > endDate)) show = false;
+            if (show && statusVal !== "all") {
+              if (statusVal === "other") {
+                if (status === "success" || status === "fail") show = false;
+              } else if (status !== statusVal) {
+                show = false;
+              }
+            }
+            row.style.display = show ? "" : "none";
+          });
+        }
       </script>
     </body>
     </html>
