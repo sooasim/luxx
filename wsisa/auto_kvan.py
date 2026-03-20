@@ -65,9 +65,18 @@ def _is_server_env() -> bool:
     s = str(os.environ.get("SISA_SERVER", "")).strip().lower()
     k = str(os.environ.get("K_VAN_SERVER", "")).strip().lower()
     truthy = ("1", "true", "yes", "y", "on")
+    mysql_host = str(
+        os.environ.get("MYSQLHOST")
+        or os.environ.get("MYSQL_HOST")
+        or ""
+    ).strip().lower()
     return bool(
         os.environ.get("RAILWAY_ENVIRONMENT")
+        or os.environ.get("RAILWAY_PRIVATE_DOMAIN")
+        or os.environ.get("RAILWAY_TCP_PROXY_DOMAIN")
         or os.environ.get("RUN_HEADLESS")
+        or mysql_host.endswith(".railway.internal")
+        or "railway" in mysql_host
         or s in truthy
         or k in truthy
     )
@@ -294,17 +303,14 @@ WAKEUP_FLAG_PATH = DATA_DIR / "crawler_wakeup.flag"
 # - SISA_LOCAL_TEST 가 명시되면 그 값을 따르고
 # - 없으면 "서버 환경이 아니면" 기본적으로 LOCAL_TEST=True 로 동작하게 만든다.
 _local_flag = os.environ.get("SISA_LOCAL_TEST")
-if _local_flag is None:
-    # 기본은 DB 모드(운영 동작). JSON 모드가 필요하면 명시적으로 켠다.
-    LOCAL_TEST = str(os.environ.get("K_VAN_USE_JSON", "")).strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "y",
-        "on",
-    )
-else:
+_json_flag = os.environ.get("K_VAN_USE_JSON")
+if _local_flag is not None:
     LOCAL_TEST = _local_flag.strip().lower() in ("1", "true", "yes", "y")
+elif _json_flag is not None:
+    LOCAL_TEST = _json_flag.strip().lower() in ("1", "true", "yes", "y", "on")
+else:
+    # 기본 정책: 로컬은 JSON(임시), 서버는 DB.
+    LOCAL_TEST = not _is_server_env()
 
 
 def signal_crawler_wakeup() -> None:

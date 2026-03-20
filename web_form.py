@@ -1011,6 +1011,18 @@ def trigger_kvan_crawler_refresh() -> None:
         cmd = [sys.executable, str(crawler_path)]
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
+        # 서버에서는 반드시 DB 모드로 동작하도록 기본값 강제.
+        is_server = bool(
+            env.get("RAILWAY_ENVIRONMENT")
+            or env.get("RAILWAY_PRIVATE_DOMAIN")
+            or env.get("RAILWAY_TCP_PROXY_DOMAIN")
+            or str(env.get("MYSQLHOST") or env.get("MYSQL_HOST") or "").lower().find("railway") >= 0
+        )
+        if is_server:
+            env.setdefault("SISA_SERVER", "1")
+            env.setdefault("K_VAN_SERVER", "1")
+            env.setdefault("SISA_LOCAL_TEST", "0")
+            env.setdefault("K_VAN_USE_JSON", "0")
         p = subprocess.Popen(
             cmd,
             stdout=lf,

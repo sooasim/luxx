@@ -86,6 +86,7 @@ ADMIN_LOG_PATH = DATA_DIR / "hq_logs.log"
 WAKEUP_FLAG_PATH = DATA_DIR / "crawler_wakeup.flag"
 HEARTBEAT_PATH = DATA_DIR / "kvan_crawler.heartbeat"
 PAYMENT_NOTIFICATIONS_PATH = DATA_DIR / "payment_notifications.json"
+TRACE_LOG_PATH = DATA_DIR / "kvan_trace.log"
 
 ORDER_JSON_PATH = DATA_DIR / "current_order.json"
 RESULT_JSON_PATH = DATA_DIR / "last_result.json"
@@ -102,6 +103,7 @@ LOCAL_DB_DIR = DATA_DIR / "local_db"
 LOCAL_DB_DIR.mkdir(parents=True, exist_ok=True)
 
 DEBUG_CRAWLER = os.environ.get("K_VAN_DEBUG", "1") == "1"
+TRACE_CRAWLER = os.environ.get("K_VAN_TRACE", "1") == "1"
 
 
 def _build_mysql_url_from_env() -> str:
@@ -130,26 +132,32 @@ def _is_server_env() -> bool:
     s = str(os.environ.get("SISA_SERVER", "")).strip().lower()
     k = str(os.environ.get("K_VAN_SERVER", "")).strip().lower()
     truthy = ("1", "true", "yes", "y", "on")
+    mysql_host = str(
+        os.environ.get("MYSQLHOST")
+        or os.environ.get("MYSQL_HOST")
+        or ""
+    ).strip().lower()
     return bool(
         os.environ.get("RAILWAY_ENVIRONMENT")
+        or os.environ.get("RAILWAY_PRIVATE_DOMAIN")
+        or os.environ.get("RAILWAY_TCP_PROXY_DOMAIN")
         or os.environ.get("RUN_HEADLESS")
+        or mysql_host.endswith(".railway.internal")
+        or "railway" in mysql_host
         or s in truthy
         or k in truthy
     )
 
 
 _local_flag = os.environ.get("SISA_LOCAL_TEST")
-if _local_flag is None:
-    # 기본은 DB 모드(운영 동작). JSON 모드가 필요하면 명시적으로 켠다.
-    LOCAL_TEST = str(os.environ.get("K_VAN_USE_JSON", "")).strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "y",
-        "on",
-    )
-else:
+_json_flag = os.environ.get("K_VAN_USE_JSON")
+if _local_flag is not None:
     LOCAL_TEST = _local_flag.strip().lower() in ("1", "true", "yes", "y")
+elif _json_flag is not None:
+    LOCAL_TEST = _json_flag.strip().lower() in ("1", "true", "yes", "y", "on")
+else:
+    # 기본 정책: 로컬은 JSON(임시), 서버는 DB.
+    LOCAL_TEST = not _is_server_env()
 
 
 def _use_json_store() -> bool:
@@ -177,6 +185,29 @@ def _dbg(msg: str) -> None:
 
 def _alog(msg: str) -> None:
     _append_admin_log("CRAWLER", msg)
+
+
+def _trace(step: str, **fields) -> None:
+    """
+    거래내역 크롤링 디버깅용 상세 트레이스.
+    K_VAN_TRACE=1 이면 hq_logs.log + kvan_trace.log 에 기록한다.
+    """
+    if not TRACE_CRAWLER:
+        return
+    parts = []
+    for k, v in fields.items():
+        try:
+            parts.append(f"{k}={v}")
+        except Exception:
+            parts.append(f"{k}=<unrepr>")
+    line = f"[TRACE] {step}" + (f" | {' | '.join(parts)}" if parts else "")
+    _alog(line)
+    try:
+        TRACE_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(TRACE_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(f"{datetime.utcnow().isoformat()} {line}\n")
+    except Exception:
+        pass
 
 
 def _touch_heartbeat() -> None:
@@ -227,7 +258,9 @@ def _load_admin_state() -> dict:
     for p in _admin_state_candidates():
         if p.exists():
             try:
-                return json.loads(p.read_text(encoding="utf-8"))
+                data = json.loads(p.read_text(encoding="utf-8"))
+                _trace("admin_state_load", path=str(p), sessions=len(data.get("sessions") or []), history=len(data.get("history") or []))
+                return data
             except Exception:
                 pass
     return {"sessions": [], "history": []}
@@ -849,7 +882,11 @@ class KVStore:
         except Exception as e:
             if self.use_json:
                 raise
-            # DB 장애 시 크롤러가 즉시 죽지 않도록 JSON 폴백(원인 로그는 강하게 남김).
+            # 서버에서는 DB 실패를 즉시 드러내고 종료(어드민 DB와 분리되는 JSON 폴백 방지).
+            if _is_server_env():
+                _alog(f"[FATAL] 서버 DB 초기화 실패: {e}")
+                raise
+            # 로컬 개발 환경에서는 JSON 폴백 허용.
             _alog(f"[ERROR] DB 초기화 실패 - JSON 폴백 전환: {e}")
             print(f"[WARN] DB 초기화 실패 - JSON 폴백 전환: {e}")
             self.use_json = True
@@ -1136,12 +1173,15 @@ class KVStore:
         if self.use_json:
             if not rows and not force_empty:
                 print("[INFO] kvan_transactions(json): 빈 스냅샷 무시, 이전 파일 유지")
+                _trace("replace_kvan_tx_skip", mode="json", rows=0, force_empty=False)
                 return
             _json_save_rows("kvan_transactions", rows)
+            _trace("replace_kvan_tx_saved", mode="json", rows=len(rows), force_empty=force_empty)
             return
 
         if not rows and not force_empty:
             print("[INFO] kvan_transactions(MySQL): 빈 스냅샷 - TRUNCATE 생략(기존 행 유지)")
+            _trace("replace_kvan_tx_skip", mode="mysql", rows=0, force_empty=False)
             return
 
         conn = get_db()
@@ -1176,6 +1216,7 @@ class KVStore:
                 )
         conn.commit()
         conn.close()
+        _trace("replace_kvan_tx_saved", mode="mysql", rows=len(rows), force_empty=force_empty)
 
     def load_recent_kvan_transactions(self, limit: int = 200) -> list[dict]:
         if self.use_json:
@@ -1322,9 +1363,13 @@ class KVStore:
     def sync_kvan_to_transactions(self) -> bool:
         updated = 0
         inserted = 0
+        skipped_no_amount = 0
+        synthetic_approval = 0
+        notified = 0
 
         try:
             krows = self.load_recent_kvan_transactions(limit=200)
+            _trace("sync_start", use_json=self.use_json, krows=len(krows))
 
             if self.use_json:
                 tx_rows = _json_load_rows("transactions")
@@ -1346,6 +1391,8 @@ class KVStore:
                     amt = kr.get("amount") or 0
                     approval_raw = (kr.get("approval_no") or "").strip()
                     approval = _normalized_approval_for_sync(approval_raw, kr)
+                    if not approval_raw and approval.startswith("NOAPP-"):
+                        synthetic_approval += 1
                     mid = (kr.get("mid") or "").strip()
                     tx_type = (kr.get("tx_type") or "").strip()
                     reg = (kr.get("registered_at") or "").strip()
@@ -1353,6 +1400,7 @@ class KVStore:
                     prefix4 = _card_prefix4(card_number)
 
                     if not amt:
+                        skipped_no_amount += 1
                         continue
 
                     tx_status = (
@@ -1490,6 +1538,8 @@ class KVStore:
                         amt = kr.get("amount") or 0
                         approval_raw = (kr.get("approval_no") or "").strip()
                         approval = _normalized_approval_for_sync(approval_raw, kr)
+                        if not approval_raw and approval.startswith("NOAPP-"):
+                            synthetic_approval += 1
                         mid = (kr.get("mid") or "").strip()
                         tx_type = (kr.get("tx_type") or "").strip()
                         reg = (kr.get("registered_at") or "").strip()
@@ -1497,6 +1547,7 @@ class KVStore:
                         prefix4 = _card_prefix4(card_number)
 
                         if not amt:
+                            skipped_no_amount += 1
                             continue
 
                         reg_date = reg.split(" ")[0] if reg else ""
@@ -1662,6 +1713,7 @@ class KVStore:
                                 tx_id=new_tx_id,
                                 customer_name="",
                             )
+                            notified += 1
 
                 conn.commit()
                 conn.close()
@@ -1670,12 +1722,22 @@ class KVStore:
                 print(
                     f"[INFO] K-VAN → transactions 동기화 완료 (updated={updated}, inserted={inserted}, json={self.use_json})"
                 )
+            _trace(
+                "sync_done",
+                updated=updated,
+                inserted=inserted,
+                skipped_no_amount=skipped_no_amount,
+                synthetic_approval=synthetic_approval,
+                notified=notified,
+                use_json=self.use_json,
+            )
             # 크롤러 대기: 매 사이클마다 동일 행 UPDATE 만 일어나면 had_new 로 보지 않는다.
             # (서버 MySQL에서 매 루프 sync 가 True 가 되어 2초 폴링에 고착되던 원인 제거)
             return bool(inserted)
 
         except Exception as e:
             print(f"[WARN] K-VAN ↔ transactions 동기화 오류: {e}")
+            _trace("sync_error", error=str(e)[:300])
             return False
 
 
@@ -2774,14 +2836,28 @@ def _scrape_transactions_and_store(driver: webdriver.Chrome, store: KVStore) -> 
     """
     /transactions 스크랩 - `kvan_tx_table_scrape` (구버전 단순 헤더 + infer 폴백).
     """
+    _trace(
+        "tx_scrape_start",
+        current_url=(driver.current_url or "")[:120],
+        use_json=store.use_json,
+    )
     snapshot_rows, body_rows, used_label, _attempts, h_tr1 = (
         extract_kvan_transactions_from_page(driver, navigate=True)
+    )
+    _trace(
+        "tx_scrape_result",
+        used_label=used_label or "(none)",
+        body_rows=len(body_rows),
+        snapshot_rows=len(snapshot_rows),
+        header_attempts=len(_attempts),
+        h_tr1_preview=(h_tr1[:8] if h_tr1 else []),
     )
     if used_label == "timeout":
         print(
             "[WARN] /transactions 테이블 로딩 타임아웃 - kvan_transactions 는 비우지 않고 유지합니다."
         )
         _alog("/transactions tbody 로딩 타임아웃")
+        _trace("tx_scrape_timeout")
         return 0
 
     if snapshot_rows:
@@ -2811,17 +2887,29 @@ def _scrape_transactions_and_store(driver: webdriver.Chrome, store: KVStore) -> 
         _alog(
             f"[WARN] /transactions 파싱 0건 tbody_rows={len(body_rows)} infer_tries={infer_n}"
         )
+        _trace(
+            "tx_scrape_zero_snapshot",
+            first_body_row=(body_rows[0][:10] if body_rows else []),
+            infer_tries=infer_n,
+        )
         return 0
 
     if not snapshot_rows and not body_rows:
         store.replace_kvan_transactions([], force_empty=True)
         print("[INFO] /transactions 거래 행 0건 - kvan_transactions 비움")
+        _trace("tx_scrape_empty_body")
         return 0
 
     store.replace_kvan_transactions(snapshot_rows)
     print(
         f"[INFO] /transactions 에서 {len(snapshot_rows)}건 저장 완료 "
         f"(json={store.use_json}, header={used_label})"
+    )
+    _trace(
+        "tx_scrape_saved",
+        saved_rows=len(snapshot_rows),
+        header=used_label,
+        first_snapshot=(snapshot_rows[0] if snapshot_rows else {}),
     )
     return len(snapshot_rows)
 
@@ -3289,6 +3377,7 @@ def _delete_expired_no_tx_links_fast(driver: webdriver.Chrome, store: KVStore, m
                     if _click_trash_and_confirm(driver, card):
                         if session_id:
                             _mark_session_deleted(session_id, title)
+                        _trace("expired_delete_no_tx", session_id=session_id or "-", title=title[:60])
                         deleted += 1
                         deleted_this_round = True
                         _append_admin_log("AUTO", f"즉시 삭제 완료 session_id={session_id or '-'}")
@@ -3323,6 +3412,7 @@ def _delete_expired_no_tx_links_fast(driver: webdriver.Chrome, store: KVStore, m
                     print(f"[WARN] 만료+거래있음 팝업 파싱 실패: {e_parse}")
 
                 _mark_session_expired_with_transactions(session_id, title)
+                _trace("expired_keep_with_tx", session_id=session_id or "-", title=title[:60], rows=len(rows))
                 _close_dialog(driver, dialog)
 
             except StaleElementReferenceException:
@@ -3576,6 +3666,13 @@ def _wait_with_wakeup(total_delay: int) -> None:
 def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
     store = KVStore()
     driver = create_driver(headless=_is_server_env())
+    _trace(
+        "crawler_boot",
+        data_dir=str(DATA_DIR),
+        use_json=store.use_json,
+        server_env=_is_server_env(),
+        database_url=(DATABASE_URL or "")[:120],
+    )
 
     try:
         print("[crawler] K-VAN 로그인 시작")

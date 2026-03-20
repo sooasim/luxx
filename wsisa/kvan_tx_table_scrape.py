@@ -25,6 +25,22 @@ from kvan_link_common import (
 )
 
 
+TRACE_TX = os.environ.get("K_VAN_TRACE", "1") == "1"
+
+
+def _txtrace(step: str, **fields) -> None:
+    if not TRACE_TX:
+        return
+    parts = []
+    for k, v in fields.items():
+        parts.append(f"{k}={v}")
+    line = f"[TXTRACE] {step}" + (f" | {' | '.join(parts)}" if parts else "")
+    try:
+        print(line)
+    except Exception:
+        pass
+
+
 def _cell_txt(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").replace("\n", " ").strip())
 
@@ -125,6 +141,7 @@ def extract_kvan_transactions_from_page(
         snapshot_rows, body_rows, used_header_label, header_attempts, h_tr1_debug
     """
     if navigate:
+        _txtrace("navigate_start", current_url=(driver.current_url or "")[:120])
         if "transactions" in (driver.current_url or ""):
             try:
                 driver.refresh()
@@ -139,6 +156,7 @@ def extract_kvan_transactions_from_page(
         WebDriverWait(driver, max(8, wait_body_sec)).until(
             EC.presence_of_element_located((By.XPATH, "//table//tbody//tr"))
         )
+        _txtrace("tbody_ready", wait_body_sec=wait_body_sec)
         try:
             driver.execute_script(
                 "window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight));"
@@ -151,11 +169,13 @@ def extract_kvan_transactions_from_page(
                 break
             time.sleep(0.2)
     except TimeoutException:
+        _txtrace("timeout", stage="tbody_wait")
         return [], [], "timeout", [], []
 
     body_rows = _collect_body_rows(driver)
     captured_iso = datetime.utcnow().isoformat()
     h_tr1 = _simple_headers_tr1(driver)
+    _txtrace("collected_rows", body_rows=len(body_rows), tr1_cols=len(h_tr1))
 
     header_attempts: list[tuple[str, list[str]]] = []
     if any((x or "").strip() for x in h_tr1):
@@ -166,6 +186,12 @@ def extract_kvan_transactions_from_page(
 
     infer_cands = _collect_infer_header_candidates(driver)
     infer_sorted = sorted(infer_cands, key=_score_header_labels, reverse=True)
+    _txtrace(
+        "header_candidates",
+        tr1=bool(any((x or "").strip() for x in h_tr1)),
+        best_row=bool(h_best),
+        infer_count=len(infer_sorted),
+    )
     for i, cand in enumerate(infer_sorted[:6]):
         header_attempts.append((f"infer_row_rank{i}", cand))
 
@@ -177,9 +203,20 @@ def extract_kvan_transactions_from_page(
         snap = build_kvan_transactions_snapshots(
             headers, body_rows, captured_iso=captured_iso
         )
+        _txtrace(
+            "header_attempt",
+            label=label,
+            header_cols=len(headers),
+            snapshot_rows=len(snap),
+        )
         if snap:
             snapshot_rows = snap
             used_label = label
             break
 
+    _txtrace(
+        "extract_done",
+        used_label=used_label or "(none)",
+        snapshot_rows=len(snapshot_rows),
+    )
     return snapshot_rows, body_rows, used_label, header_attempts, h_tr1
