@@ -469,6 +469,37 @@ def _resolve_agency_id_by_mid_unique(cur, mid: str) -> Optional[str]:
     return None
 
 
+def _resolve_agency_id_by_kvan_key_db(cur, session_key: str) -> Optional[str]:
+    key = (session_key or "").strip()
+    if not key:
+        return None
+    try:
+        cur.execute(
+            """
+            SELECT agency_id
+            FROM kvan_links
+            WHERE kvan_session_id = %s
+               OR kvan_link LIKE %s
+               OR internal_session_id = %s
+            ORDER BY captured_at DESC
+            LIMIT 20
+            """,
+            (key, f"%{key}%", key),
+        )
+        rows = cur.fetchall() or []
+        ids = [
+            str(r.get("agency_id") or "").strip()
+            for r in rows
+            if str(r.get("agency_id") or "").strip()
+        ]
+        ids = list(dict.fromkeys(ids))
+        if len(ids) == 1:
+            return ids[0]
+    except Exception:
+        pass
+    return None
+
+
 def _lookup_internal_session_id_for_kvan_key(kvan_key: str) -> str:
     kk = (kvan_key or "").strip()
     if not kk:
@@ -832,6 +863,14 @@ def _has_active_sessions(window_minutes: int = 10) -> bool:
         return False
     except Exception as e:
         print(f"[WARN] _has_active_sessions 실패: {e}")
+        return False
+
+
+def _has_any_admin_sessions() -> bool:
+    try:
+        st = _load_admin_state()
+        return bool((st.get("sessions") or []) or (st.get("history") or []))
+    except Exception:
         return False
 
 
@@ -1356,6 +1395,7 @@ class KVStore:
 
         prefix4 = _card_prefix4(card_number)
         agency_id = _get_agency_id_for_session(session_id)
+        agency_id_from_state = (agency_id or "").strip()
 
         if self.use_json:
             tx_rows = _json_load_rows("transactions")
@@ -1410,11 +1450,22 @@ class KVStore:
         conn = get_db()
         with conn.cursor() as cur:
             valid_agency_ids = _load_valid_agency_ids(cur)
+            db_agency_by_key = _resolve_agency_id_by_kvan_key_db(cur, session_id)
+            if (not agency_id) and db_agency_by_key:
+                agency_id = db_agency_by_key
             safe_agency_id = _sanitize_agency_id_for_fk(
                 agency_id,
                 valid_agency_ids,
                 step="popup_upsert",
                 hint=approval_no,
+            )
+            _trace(
+                "popup_upsert_resolved",
+                session_id=session_id,
+                approval_no=approval_no,
+                agency_from_state=agency_id_from_state,
+                agency_from_kvan_links=(db_agency_by_key or ""),
+                agency_final=(safe_agency_id or ""),
             )
             cur.execute(
                 """
@@ -3892,6 +3943,12 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
 
                 # 3) 팝업 동기화
                 active_for_popup = _has_active_sessions(window_minutes=popup_win)
+                source_empty = not _has_any_admin_sessions()
+                if source_empty:
+                    # admin_state 기반 매핑 소스가 비면 팝업 파싱을 유지해
+                    # 승인번호/카드정보를 transactions에 먼저 반영하고 kvan_links 기반 매핑을 복구한다.
+                    active_for_popup = True
+                    _trace("popup_scan_forced", reason="admin_state_empty")
                 if has_links:
                     if _scan_payment_link_popups_and_sync(driver, store, allow_popup_for_non_expired=active_for_popup):
                         had_new = True
