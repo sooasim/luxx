@@ -528,6 +528,8 @@ def _guess_open_session_id_for_success(
         target_amount = int(amount or 0)
         target_agency = str(agency_id or "").strip()
         candidates: list[str] = []
+        all_open: list[str] = []
+        relaxed_agency_candidates: list[str] = []
         for s in sessions:
             if not isinstance(s, dict):
                 continue
@@ -535,6 +537,9 @@ def _guess_open_session_id_for_success(
                 continue
             if str(s.get("status") or "").strip() != "결제중":
                 continue
+            sid = str(s.get("id") or "").strip()
+            if sid:
+                all_open.append(sid)
             try:
                 s_amt = int(str(s.get("amount") or "0").replace(",", "").strip() or "0")
             except Exception:
@@ -543,6 +548,13 @@ def _guess_open_session_id_for_success(
                 continue
             s_ag = str(s.get("agency_id") or "").strip()
             if target_agency and s_ag != target_agency:
+                # agency_id가 잘못 매핑된 경우를 대비해 amount/date만 맞는 후보를 별도 수집
+                if reg_date:
+                    s_dt = _parse_session_datetime(s.get("created_at"))
+                    if s_dt is not None and s_dt.strftime("%Y-%m-%d") > reg_date:
+                        continue
+                if sid:
+                    relaxed_agency_candidates.append(sid)
                 continue
             if not target_agency and s_ag:
                 continue
@@ -550,12 +562,19 @@ def _guess_open_session_id_for_success(
                 s_dt = _parse_session_datetime(s.get("created_at"))
                 if s_dt is not None and s_dt.strftime("%Y-%m-%d") > reg_date:
                     continue
-            sid = str(s.get("id") or "").strip()
             if sid:
                 candidates.append(sid)
         uniq = list(dict.fromkeys(candidates))
         if len(uniq) == 1:
             return uniq[0]
+        # 2차 완화: agency_id 일치 조건만 완화했을 때 단일 후보면 채택
+        relaxed = list(dict.fromkeys(relaxed_agency_candidates))
+        if len(relaxed) == 1:
+            return relaxed[0]
+        # 3차 완화: 결제중 세션이 딱 1개면 해당 세션으로 확정
+        all_open_uniq = list(dict.fromkeys(all_open))
+        if len(all_open_uniq) == 1:
+            return all_open_uniq[0]
     except Exception:
         pass
     return ""
@@ -1948,6 +1967,15 @@ class KVStore:
                                         session_id=sid_hint,
                                         path="approval_match",
                                     )
+                                else:
+                                    _trace(
+                                        "sync_mark_unresolved",
+                                        approval=approval,
+                                        amount=amt,
+                                        agency_id=resolved_agency_id or "",
+                                        reg_date=reg_date,
+                                        path="approval_match",
+                                    )
                             updated += 1
                             continue
 
@@ -2025,6 +2053,15 @@ class KVStore:
                                         "sync_mark_checked",
                                         approval=approval,
                                         session_id=sid_hint,
+                                        path="amount_date_match",
+                                    )
+                                else:
+                                    _trace(
+                                        "sync_mark_unresolved",
+                                        approval=approval,
+                                        amount=amt,
+                                        agency_id=resolved_agency_id or "",
+                                        reg_date=reg_date,
                                         path="amount_date_match",
                                     )
                             updated += 1
