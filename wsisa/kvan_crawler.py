@@ -435,7 +435,7 @@ def _sanitize_agency_id_for_fk(
     agency_id: Optional[str],
     valid_agency_ids: set[str],
     *,
-    step: str,
+    stage: str,
     hint: str = "",
 ) -> Optional[str]:
     ag = str(agency_id or "").strip()
@@ -443,7 +443,7 @@ def _sanitize_agency_id_for_fk(
         return None
     if ag in valid_agency_ids:
         return ag
-    _trace("sync_invalid_agency", step=step, hint=hint, agency_id=ag)
+    _trace("sync_invalid_agency", stage=stage, hint=hint, agency_id=ag)
     return None
 
 
@@ -1456,7 +1456,7 @@ class KVStore:
             safe_agency_id = _sanitize_agency_id_for_fk(
                 agency_id,
                 valid_agency_ids,
-                step="popup_upsert",
+                stage="popup_upsert",
                 hint=approval_no,
             )
             _trace(
@@ -1733,7 +1733,7 @@ class KVStore:
                         resolved_agency_id = _sanitize_agency_id_for_fk(
                             resolved_agency_id,
                             valid_agency_ids,
-                            step="map_from_existing_tx",
+                            stage="map_from_existing_tx",
                             hint=approval_raw or approval,
                         )
 
@@ -1743,7 +1743,7 @@ class KVStore:
                             resolved_agency_id = _sanitize_agency_id_for_fk(
                                 key_agency,
                                 valid_agency_ids,
-                                step="map_from_key",
+                                stage="map_from_key",
                                 hint=approval_raw or approval,
                             )
                             print(
@@ -1755,7 +1755,7 @@ class KVStore:
                             resolved_agency_id = _sanitize_agency_id_for_fk(
                                 mid_agency,
                                 valid_agency_ids,
-                                step="map_from_mid_unique",
+                                stage="map_from_mid_unique",
                                 hint=approval_raw or approval,
                             )
 
