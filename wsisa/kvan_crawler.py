@@ -1329,20 +1329,26 @@ class KVStore:
         conn.commit()
         conn.close()
 
-    def load_kvan_links(self) -> list[dict]:
+    def load_kvan_links(self, limit: int | None = None) -> list[dict]:
         if self.use_json:
-            return _json_load_rows("kvan_links")
+            rows = _json_load_rows("kvan_links")
+            if isinstance(limit, int) and limit > 0:
+                return rows[:limit]
+            return rows
 
         conn = get_db()
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            sql = """
                 SELECT id, captured_at, link_created_at, title, amount, ttl_label, status,
                        kvan_link, mid, kvan_session_id, agency_id, internal_session_id, raw_text
                 FROM kvan_links
                 ORDER BY id DESC
-                """
-            )
+            """
+            params: tuple = ()
+            if isinstance(limit, int) and limit > 0:
+                sql += " LIMIT %s"
+                params = (int(limit),)
+            cur.execute(sql, params)
             rows = cur.fetchall() or []
         conn.close()
         return rows
