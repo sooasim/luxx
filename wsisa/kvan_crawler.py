@@ -421,6 +421,31 @@ def _resolve_agency_id_for_kvan_tx_row(raw_text: str, cur) -> tuple[Optional[str
     return (aid or None), key
 
 
+def _load_valid_agency_ids(cur) -> set[str]:
+    try:
+        cur.execute("SELECT id FROM agencies")
+        rows = cur.fetchall() or []
+        return {str(r.get("id") or "").strip() for r in rows if str(r.get("id") or "").strip()}
+    except Exception:
+        return set()
+
+
+def _sanitize_agency_id_for_fk(
+    agency_id: Optional[str],
+    valid_agency_ids: set[str],
+    *,
+    step: str,
+    hint: str = "",
+) -> Optional[str]:
+    ag = str(agency_id or "").strip()
+    if not ag:
+        return None
+    if ag in valid_agency_ids:
+        return ag
+    _trace("sync_invalid_agency", step=step, hint=hint, agency_id=ag)
+    return None
+
+
 def _lookup_internal_session_id_for_kvan_key(kvan_key: str) -> str:
     kk = (kvan_key or "").strip()
     if not kk:
@@ -1308,6 +1333,13 @@ class KVStore:
 
         conn = get_db()
         with conn.cursor() as cur:
+            valid_agency_ids = _load_valid_agency_ids(cur)
+            safe_agency_id = _sanitize_agency_id_for_fk(
+                agency_id,
+                valid_agency_ids,
+                step="popup_upsert",
+                hint=approval_no,
+            )
             cur.execute(
                 """
                 SELECT id FROM transactions
@@ -1330,7 +1362,7 @@ class KVStore:
                         agency_id = COALESCE(NULLIF(agency_id, ''), %s)
                     WHERE id = %s
                     """,
-                    (amount, customer_name or "", prefix4, registered_at, agency_id, tx_id),
+                    (amount, customer_name or "", prefix4, registered_at, safe_agency_id, tx_id),
                 )
             else:
                 new_tx_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-18:]
@@ -1348,11 +1380,11 @@ class KVStore:
                       'success', %s, '미정산', NULL, '', %s, '결제 승인', %s
                     )
                     """,
-                    (new_tx_id, agency_id, amount, customer_name or "", prefix4, message, approval_no, registered_at),
+                    (new_tx_id, safe_agency_id, amount, customer_name or "", prefix4, message, approval_no, registered_at),
                 )
                 append_payment_notification(
                     PAYMENT_NOTIFICATIONS_PATH,
-                    agency_id=agency_id or "",
+                    agency_id=safe_agency_id or "",
                     amount=amount,
                     tx_id=new_tx_id,
                     customer_name=customer_name or "",
@@ -1484,6 +1516,7 @@ class KVStore:
             else:
                 conn = _get_db_with_retry()
                 with conn.cursor() as cur:
+                    valid_agency_ids = _load_valid_agency_ids(cur)
                     # kvan_transactions(원천)에서 찾으려는 승인번호/카드 prefix 목록
                     approvals = []
                     prefixes = []
@@ -1514,7 +1547,7 @@ class KVStore:
                         for r in cur.fetchall() or []:
                             a = (r.get("kvan_approval_no") or "").strip()
                             ag = (r.get("agency_id") or "").strip()
-                            if a and ag and a not in approval_to_agency:
+                            if a and ag and ag in valid_agency_ids and a not in approval_to_agency:
                                 approval_to_agency[a] = ag
 
                     if prefixes:
@@ -1531,7 +1564,7 @@ class KVStore:
                         for r in cur.fetchall() or []:
                             p4 = (r.get("card_prefix4") or "").strip()
                             ag = (r.get("agency_id") or "").strip()
-                            if p4 and ag and p4 not in prefix_to_agency:
+                            if p4 and ag and ag in valid_agency_ids and p4 not in prefix_to_agency:
                                 prefix_to_agency[p4] = ag
 
                     for kr in krows:
@@ -1562,11 +1595,22 @@ class KVStore:
                         resolved_agency_id = approval_to_agency.get(approval) or (
                             prefix4 and prefix_to_agency.get(prefix4)
                         ) or ""
+                        resolved_agency_id = _sanitize_agency_id_for_fk(
+                            resolved_agency_id,
+                            valid_agency_ids,
+                            step="map_from_existing_tx",
+                            hint=approval_raw or approval,
+                        )
 
                         raw_tx = (kr.get("raw_text") or "").strip()
                         key_agency, kkey = _resolve_agency_id_for_kvan_tx_row(raw_tx, cur)
                         if kkey:
-                            resolved_agency_id = (key_agency or "").strip()
+                            resolved_agency_id = _sanitize_agency_id_for_fk(
+                                key_agency,
+                                valid_agency_ids,
+                                step="map_from_key",
+                                hint=approval_raw or approval,
+                            )
                             print(
                                 f"[KVAN-TX-SYNC][crawler] approval={approval_raw or approval} key={kkey} "
                                 f"agency_id={(resolved_agency_id or '')!r}"
@@ -1615,7 +1659,7 @@ class KVStore:
 
                         # 승인번호로 매칭이 안 되면, (amount + 날짜)로 기존 거래를 찾아보되
                         # 가능한 경우 resolved_agency_id로 좁힌다.
-                        params = [amt, reg_date, reg_date, resolved_agency_id]
+                        params = [amt, reg_date, reg_date]
                         sql = """
                             SELECT id
                             FROM transactions
@@ -1624,6 +1668,7 @@ class KVStore:
                         """
                         if resolved_agency_id:
                             sql += " AND agency_id = %s"
+                            params.append(resolved_agency_id)
                         sql += " ORDER BY created_at DESC LIMIT 1"
                         if resolved_agency_id:
                             cur.execute(sql, tuple(params))

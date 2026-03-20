@@ -1528,6 +1528,25 @@ def _resolve_agency_id_for_kvan_tx_row(raw_text: str, cur) -> tuple[str | None, 
     return (aid or None), key
 
 
+def _load_valid_agency_ids(cur) -> set[str]:
+    try:
+        cur.execute("SELECT id FROM agencies")
+        rows = cur.fetchall() or []
+        return {str(r.get("id") or "").strip() for r in rows if str(r.get("id") or "").strip()}
+    except Exception:
+        return set()
+
+
+def _sanitize_agency_id_for_fk(agency_id: str | None, valid_agency_ids: set[str], hint: str = "") -> str | None:
+    ag = str(agency_id or "").strip()
+    if not ag:
+        return None
+    if ag in valid_agency_ids:
+        return ag
+    print(f"[WARN] invalid agency_id for FK skip: agency_id={ag}, hint={hint}")
+    return None
+
+
 def _sync_kvan_to_transactions() -> bool:
     """
     kvan_transactions 에 쌓인 K-VAN 거래내역을
@@ -1552,6 +1571,7 @@ def _sync_kvan_to_transactions() -> bool:
     try:
         conn = get_db()
         with conn.cursor() as cur:
+            valid_agency_ids = _load_valid_agency_ids(cur)
             # 1) 최근 K-VAN 거래 200건만 사용 (raw_text로 세션 KEY 추출 → 대행사 구분)
             cur.execute(
                 """
@@ -1580,6 +1600,11 @@ def _sync_kvan_to_transactions() -> bool:
 
                 # 대행사/본사 구분: raw_text 에서 주 세션 KEY 추정 → admin_state → 필요 시 kvan_links 단일 행
                 agency_id, chosen_key = _resolve_agency_id_for_kvan_tx_row(raw_text, cur)
+                agency_id = _sanitize_agency_id_for_fk(
+                    agency_id,
+                    valid_agency_ids,
+                    hint=approval,
+                )
                 if chosen_key:
                     print(
                         f"[KVAN-TX-SYNC] approval={approval} key={chosen_key} "
@@ -1621,7 +1646,7 @@ def _sync_kvan_to_transactions() -> bool:
                             agency_id = COALESCE(NULLIF(TRIM(agency_id), ''), %s)
                         WHERE id = %s
                         """,
-                        (amt, tx_status, mid, approval, tx_type, reg, fill_agency, tx_id),
+                        (amt, tx_status, mid, approval, tx_type, reg, fill_agency or None, tx_id),
                     )
                     updated += 1
                     continue
@@ -1693,7 +1718,7 @@ def _sync_kvan_to_transactions() -> bool:
                     """,
                     (
                         new_tx_id,
-                        (agency_id or "").strip(),
+                        agency_id,
                         amt,
                         tx_status,
                         message,

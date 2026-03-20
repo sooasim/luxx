@@ -219,6 +219,26 @@ def _is_retryable_db_error(exc: Exception) -> bool:
     )
 
 
+def _get_db_with_retry(max_attempts: int = 3, delay_sec: float = 0.6):
+    last_exc: Exception | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            conn = get_db()
+            try:
+                conn.ping(reconnect=True)
+            except Exception:
+                pass
+            return conn
+        except Exception as e:  # noqa: BLE001
+            last_exc = e
+            if attempt >= max_attempts or not _is_retryable_db_error(e):
+                raise
+            time.sleep(delay_sec * attempt)
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("DB connection retry failed")
+
+
 def cleanup_history_files() -> dict:
     """
     세션 JSON 히스토리 파일을 3개월 기준으로 정리하고,
@@ -1225,10 +1245,10 @@ def _save_session_order_json(
     return out_path
 
 
-def _find_agency_by_credentials(login_id: str, password: str) -> dict | None:
-    """MySQL 에서 대행사 로그인 정보로 대행사 레코드를 찾는다."""
+def _find_agency_by_credentials(login_id: str, password: str) -> tuple[dict | None, str | None]:
+    """MySQL(실패 시 state fallback)에서 대행사 로그인 정보로 대행사 레코드를 찾는다."""
     try:
-        conn = get_db()
+        conn = _get_db_with_retry(max_attempts=3, delay_sec=0.5)
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT * FROM agencies WHERE login_id=%s AND login_password=%s LIMIT 1",
@@ -1236,9 +1256,20 @@ def _find_agency_by_credentials(login_id: str, password: str) -> dict | None:
             )
             row = cur.fetchone()
         conn.close()
-        return row
-    except Exception:
-        return None
+        return row, None
+    except Exception as e:  # noqa: BLE001
+        _append_hq_log("WEB", f"[WARN] agency 로그인 DB 조회 실패: {e}")
+        try:
+            st = _load_hq_state()
+            for ag in st.get("agencies") or []:
+                if (
+                    str(ag.get("login_id") or "").strip() == str(login_id).strip()
+                    and str(ag.get("login_password") or "").strip() == str(password).strip()
+                ):
+                    return ag, "db_fallback"
+        except Exception:
+            pass
+        return None, "db_error"
 
 HEADERS: List[str] = [
     "login_id",
@@ -1369,7 +1400,7 @@ def portal_login():
         return redirect(url_for("hq_admin"))
 
     # 2) 대행사 계정 확인
-    ag = _find_agency_by_credentials(username, password)
+    ag, login_meta = _find_agency_by_credentials(username, password)
     if ag:
         session["agency_id"] = ag.get("id")
         session["agency_name"] = ag.get("company_name")
@@ -1377,6 +1408,9 @@ def portal_login():
         return redirect(url_for("agency_admin"))
 
     # 3) 실패 시 간단한 에러 페이지 표시
+    msg = "아이디 또는 비밀번호를 다시 확인해 주세요."
+    if login_meta == "db_error":
+        msg = "DB 연결 상태가 불안정합니다. 잠시 후 다시 시도해 주세요."
     return """
     <!DOCTYPE html>
     <html lang="ko">
@@ -1390,7 +1424,7 @@ def portal_login():
     <body class="bg-[#1e326b] text-white font-[Inter] min-h-screen flex items-center justify-center">
       <div class="bg-white/10 border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full text-center shadow-2xl">
         <h1 class="text-xl font-bold mb-3">로그인에 실패했습니다.</h1>
-        <p class="text-sm text-white/70 mb-6">아이디 또는 비밀번호를 다시 확인해 주세요.</p>
+        <p class="text-sm text-white/70 mb-6">""" + msg + """</p>
         <a href="/login.html" class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white text-[#1e326b] font-semibold text-sm hover:bg-brand-accent transition">
           로그인 페이지로 돌아가기
         </a>
@@ -4102,12 +4136,17 @@ def agency_login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        ag = _find_agency_by_credentials(username, password)
+        ag, login_meta = _find_agency_by_credentials(username, password)
         if ag:
             session["agency_id"] = ag.get("id")
             session["agency_name"] = ag.get("company_name")
+            if login_meta == "db_fallback":
+                _append_hq_log("WEB", f"[WARN] agency_login fallback 경로 로그인 id={ag.get('id')}")
             return redirect(url_for("agency_admin"))
-        error = "아이디 또는 비밀번호가 올바르지 않습니다."
+        if login_meta == "db_error":
+            error = "DB 연결 상태가 불안정합니다. 잠시 후 다시 시도해 주세요."
+        else:
+            error = "아이디 또는 비밀번호가 올바르지 않습니다."
 
     template = """
     <!DOCTYPE html>
