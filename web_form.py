@@ -638,6 +638,64 @@ def _hq_merge_expired_with_tx_from_transactions(items: list, transactions: list)
     return out
 
 
+def _hq_merge_expired_with_tx_from_kvan_links(
+    items: list,
+    kvan_links: list,
+    transactions: list,
+) -> list:
+    """
+    만료+거래 목록을 kvan_links 기준으로 한 번 더 보강한다.
+    조건:
+      - kvan_links 상태가 만료 계열
+      - 같은 세션 키(KEY/내부세션ID)가 transactions.message 에 존재
+    """
+    if not isinstance(items, list):
+        items = []
+    seen = {
+        str(x.get("session_id") or "").strip()
+        for x in items
+        if str(x.get("session_id") or "").strip()
+    }
+    tx_keys: set[str] = set()
+    for t in transactions or []:
+        for k in _extract_session_keys_from_tx_message(str(t.get("message") or "")):
+            tx_keys.add(k)
+    if not tx_keys:
+        return items
+    out = list(items)
+    for r in kvan_links or []:
+        if not isinstance(r, dict):
+            continue
+        st = str(r.get("status") or "").strip()
+        ttl = str(r.get("ttl_label") or "").strip()
+        if ("만료" not in st) and ("만료" not in ttl):
+            continue
+        keys = _hq_collect_session_keys_from_row(r)
+        if not keys:
+            continue
+        if not any(k in tx_keys for k in keys):
+            continue
+        sid = (
+            str(r.get("internal_session_id") or "").strip()
+            or str(r.get("kvan_session_id") or "").strip()
+            or keys[0]
+        )
+        if not sid or sid in seen:
+            continue
+        seen.add(sid)
+        out.append(
+            {
+                "session_id": sid,
+                "kvan_session_id": str(r.get("kvan_session_id") or "").strip(),
+                "title": str(r.get("title") or r.get("product_name") or "")[:200],
+                "agency_id": str(r.get("agency_id") or "").strip(),
+                "finished_at": str(r.get("link_created_at") or r.get("captured_at") or ""),
+                "seen": True,
+            }
+        )
+    return out
+
+
 def _extract_session_keys_from_tx_message(msg: str) -> list[str]:
     out: list[str] = []
     m = str(msg or "")
@@ -4790,6 +4848,11 @@ def hq_admin():
         print(f"[WARN] hq_admin kvan_links 조회 실패: {e}")
 
     kvan_links_display = _hq_enrich_kvan_links_for_admin(kvan_links, agencies)
+    expired_with_transactions = _hq_merge_expired_with_tx_from_kvan_links(
+        expired_with_transactions, kvan_links, transactions
+    )
+    expired_with_tx_unseen = sum(1 for x in expired_with_transactions if not x.get("seen"))
+    expired_with_transactions_reversed = list(reversed(expired_with_transactions))
 
     # 각 테이블 전체 컬럼 목록 (DB 모든 항목 표시용)
     app_columns = list(applications[0].keys()) if applications else []
@@ -6122,46 +6185,84 @@ def agency_admin():
     # POST 처리(삭제·새로고침 신호 등) 이후 DB 기준으로 거래 목록을 다시 읽는다.
     agency_transactions: list[dict] = []
     try:
+        # admin_state 에 기록된 이 대행사 세션 키를 수집해
+        # agency_id 누락 거래도 message 기반으로 보조 매핑한다.
+        agency_session_keys: list[str] = []
+        try:
+            st = load_admin_state_json_for_web()
+            aid_s = str(agency_id or "").strip()
+            for s in (st.get("sessions") or []) + (st.get("history") or []):
+                if not isinstance(s, dict):
+                    continue
+                if str(s.get("agency_id") or "").strip() != aid_s:
+                    continue
+                sid = str(s.get("id") or "").strip()
+                if sid and sid not in agency_session_keys:
+                    agency_session_keys.append(sid)
+                ksid = str(s.get("kvan_session_id") or "").strip()
+                if ksid and ksid not in agency_session_keys:
+                    agency_session_keys.append(ksid)
+                slink = str(s.get("kvan_link") or "").strip()
+                if slink:
+                    sk = extract_kvan_session_key_from_url(slink)
+                    if sk and sk not in agency_session_keys:
+                        agency_session_keys.append(sk)
+        except Exception:
+            agency_session_keys = []
+
         conn = get_db()
         with conn.cursor() as cur:
-            agency_mid = str(agency.get("kvan_mid") or "").strip()
+            repaired_by_key = 0
+            # 1) 세션키(message) 기준: 가장 정확한 보조 복구
+            if agency_session_keys:
+                like_cond = " OR ".join(["message LIKE %s"] * len(agency_session_keys))
+                q_fix_key = f"""
+                    UPDATE transactions
+                    SET agency_id = %s
+                    WHERE (agency_id IS NULL OR TRIM(agency_id) = '')
+                      AND ({like_cond})
+                """
+                cur.execute(q_fix_key, (agency_id, *tuple(f"%{k}%" for k in agency_session_keys)))
+                repaired_by_key = int(cur.rowcount or 0)
             # 기본: agency_id 정확 매칭
-            # 보조: 과거/누락 데이터에서 agency_id 가 비어도
-            #      kvan_mid 일치 또는 kvan_transactions.agency_id 매칭이면 노출
-            sql = """
-                SELECT *
-                FROM (
-                    SELECT t.*
-                    FROM transactions t
-                    WHERE t.agency_id = %s
-
+            # 보조: agency_id 누락 행 중 세션키(message) 일치 건만 표시
+            sql_parts = [
+                """
+                SELECT t.*
+                FROM transactions t
+                WHERE t.agency_id = %s
+                """,
+            ]
+            params: list = [agency_id]
+            if agency_session_keys:
+                like_cond = " OR ".join(["t.message LIKE %s"] * len(agency_session_keys))
+                sql_parts.append(
+                    f"""
                     UNION
-
-                    SELECT t.*
-                    FROM transactions t
-                    JOIN kvan_transactions kt
-                      ON kt.approval_no = t.kvan_approval_no
-                    WHERE (t.agency_id IS NULL OR TRIM(t.agency_id) = '')
-                      AND kt.agency_id = %s
-
-                    UNION
-
                     SELECT t.*
                     FROM transactions t
                     WHERE (t.agency_id IS NULL OR TRIM(t.agency_id) = '')
-                      AND %s <> ''
-                      AND t.kvan_mid = %s
+                      AND ({like_cond})
+                    """
+                )
+                params.extend([f"%{k}%" for k in agency_session_keys])
+            query = f"""
+                SELECT * FROM (
+                    {' '.join(sql_parts)}
                 ) x
                 ORDER BY created_at DESC
                 LIMIT 500
             """
-            cur.execute(sql, (agency_id, agency_id, agency_mid, agency_mid))
-            agency_transactions = cur.fetchall()
+            cur.execute(query, tuple(params))
+            agency_transactions = cur.fetchall() or []
+        conn.commit()
         conn.close()
         try:
             _append_hq_log(
                 "WEB",
-                f"agency_tx_load agency_id={agency_id} kvan_mid={agency_mid or '-'} rows={len(agency_transactions)}",
+                f"agency_tx_load agency_id={agency_id} "
+                f"rows={len(agency_transactions)} "
+                f"repair_key={repaired_by_key}",
             )
         except Exception:
             pass
@@ -6641,7 +6742,7 @@ def agency_admin():
                 </button>
               </div>
             </div>
-            <div class="box-schema"><code>transactions</code> 본사 DB 동기화 · <code>agency_id</code> 우선 + 보조 매핑(<code>kvan_mid</code>, <code>kvan_approval_no↔kvan_transactions.agency_id</code>) 표시(최대 500건). 열: 시간, 거래금액, 수수료율·지급예정(계산), 구매자, 결제상태, <strong>정산상태(미정산/정산완료)</strong>, DB 원문. 아래 표는 드래그로 범위 선택 후 복사(Ctrl+C) 가능.</div>
+            <div class="box-schema"><code>transactions</code> 본사 DB 동기화 · <code>agency_id</code> 우선 + 보조 매핑(<code>세션 KEY(message)</code>) 표시(최대 500건). 열: 시간, 거래금액, 수수료율·지급예정(계산), 구매자, 결제상태, <strong>정산상태(미정산/정산완료)</strong>, DB 원문. 아래 표는 드래그로 범위 선택 후 복사(Ctrl+C) 가능.</div>
             {% if agency_transactions %}
             <form method="post" action="{{ url_for('agency_admin') }}" onsubmit="return confirm('선택한 거래를 본사 DB에서 삭제할까요?');">
             <input type="hidden" name="action" value="bulk_delete_agency_tx" />

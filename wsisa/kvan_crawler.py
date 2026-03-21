@@ -500,6 +500,49 @@ def _resolve_agency_id_by_kvan_key_db(cur, session_key: str) -> Optional[str]:
     return None
 
 
+def _resolve_agency_id_from_admin_state_amount_date(
+    amount: int,
+    reg_date: str,
+) -> Optional[str]:
+    """
+    세션 KEY/승인번호 매핑이 모두 실패했을 때의 엄격한 보조 매핑.
+    admin_state(sessions+history)에서 금액/날짜가 맞는 agency_id 후보가
+    '단 하나'일 때만 채택한다.
+    """
+    try:
+        target_amt = int(amount or 0)
+    except Exception:
+        target_amt = 0
+    if target_amt <= 0:
+        return None
+    try:
+        st = _load_admin_state()
+        buckets = (st.get("sessions") or []) + (st.get("history") or [])
+        cands: set[str] = set()
+        for s in buckets:
+            if not isinstance(s, dict):
+                continue
+            aid = str(s.get("agency_id") or "").strip()
+            if not aid:
+                continue
+            try:
+                s_amt = int(str(s.get("amount") or "0").replace(",", "").strip() or "0")
+            except Exception:
+                s_amt = 0
+            if s_amt != target_amt:
+                continue
+            if reg_date:
+                s_dt = _parse_session_datetime(s.get("finished_at") or s.get("created_at"))
+                if s_dt is not None and s_dt.strftime("%Y-%m-%d") != reg_date:
+                    continue
+            cands.add(aid)
+        if len(cands) == 1:
+            return next(iter(cands))
+    except Exception:
+        pass
+    return None
+
+
 def _extract_session_id_from_tx_message(message: str) -> str:
     msg = str(message or "").strip()
     if not msg:
@@ -1697,25 +1740,10 @@ class KVStore:
             if self.use_json:
                 tx_rows = _json_load_rows("transactions")
 
-                approval_to_agency: dict[str, str] = {}
-                prefix_to_agency: dict[str, str] = {}
-                for tx in tx_rows or []:
-                    ag = (tx.get("agency_id") or "").strip()
-                    if not ag:
-                        continue
-                    a = (tx.get("kvan_approval_no") or "").strip()
-                    if a and a not in approval_to_agency:
-                        approval_to_agency[a] = ag
-                    p = (tx.get("card_prefix4") or "").strip()
-                    if p and p not in prefix_to_agency:
-                        prefix_to_agency[p] = ag
-
                 for kr in krows:
                     amt = kr.get("amount") or 0
                     approval_raw = (kr.get("approval_no") or "").strip()
-                    approval = _normalized_approval_for_sync(approval_raw, kr)
-                    if not approval_raw and approval.startswith("NOAPP-"):
-                        synthetic_approval += 1
+                    approval = approval_raw
                     mid = (kr.get("mid") or "").strip()
                     tx_type = (kr.get("tx_type") or "").strip()
                     reg = (kr.get("registered_at") or "").strip()
@@ -1733,36 +1761,39 @@ class KVStore:
                         if ("취소" in tx_type or "실패" in tx_type or "오류" in tx_type)
                         else "other"
                     )
+                    if tx_status != "success":
+                        continue
                     reg_date = reg.split(" ")[0] if reg else ""
-
-                    resolved_agency_id = approval_to_agency.get(approval) or (
-                        prefix4 and prefix_to_agency.get(prefix4)
-                    ) or ""
+                    raw_tx = (kr.get("raw_text") or "").strip()
+                    sid_hint_for_msg = _extract_primary_kvan_key_from_tx_raw(raw_tx) or ""
+                    resolved_agency_id = (
+                        str(_get_agency_id_for_session(sid_hint_for_msg) or "").strip()
+                        if sid_hint_for_msg
+                        else ""
+                    )
 
                     found = None
-                    for tx in tx_rows:
-                        if (tx.get("kvan_approval_no") or "").strip() == approval:
-                            found = tx
-                            break
-
-                    if not found:
+                    if approval_raw:
                         for tx in tx_rows:
-                            same_amount = int(tx.get("amount") or 0) == int(amt)
-                            if resolved_agency_id:
-                                same_agency = (tx.get("agency_id") or "") == resolved_agency_id
-                            else:
-                                same_agency = True
-                            created_at = str(tx.get("created_at") or "")
-                            same_date = (not reg_date) or created_at.startswith(reg_date)
-                            if same_amount and same_agency and same_date:
+                            if (tx.get("kvan_approval_no") or "").strip() == approval_raw:
                                 found = tx
                                 break
+                    if (not found) and sid_hint_for_msg:
+                        for tx in tx_rows:
+                            msg = str(tx.get("message") or "")
+                            if sid_hint_for_msg and sid_hint_for_msg in msg:
+                                found = tx
+                                break
+
+                    if not found and not (approval_raw or sid_hint_for_msg):
+                        # KEY/승인번호 근거가 없으면 대행사/본사 구분을 위해 동기화를 건너뛴다.
+                        continue
 
                     if found:
                         found["amount"] = found.get("amount") or amt
                         found["status"] = tx_status
                         found["kvan_mid"] = mid
-                        found["kvan_approval_no"] = approval
+                        found["kvan_approval_no"] = approval_raw
                         found["kvan_tx_type"] = tx_type
                         found["kvan_registered_at"] = reg
                         if (not (found.get("agency_id") or "").strip()) and resolved_agency_id:
@@ -1785,21 +1816,18 @@ class KVStore:
                                 "status": tx_status,
                                 "message": (
                                     f"K-VAN {tx_type or '거래'} 자동 연동 "
-                                    f"(승인번호={approval_raw or '없음'})"
+                                    f"(승인번호={approval_raw or '없음'}"
+                                    + (f", 세션ID={sid_hint_for_msg}" if sid_hint_for_msg else "")
+                                    + ")"
                                 ),
                                 "settlement_status": "미정산",
                                 "settled_at": None,
                                 "kvan_mid": mid,
-                                "kvan_approval_no": approval,
+                                "kvan_approval_no": approval_raw,
                                 "kvan_tx_type": tx_type,
                                 "kvan_registered_at": reg,
                             }
                         )
-                        # 신규건도 maps 반영(추후 매칭 정확도 향상)
-                        if resolved_agency_id:
-                            approval_to_agency.setdefault(approval, resolved_agency_id)
-                            if prefix4:
-                                prefix_to_agency.setdefault(prefix4, resolved_agency_id)
                         inserted += 1
 
                 _json_save_rows("transactions", tx_rows)
@@ -1824,62 +1852,10 @@ class KVStore:
                     except Exception:
                         pass
                     valid_agency_ids = _load_valid_agency_ids(cur)
-                    # kvan_transactions(원천)에서 찾으려는 승인번호/카드 prefix 목록
-                    approvals = []
-                    prefixes = []
-                    for kr in krows:
-                        a = (kr.get("approval_no") or "").strip()
-                        if a:
-                            approvals.append(a)
-                        p4 = _card_prefix4(kr.get("card_number") or "")
-                        if p4:
-                            prefixes.append(p4)
-                    approvals = list(dict.fromkeys(approvals))
-                    prefixes = list(dict.fromkeys(prefixes))
-
-                    approval_to_agency: dict[str, str] = {}
-                    prefix_to_agency: dict[str, str] = {}
-
-                    if approvals:
-                        placeholders = ",".join(["%s"] * len(approvals))
-                        cur.execute(
-                            f"""
-                            SELECT kvan_approval_no, agency_id
-                            FROM transactions
-                            WHERE kvan_approval_no IN ({placeholders})
-                              AND agency_id IS NOT NULL AND agency_id <> ''
-                            """,
-                            tuple(approvals),
-                        )
-                        for r in cur.fetchall() or []:
-                            a = (r.get("kvan_approval_no") or "").strip()
-                            ag = (r.get("agency_id") or "").strip()
-                            if a and ag and ag in valid_agency_ids and a not in approval_to_agency:
-                                approval_to_agency[a] = ag
-
-                    if prefixes:
-                        placeholders = ",".join(["%s"] * len(prefixes))
-                        cur.execute(
-                            f"""
-                            SELECT card_prefix4, agency_id
-                            FROM transactions
-                            WHERE card_prefix4 IN ({placeholders})
-                              AND agency_id IS NOT NULL AND agency_id <> ''
-                            """,
-                            tuple(prefixes),
-                        )
-                        for r in cur.fetchall() or []:
-                            p4 = (r.get("card_prefix4") or "").strip()
-                            ag = (r.get("agency_id") or "").strip()
-                            if p4 and ag and ag in valid_agency_ids and p4 not in prefix_to_agency:
-                                prefix_to_agency[p4] = ag
-
                     for kr in krows:
                         amt = kr.get("amount") or 0
                         approval_raw = (kr.get("approval_no") or "").strip()
-                        approval = _normalized_approval_for_sync(approval_raw, kr)
-                        if not approval_raw and approval.startswith("NOAPP-"):
-                            synthetic_approval += 1
+                        approval = approval_raw
                         mid = (kr.get("mid") or "").strip()
                         tx_type = (kr.get("tx_type") or "").strip()
                         reg = (kr.get("registered_at") or "").strip()
@@ -1898,14 +1874,21 @@ class KVStore:
                             if ("취소" in tx_type or "실패" in tx_type or "오류" in tx_type)
                             else "other"
                         )
+                        if tx_status != "success":
+                            _trace(
+                                "sync_skip_non_success",
+                                tx_type=tx_type,
+                                amount=amt,
+                                reg_date=reg_date,
+                            )
+                            continue
 
-                        resolved_agency_id = approval_to_agency.get(approval) or (
-                            prefix4 and prefix_to_agency.get(prefix4)
-                        ) or ""
+                        agency_source = "none"
+                        resolved_agency_id = ""
                         resolved_agency_id = _sanitize_agency_id_for_fk(
                             resolved_agency_id,
                             valid_agency_ids,
-                            stage="map_from_existing_tx",
+                            stage="map_from_key_only",
                             hint=approval_raw or approval,
                         )
 
@@ -1918,32 +1901,68 @@ class KVStore:
                                 stage="map_from_key",
                                 hint=approval_raw or approval,
                             )
+                            if resolved_agency_id:
+                                agency_source = "map_from_key"
                             print(
                                 f"[KVAN-TX-SYNC][crawler] approval={approval_raw or approval} key={kkey} "
                                 f"agency_id={(resolved_agency_id or '')!r}"
                             )
-                        if not resolved_agency_id:
-                            mid_agency = _resolve_agency_id_by_mid_unique(cur, mid)
-                            resolved_agency_id = _sanitize_agency_id_for_fk(
-                                mid_agency,
-                                valid_agency_ids,
-                                stage="map_from_mid_unique",
-                                hint=approval_raw or approval,
-                            )
-
-                        cur.execute(
-                            """
-                            SELECT id, message
-                            FROM transactions
-                            WHERE kvan_approval_no = %s
-                            LIMIT 1
-                            """,
-                            (approval,),
+                        _trace(
+                            "sync_row_mapping",
+                            approval=approval,
+                            amount=amt,
+                            mid=mid,
+                            reg_date=reg_date,
+                            source=agency_source,
+                            resolved_agency_id=resolved_agency_id or "",
                         )
-                        tx = cur.fetchone()
+
+                        tx = None
+                        if approval_raw:
+                            cur.execute(
+                                """
+                                SELECT id, message, agency_id
+                                FROM transactions
+                                WHERE kvan_approval_no = %s
+                                LIMIT 1
+                                """,
+                                (approval_raw,),
+                            )
+                            tx = cur.fetchone()
+                        if (not tx) and kkey:
+                            cur.execute(
+                                """
+                                SELECT id, message, agency_id
+                                FROM transactions
+                                WHERE message LIKE %s
+                                ORDER BY created_at DESC
+                                LIMIT 1
+                                """,
+                                (f"%{kkey}%",),
+                            )
+                            tx = cur.fetchone()
 
                         if tx:
                             tx_id = tx["id"]
+                            existing_agency_id = str(tx.get("agency_id") or "").strip()
+                            final_agency_id = resolved_agency_id
+                            # 기존 agency_id가 있으면 기본적으로 보존한다.
+                            # 단, KEY 기반으로 강하게 확정된 경우에만 교정 허용.
+                            if existing_agency_id:
+                                if (
+                                    resolved_agency_id
+                                    and resolved_agency_id != existing_agency_id
+                                    and agency_source == "map_from_key"
+                                ):
+                                    final_agency_id = resolved_agency_id
+                                    _trace(
+                                        "sync_agency_corrected_by_key",
+                                        approval=approval,
+                                        before=existing_agency_id,
+                                        after=resolved_agency_id,
+                                    )
+                                else:
+                                    final_agency_id = existing_agency_id
                             cur.execute(
                                 """
                                 UPDATE transactions
@@ -1955,193 +1974,73 @@ class KVStore:
                                     kvan_tx_type = %s,
                                     kvan_registered_at = %s,
                                     card_prefix4 = COALESCE(NULLIF(card_prefix4, ''), %s),
-                                    agency_id = COALESCE(NULLIF(TRIM(agency_id), ''), %s)
+                                    agency_id = %s
                                 WHERE id = %s
                                 """,
                                 (
                                     amt,
                                     tx_status,
                                     mid,
-                                    approval,
+                                    approval_raw,
                                     tx_type,
                                     reg,
                                     prefix4,
-                                    resolved_agency_id,
+                                    final_agency_id,
                                     tx_id,
                                 ),
                             )
-                            if tx_status == "success":
-                                sid_hint = _extract_session_id_from_tx_message(
-                                    tx.get("message") or ""
-                                )
-                                if not sid_hint:
-                                    sid_hint = _guess_open_session_id_for_success(
-                                        amount=int(amt or 0),
-                                        agency_id=resolved_agency_id,
-                                        reg_date=reg_date,
-                                    )
-                                if sid_hint:
-                                    _mark_session_checked(
-                                        sid_hint,
-                                        title="거래내역 자동 동기화",
-                                        has_approval=True,
-                                    )
-                                    _trace(
-                                        "sync_mark_checked",
-                                        approval=approval,
-                                        session_id=sid_hint,
-                                        path="approval_match",
-                                    )
-                                else:
-                                    open_cnt = _count_open_sessions()
-                                    if open_cnt <= 0:
-                                        _trace(
-                                            "sync_mark_skipped_no_open_session",
-                                            approval=approval,
-                                            amount=amt,
-                                            agency_id=resolved_agency_id or "",
-                                            reg_date=reg_date,
-                                            path="approval_match",
-                                        )
-                                    else:
-                                        _trace(
-                                            "sync_mark_unresolved",
-                                            approval=approval,
-                                            amount=amt,
-                                            agency_id=resolved_agency_id or "",
-                                            reg_date=reg_date,
-                                            open_sessions=open_cnt,
-                                            path="approval_match",
-                                        )
-                            updated += 1
-                            continue
-
-                        # 승인번호로 매칭이 안 되면, (amount + 날짜)로 기존 거래를 찾아보되
-                        # 가능한 경우 resolved_agency_id로 좁힌다.
-                        params = [amt, reg_date, reg_date]
-                        sql = """
-                            SELECT id, message, kvan_approval_no, agency_id
-                            FROM transactions
-                            WHERE amount = %s
-                              AND (%s = '' OR DATE(created_at) = %s)
-                        """
-                        if resolved_agency_id:
-                            sql += " AND agency_id = %s"
-                            params.append(resolved_agency_id)
-                        else:
-                            # agency_id 미해결 상태에서는 다른 대행사 건을 덮어쓰지 않도록
-                            # agency_id 비어있는 후보만 보정 대상으로 제한한다.
-                            sql += " AND (agency_id IS NULL OR TRIM(agency_id) = '')"
-                        sql += " ORDER BY created_at DESC LIMIT 10"
-                        if resolved_agency_id:
-                            cur.execute(sql, tuple(params))
-                        else:
-                            cur.execute(
-                                """
-                                SELECT id, message, kvan_approval_no, agency_id
-                                FROM transactions
-                                WHERE amount = %s
-                                  AND (%s = '' OR DATE(created_at) = %s)
-                                  AND (agency_id IS NULL OR TRIM(agency_id) = '')
-                                ORDER BY created_at DESC
-                                LIMIT 10
-                                """,
-                                (amt, reg_date, reg_date),
-                            )
-                        candidates = cur.fetchall() or []
-                        tx = None
-                        for cand in candidates:
-                            existing_ap = str(cand.get("kvan_approval_no") or "").strip()
-                            # 이미 다른 승인번호가 박혀 있는 행은 덮어쓰지 않는다.
-                            if existing_ap and existing_ap != approval:
-                                _trace(
-                                    "sync_amount_date_skip_conflict_approval",
-                                    amount=amt,
+                            sid_hint = _extract_session_id_from_tx_message(
+                                tx.get("message") or ""
+                            ) or kkey
+                            if not sid_hint:
+                                sid_hint = _guess_open_session_id_for_success(
+                                    amount=int(amt or 0),
+                                    agency_id=resolved_agency_id,
                                     reg_date=reg_date,
-                                    existing_approval=existing_ap,
-                                    incoming_approval=approval,
                                 )
-                                continue
-                            tx = cand
-                            # 같은 승인번호가 있으면 최우선 채택
-                            if existing_ap == approval:
-                                break
-                        if tx:
-                            tx_id = tx["id"]
-                            cur.execute(
-                                """
-                                UPDATE transactions
-                                SET created_at = COALESCE(created_at, NOW()),
-                                    status = %s,
-                                    kvan_mid = %s,
-                                    kvan_approval_no = %s,
-                                    kvan_tx_type = %s,
-                                    kvan_registered_at = %s,
-                                    card_prefix4 = COALESCE(NULLIF(card_prefix4, ''), %s),
-                                    agency_id = COALESCE(NULLIF(TRIM(agency_id), ''), %s)
-                                WHERE id = %s
-                                """,
-                                (
-                                    tx_status,
-                                    mid,
-                                    approval,
-                                    tx_type,
-                                    reg,
-                                    prefix4,
-                                    resolved_agency_id,
-                                    tx_id,
-                                ),
-                            )
-                            if tx_status == "success":
-                                sid_hint = _extract_session_id_from_tx_message(
-                                    tx.get("message") or ""
+                            if sid_hint:
+                                _mark_session_checked(
+                                    sid_hint,
+                                    title="거래내역 자동 동기화",
+                                    has_approval=True,
                                 )
-                                if not sid_hint:
-                                    sid_hint = _guess_open_session_id_for_success(
-                                        amount=int(amt or 0),
-                                        agency_id=resolved_agency_id,
-                                        reg_date=reg_date,
-                                    )
-                                if sid_hint:
-                                    _mark_session_checked(
-                                        sid_hint,
-                                        title="거래내역 자동 동기화",
-                                        has_approval=True,
-                                    )
+                                _trace(
+                                    "sync_mark_checked",
+                                    approval=approval_raw,
+                                    session_id=sid_hint,
+                                    path="approval_or_key_match",
+                                )
+                            else:
+                                open_cnt = _count_open_sessions()
+                                if open_cnt <= 0:
                                     _trace(
-                                        "sync_mark_checked",
-                                        approval=approval,
-                                        session_id=sid_hint,
-                                        path="amount_date_match",
+                                        "sync_mark_skipped_no_open_session",
+                                        approval=approval_raw,
+                                        amount=amt,
+                                        agency_id=resolved_agency_id or "",
+                                        reg_date=reg_date,
+                                        path="approval_or_key_match",
                                     )
                                 else:
-                                    open_cnt = _count_open_sessions()
-                                    if open_cnt <= 0:
-                                        _trace(
-                                            "sync_mark_skipped_no_open_session",
-                                            approval=approval,
-                                            amount=amt,
-                                            agency_id=resolved_agency_id or "",
-                                            reg_date=reg_date,
-                                            path="amount_date_match",
-                                        )
-                                    else:
-                                        _trace(
-                                            "sync_mark_unresolved",
-                                            approval=approval,
-                                            amount=amt,
-                                            agency_id=resolved_agency_id or "",
-                                            reg_date=reg_date,
-                                            open_sessions=open_cnt,
-                                            path="amount_date_match",
-                                        )
+                                    _trace(
+                                        "sync_mark_unresolved",
+                                        approval=approval_raw,
+                                        amount=amt,
+                                        agency_id=resolved_agency_id or "",
+                                        reg_date=reg_date,
+                                        open_sessions=open_cnt,
+                                        path="approval_or_key_match",
+                                    )
                             updated += 1
                             continue
 
                         new_tx_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-18:]
+                        sid_hint_for_msg = _extract_primary_kvan_key_from_tx_raw(raw_tx) or ""
                         message = (
                             f"K-VAN {tx_type or '거래'} 자동 연동 "
-                            f"(승인번호={approval_raw or '없음'})"
+                            f"(승인번호={approval_raw or '없음'}"
+                            + (f", 세션ID={sid_hint_for_msg}" if sid_hint_for_msg else "")
+                            + ")"
                         )
 
                         cur.execute(
@@ -2165,15 +2064,11 @@ class KVStore:
                                 tx_status,
                                 message,
                                 mid,
-                                approval,
+                                approval_raw,
                                 tx_type,
                                 reg,
                             ),
                         )
-                        if resolved_agency_id:
-                            approval_to_agency.setdefault(approval, resolved_agency_id)
-                            if prefix4:
-                                prefix_to_agency.setdefault(prefix4, resolved_agency_id)
                         inserted += 1
                         if tx_status == "success" and int(amt or 0) > 0:
                             append_payment_notification(
