@@ -4,6 +4,8 @@ import json
 import re
 import time
 import random
+import html
+import uuid
 from typing import List
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse, urlunparse
@@ -576,6 +578,13 @@ AUCTION_SITES = [
     ("Bonhams", "https://www.bonhams.com"),
     ("Catawiki", "https://www.catawiki.com"),
     ("Drouot", "https://www.drouot.com"),
+]
+PRODUCT_IMAGE_URLS = [
+    "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80",
 ]
 KVAN_CRAWLER_LOCK_PATH = DATA_DIR / "kvan_crawler.lock"
 # 거래 내역 엑셀형 리스트용 컬럼 순서 (DB transactions 테이블 전체 양식)
@@ -1204,6 +1213,128 @@ def _ensure_product_asset_table(conn) -> None:
     conn.commit()
 
 
+def _split_product_name_lines(name: str) -> tuple[str, str]:
+    text = str(name or "").strip()
+    if not text:
+        return "-", "-"
+    parts = text.split(" ", 1)
+    if len(parts) == 1:
+        return parts[0], ""
+    return parts[0], parts[1]
+
+
+def _render_card_html_for_screenshot(asset: dict, card_kind: str) -> str:
+    tpl_path = BASE_DIR / ("purchase_card.html" if card_kind == "product" else "storage_card.html")
+    if not tpl_path.exists():
+        raise FileNotFoundError(f"카드 템플릿이 없습니다: {tpl_path}")
+    tpl = tpl_path.read_text(encoding="utf-8")
+    p1, p2 = _split_product_name_lines(str(asset.get("product_name") or ""))
+    amount = int(asset.get("amount") or 0)
+    # 결제금액(amount)은 어드민 입력 최종 금액으로 간주한다.
+    # 수수료/배송/보험료는 최종 금액에 "포함"되도록 역산한다.
+    total_paid = max(0, amount)
+    fee_amount = int(round(total_paid * 0.05))
+    ship_amount = max(5000, int(round(total_paid * 0.01)))
+    # 소액 결제에서도 총합이 초과되지 않도록 안전 보정
+    if fee_amount + ship_amount >= total_paid:
+        fee_amount = int(total_paid * 0.08)
+        ship_amount = int(total_paid * 0.02)
+    hammer_base = max(0, total_paid - fee_amount - ship_amount)
+    sid = str(asset.get("session_id") or "")
+    sid_tail = sid[-4:] if sid else "0000"
+    order_no = f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-{sid_tail}"
+    buyer_label = f"buyer_{sid_tail}*** ({str(asset.get('owner_type') or 'USER').upper()} Member)"
+    image_idx = abs(hash(sid or "0")) % len(PRODUCT_IMAGE_URLS)
+    payment_dt = (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M KST")
+    card_title = "구매 신청 상품 | Purchase Confirmation" if card_kind == "product" else "경매 상품 보관증 | Storage Certificate"
+
+    mapping = {
+        "__CARD_TITLE__": html.escape(card_title),
+        "__PRODUCT_NAME_LINE1__": html.escape(p1),
+        "__PRODUCT_NAME_LINE2__": html.escape(p2),
+        "__PRODUCT_DETAIL__": html.escape(str(asset.get("product_detail") or "")),
+        "__AUCTION_HOUSE__": html.escape(str(asset.get("auction_site_name") or "")),
+        "__HAMMER_PRICE__": f"{amount:,}",
+        "__SESSION_ID__": html.escape(str(asset.get("session_id") or "")),
+        "__STORAGE_NO__": html.escape(str(asset.get("storage_no") or "")),
+        "__STORAGE_CODE__": html.escape(str(asset.get("storage_code") or "")),
+        "__STORAGE_UNTIL__": html.escape(str(asset.get("storage_until") or "")),
+        "__AUCTION_URL__": html.escape(str(asset.get("auction_site_url") or "https://worldsisa.com/auction.html")),
+        "__GENERATED_AT__": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+        "__ORDER_NO__": html.escape(order_no),
+        "__PRODUCT_IMAGE_URL__": html.escape(PRODUCT_IMAGE_URLS[image_idx]),
+        "__BRAND_LINE__": html.escape(f"{str(asset.get('auction_site_name') or '')} · SISA AUCTION"),
+        "__BUYER_LABEL__": html.escape(buyer_label),
+        "__HAMMER_PRICE__": f"{hammer_base:,}",
+        "__HAMMER_WITH_FEES__": f"{total_paid:,}",
+        "__FEE_AMOUNT__": f"{fee_amount:,}",
+        "__FEE_PERCENT__": "5%",
+        "__SHIP_AMOUNT__": f"{ship_amount:,}",
+        "__TOTAL_PAID__": f"{total_paid:,}",
+        "__DELIVERY_STATUS__": "결제 확인 대기중",
+        "__PAYMENT_DATE__": payment_dt,
+    }
+    out = tpl
+    for k, v in mapping.items():
+        out = out.replace(k, v)
+    return out
+
+
+def _screenshot_card_html(html_text: str, out_path: Path) -> None:
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+
+    tmp_dir = DATA_DIR / "tmp_cards"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    tmp_html = tmp_dir / f"card_{uuid.uuid4().hex}.html"
+    driver = None
+    try:
+        tmp_html.write_text(html_text, encoding="utf-8")
+        options = Options()
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1280,900")
+        options.add_argument("--hide-scrollbars")
+        options.add_argument("--force-device-scale-factor=1")
+        driver = webdriver.Chrome(options=options)
+        driver.get(tmp_html.as_uri())
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "article.glass-card"))
+        )
+        time.sleep(1.0)
+        card = driver.find_element(By.CSS_SELECTOR, "article.glass-card")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        card.screenshot(str(out_path))
+        # 캡처 결과 PNG의 바깥 테두리를 라운드 마스크로 마감.
+        # 일부 뷰어에서 투명 영역이 흰색으로 보일 수 있어, 투명 대신 딥블루 배경으로 합성한다.
+        if Image is not None:
+            try:
+                with Image.open(out_path).convert("RGBA") as im:
+                    w, h = im.size
+                    mask = Image.new("L", (w, h), 0)
+                    mdraw = ImageDraw.Draw(mask)
+                    mdraw.rounded_rectangle((0, 0, w - 1, h - 1), radius=32, fill=255)
+                    bg = Image.new("RGBA", (w, h), (3, 11, 24, 255))
+                    rounded = Image.composite(im, bg, mask)
+                    rounded.save(out_path, format="PNG")
+            except Exception:
+                pass
+    finally:
+        try:
+            if driver is not None:
+                driver.quit()
+        except Exception:
+            pass
+        try:
+            if tmp_html.exists():
+                tmp_html.unlink()
+        except Exception:
+            pass
+
+
 def _render_product_card_images(asset: dict) -> tuple[str, str]:
     if Image is None or ImageDraw is None or ImageFont is None:
         raise RuntimeError("Pillow 라이브러리가 필요합니다.")
@@ -1217,6 +1348,18 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
     storage_no = str(asset.get("storage_no") or "")
     storage_code = str(asset.get("storage_code") or "")
     until = str(asset.get("storage_until") or "")
+
+    # 1순위: HTML 템플릿을 브라우저로 렌더링 후 카드 영역 캡처 (원본 디자인과 최대한 동일)
+    try:
+        product_html = _render_card_html_for_screenshot(asset, "product")
+        storage_html = _render_card_html_for_screenshot(asset, "storage")
+        p1 = DOWNLOADS_DIR / f"sisa_product_{sid}.png"
+        p2 = DOWNLOADS_DIR / f"sisa_storage_{sid}.png"
+        _screenshot_card_html(product_html, p1)
+        _screenshot_card_html(storage_html, p2)
+        return str(p1), str(p2)
+    except Exception as _html_cap_err:
+        _append_hq_log("WEB", f"[WARN] HTML 캡처 PNG 생성 실패 - PIL 폴백: {_html_cap_err}")
 
     def _font(size: int, bold: bool = False):
         # KR/EN 혼합 텍스트 가독성을 위해 폰트 후보를 우선순위로 로딩한다.
@@ -1291,47 +1434,91 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
         _draw_gradient_bg(img)
         draw = ImageDraw.Draw(img)
 
+        # glow effects (HTML glass-card 느낌의 블루/시안 발광)
+        draw.ellipse((-160, 250, 220, 620), fill=(34, 211, 238, 44))
+        draw.ellipse((640, -180, 1010, 210), fill=(59, 130, 246, 68))
+
         # outer shell
         draw.rounded_rectangle((14, 14, width - 14, height - 14), radius=26, outline=(175, 205, 255), width=2, fill=(10, 20, 44, 220))
         draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=22, outline=(69, 102, 172), width=1)
 
+        # watermark (HTML 샘플처럼 중앙에 크게)
+        draw.text((158, 146), "SISA VAULT", fill=(59, 130, 246, 20), font=_font(104, bold=True))
+
+        # header icon + barcode block
+        draw.rounded_rectangle((40, 32, 82, 74), radius=8, fill=(255, 255, 255, 16), outline=(220, 235, 255, 80), width=1)
+        draw.ellipse((53, 44, 69, 60), outline=(147, 197, 253), width=1)
+        for bx in range(758, 840, 4):
+            bw = 1 if bx % 8 == 0 else 2
+            draw.line((bx, 40, bx, 74), fill=(220, 235, 255, 120), width=bw)
+        draw.text((742, 78), f"VAULT-{storage_no}", fill=(172, 196, 238), font=_font(10))
+
         draw.text((40, 34), "SISA GLOBAL AUCTION", fill=(196, 218, 255), font=_font(18, bold=True))
         draw.text((40, 58), "Society of International Specialized Auctioneers", fill=(149, 178, 229), font=_font(13))
-        _pill(draw, (40, 84, 210, 116), "LIVE | 실시간 경매", (33, 88, 211), (130, 174, 255), (238, 245, 255))
-        _pill(draw, (218, 84, 380, 116), "CERTIFIED | 인증", (13, 81, 57), (97, 201, 159), (219, 255, 237))
+        _pill(draw, (40, 84, 205, 116), "LIVE | 실시간 경매", (31, 94, 214), (130, 174, 255), (238, 245, 255))
+        _pill(draw, (214, 84, 395, 116), "CERTIFIED | SISA 인증", (7, 89, 144), (80, 200, 246), (219, 255, 237))
 
-        draw.text((40, 138), f"{title} | Purchase Item Card", fill=(240, 247, 255), font=_font(36, bold=True))
-        draw.text((40, 182), f"{product_name}", fill=(218, 233, 255), font=_font(24, bold=True))
-        draw.text((40, 208), "Global Auction Linked Product Information", fill=(149, 178, 229), font=_font(14))
+        # 타이틀 라인은 카드 종류별 고정 (HTML 컨셉과 동일)
+        title_line = "경매 상품 보관증 | Storage Certificate" if is_cert else "구매 상품 | Purchase Item"
+        draw.text((40, 140), title_line, fill=(240, 247, 255), font=_font(31, bold=True))
 
-        detail_lines = _wrap_text(draw, detail, _font(16), 530)
-        dy = 236
+        # 상품명을 2줄 스타일로
+        name_parts = product_name.split(" ", 1)
+        line1 = name_parts[0] if name_parts else product_name
+        line2 = name_parts[1] if len(name_parts) > 1 else ""
+        draw.text((40, 182), line1, fill=(230, 239, 255), font=_font(39, bold=True))
+        if line2:
+            draw.text((40, 223), line2, fill=(198, 220, 255), font=_font(28, bold=True))
+            info_y = 258
+        else:
+            info_y = 234
+        draw.text((40, info_y), "Global Auction Linked Product Information", fill=(149, 178, 229), font=_font(14))
+
+        detail_lines = _wrap_text(draw, detail, _font(15), 520)
+        dy = info_y + 28
         for ln in detail_lines:
             draw.text((40, dy), ln, fill=(177, 199, 236), font=_font(16))
             dy += 24
 
-        # right data panel
-        panel = (560, 128, 860, 392)
-        draw.rounded_rectangle(panel, radius=18, fill=(8, 17, 36), outline=(111, 153, 226), width=1)
-        draw.text((580, 148), "Auction Snapshot | 경매 요약", fill=(171, 201, 255), font=_font(16))
-        draw.text((580, 178), f"경매장 / Auction House: {site_name}", fill=(230, 239, 255), font=_font(15))
-        draw.text((580, 204), f"낙찰금액 / Hammer Price: {amount:,}원", fill=(223, 247, 232), font=_font(15))
-        draw.text((580, 230), f"세션ID / Session ID: {sid}", fill=(230, 239, 255), font=_font(15))
-        draw.text((580, 256), "경매 링크 / Auction URL", fill=(168, 193, 235), font=_font(14))
-        draw.text((580, 276), f"{site_url}", fill=(168, 193, 235), font=_font(13))
+        # right data panel (HTML 스냅샷 박스 구조와 유사)
+        panel = (558, 130, 864, 392)
+        draw.rounded_rectangle(panel, radius=20, fill=(8, 22, 54), outline=(89, 139, 230), width=1)
+        draw.ellipse((790, 130, 900, 240), fill=(34, 211, 238, 24))
+        draw.text((578, 148), "Auction Snapshot | 경매 요약", fill=(171, 201, 255), font=_font(16, bold=True))
+
+        row_y = 182
+        row_step = 32
+        label_color = (152, 184, 242)
+        value_color = (238, 245, 255)
+        draw.text((578, row_y), "경매장 / Auction House", fill=label_color, font=_font(14))
+        draw.text((742, row_y), site_name, fill=value_color, font=_font(14, bold=True)); row_y += row_step
+        draw.text((578, row_y), "낙찰금액 / Hammer Price", fill=label_color, font=_font(14))
+        draw.text((742, row_y), f"{amount:,}원", fill=value_color, font=_font(14, bold=True)); row_y += row_step
+        draw.text((578, row_y), "세션ID / Session ID", fill=label_color, font=_font(14))
+        draw.text((742, row_y), sid, fill=value_color, font=_font(14, bold=True)); row_y += row_step
+        draw.text((578, row_y), "경매 링크 / Auction URL", fill=label_color, font=_font(14)); row_y += 20
+        draw.text((578, row_y), site_url, fill=(168, 193, 235), font=_font(12)); row_y += 30
 
         if is_cert:
-            draw.text((580, 306), f"보관번호 / Vault No.: {storage_no}", fill=(245, 229, 194), font=_font(15))
-            draw.text((580, 332), f"보관코드 / Vault Code: {storage_code}", fill=(245, 229, 194), font=_font(15))
-            draw.text((580, 358), f"보관기간 / Storage Period: ~ {until}", fill=(245, 229, 194), font=_font(15))
+            draw.text((578, row_y), "보관번호 / Vault No.", fill=label_color, font=_font(14))
+            draw.text((742, row_y), storage_no, fill=value_color, font=_font(14, bold=True)); row_y += 30
+            # vault code 강조 줄
+            draw.rounded_rectangle((572, row_y - 2, 850, row_y + 26), radius=6, fill=(7, 89, 144), outline=(34, 211, 238), width=1)
+            draw.text((580, row_y + 2), "보관코드 / Vault Code", fill=(160, 240, 255), font=_font(13, bold=True))
+            draw.text((736, row_y + 1), storage_code, fill=(68, 247, 255), font=_font(18, bold=True)); row_y += 36
+            draw.text((578, row_y), "보관기간 / Storage Period", fill=(114, 241, 255), font=_font(14))
+            draw.text((742, row_y), f"~ {until}", fill=(114, 241, 255), font=_font(14, bold=True))
         else:
-            draw.text((580, 306), "상태 / Status: 결제 요청 준비 완료", fill=(178, 235, 206), font=_font(15))
-            draw.text((580, 332), "일관성 / Consistency: DB 고정 상품", fill=(178, 235, 206), font=_font(15))
-            draw.text((580, 358), "세션/상품 동일 키 / Same Session Key", fill=(178, 235, 206), font=_font(15))
+            draw.text((578, row_y), "상태 / Status", fill=(178, 235, 206), font=_font(14))
+            draw.text((742, row_y), "결제 요청 준비 완료", fill=(178, 235, 206), font=_font(14, bold=True)); row_y += 30
+            draw.text((578, row_y), "일관성 / Consistency", fill=(178, 235, 206), font=_font(14))
+            draw.text((742, row_y), "DB 고정 상품", fill=(178, 235, 206), font=_font(14, bold=True)); row_y += 30
+            draw.text((578, row_y), "세션키 / Session Key", fill=(178, 235, 206), font=_font(14))
+            draw.text((742, row_y), "동일 키 사용", fill=(178, 235, 206), font=_font(14, bold=True))
 
-        draw.text((40, 392), "SISA Certified Auction Visual", fill=(134, 166, 218), font=_font(13))
-        draw.text((40, 412), "worldsisa.com/auction", fill=(146, 174, 221), font=_font(15))
-        draw.text((660, 408), datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), fill=(146, 174, 221), font=_font(14))
+        draw.line((36, 390, 864, 390), fill=(255, 255, 255, 32), width=1)
+        draw.text((40, 400), "worldsisa.com/auction", fill=(146, 174, 221), font=_font(15))
+        draw.text((666, 400), datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), fill=(146, 174, 221), font=_font(14))
 
         out_path = DOWNLOADS_DIR / out_name
         img.save(out_path, format="PNG")
@@ -1916,6 +2103,7 @@ app.secret_key = "worldsisa-form-secret"
 @app.route("/api/crawler-refresh-status", methods=["GET"])
 def api_crawler_refresh_status():
     return _crawler_refresh_status_payload()
+
 
 # 약관 파일 경로 (프로젝트 루트의 terms.html)
 TERMS_FILE = BASE_DIR / "terms.html"
