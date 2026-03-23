@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import random
 from typing import List
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse, urlunparse
@@ -28,6 +29,12 @@ from flask import (
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except Exception:  # noqa: BLE001
+    Image = None
+    ImageDraw = None
+    ImageFont = None
 
 # 코드와 데이터 경로 분리: SISA_DATA_DIR (없으면 ./data)
 BASE_DIR = Path(__file__).resolve().parent
@@ -413,6 +420,28 @@ def init_db() -> None:
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                 """
             )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS session_product_assets (
+                  session_id VARCHAR(64) PRIMARY KEY,
+                  owner_type VARCHAR(16) NOT NULL,
+                  owner_agency_id VARCHAR(64) DEFAULT '',
+                  amount BIGINT NOT NULL,
+                  product_name VARCHAR(255) NOT NULL,
+                  product_detail TEXT,
+                  auction_site_name VARCHAR(120) DEFAULT '',
+                  auction_site_url VARCHAR(255) DEFAULT '',
+                  storage_no VARCHAR(24) DEFAULT '',
+                  storage_code VARCHAR(8) DEFAULT '',
+                  storage_until DATETIME NULL,
+                  image_main_path VARCHAR(255) DEFAULT '',
+                  image_cert_path VARCHAR(255) DEFAULT '',
+                  status VARCHAR(20) DEFAULT 'prepared',
+                  created_at DATETIME NOT NULL,
+                  linked_at DATETIME NULL
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                """
+            )
             # 기존 DB에 이미 생성된 테이블들이 있는 경우를 위해
             # 필요한 열이 없으면 추가 (에러는 무시)
             try:
@@ -529,6 +558,25 @@ KVAN_QUEUE_PATH = DATA_DIR / "kvan_queue.json"
 KVAN_LOCK_PATH = DATA_DIR / "kvan_running.lock"
 PAYMENT_NOTIFICATIONS_PATH = DATA_DIR / "payment_notifications.json"
 EXPIRED_WITH_TRANSACTIONS_PATH = DATA_DIR / "expired_with_transactions.json"
+PRODUCT_ASSET_JSON_PATH = DATA_DIR / "session_product_assets.json"
+DOWNLOADS_DIR = Path.home() / "Downloads"
+if not DOWNLOADS_DIR.exists():
+    DOWNLOADS_DIR = DATA_DIR / "downloads"
+DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+# 금액별 랜덤 상품 후보(각 10개). 이미지 생성 시 1개 선택되어 DB에 고정된다.
+AUCTION_SITES = [
+    ("Sotheby's", "https://www.sothebys.com"),
+    ("eBay", "https://www.ebay.com"),
+    ("Heritage Auctions", "https://www.ha.com"),
+    ("LiveAuctioneers", "https://www.liveauctioneers.com"),
+    ("Invaluable", "https://www.invaluable.com"),
+    ("Christie's", "https://www.christies.com"),
+    ("Phillips", "https://www.phillips.com"),
+    ("Bonhams", "https://www.bonhams.com"),
+    ("Catawiki", "https://www.catawiki.com"),
+    ("Drouot", "https://www.drouot.com"),
+]
 KVAN_CRAWLER_LOCK_PATH = DATA_DIR / "kvan_crawler.lock"
 # 거래 내역 엑셀형 리스트용 컬럼 순서 (DB transactions 테이블 전체 양식)
 TX_EXCEL_COLUMNS = [
@@ -1111,6 +1159,385 @@ def _mark_payment_notifications_seen(agency_id: str | None = None) -> None:
         print(f"[WARN] 결제 알림 확인 처리 실패: {e}")
 
 
+def _product_candidates_for_amount(amount: int) -> list[dict]:
+    base = max(1000, int(amount or 0))
+    out: list[dict] = []
+    for idx, (site_name, site_url) in enumerate(AUCTION_SITES, start=1):
+        out.append(
+            {
+                "product_name": f"{site_name} 출품 상품 #{idx:02d}",
+                "product_detail": (
+                    f"{site_name} 프리미엄 경매 출품 상품. "
+                    f"낙찰 예상가 {base:,}원, 보증/검수 포함."
+                ),
+                "auction_site_name": site_name,
+                "auction_site_url": site_url,
+            }
+        )
+    return out[:10]
+
+
+def _ensure_product_asset_table(conn) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS session_product_assets (
+              session_id VARCHAR(64) PRIMARY KEY,
+              owner_type VARCHAR(16) NOT NULL,
+              owner_agency_id VARCHAR(64) DEFAULT '',
+              amount BIGINT NOT NULL,
+              product_name VARCHAR(255) NOT NULL,
+              product_detail TEXT,
+              auction_site_name VARCHAR(120) DEFAULT '',
+              auction_site_url VARCHAR(255) DEFAULT '',
+              storage_no VARCHAR(24) DEFAULT '',
+              storage_code VARCHAR(8) DEFAULT '',
+              storage_until DATETIME NULL,
+              image_main_path VARCHAR(255) DEFAULT '',
+              image_cert_path VARCHAR(255) DEFAULT '',
+              status VARCHAR(20) DEFAULT 'prepared',
+              created_at DATETIME NOT NULL,
+              linked_at DATETIME NULL
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+            """
+        )
+    conn.commit()
+
+
+def _render_product_card_images(asset: dict) -> tuple[str, str]:
+    if Image is None or ImageDraw is None or ImageFont is None:
+        raise RuntimeError("Pillow 라이브러리가 필요합니다.")
+    width, height = 900, 450
+    sid = str(asset.get("session_id") or "").strip()
+    amount = int(asset.get("amount") or 0)
+    site_name = str(asset.get("auction_site_name") or "")
+    site_url = str(asset.get("auction_site_url") or "")
+    product_name = str(asset.get("product_name") or "")
+    detail = str(asset.get("product_detail") or "")
+    storage_no = str(asset.get("storage_no") or "")
+    storage_code = str(asset.get("storage_code") or "")
+    until = str(asset.get("storage_until") or "")
+
+    def _font(size: int, bold: bool = False):
+        # KR/EN 혼합 텍스트 가독성을 위해 폰트 후보를 우선순위로 로딩한다.
+        # 1) 프로젝트 커스텀 폰트(있으면 사용)
+        # 2) Windows 기본 한글/영문 폰트
+        # 3) PIL 기본 폰트
+        custom_dir = BASE_DIR / "assets" / "fonts"
+        custom_candidates = [
+            custom_dir / "Inter-Bold.ttf" if bold else custom_dir / "Inter-Regular.ttf",
+            custom_dir / "Pretendard-Bold.ttf" if bold else custom_dir / "Pretendard-Regular.ttf",
+        ]
+        win_candidates = [
+            Path("C:/Windows/Fonts/malgunbd.ttf" if bold else "C:/Windows/Fonts/malgun.ttf"),
+            Path("C:/Windows/Fonts/segoeuib.ttf" if bold else "C:/Windows/Fonts/segoeui.ttf"),
+            Path("C:/Windows/Fonts/arialbd.ttf" if bold else "C:/Windows/Fonts/arial.ttf"),
+        ]
+        for fp in custom_candidates + win_candidates:
+            try:
+                if fp.exists():
+                    return ImageFont.truetype(str(fp), size)
+            except Exception:
+                continue
+        try:
+            return ImageFont.truetype("malgun.ttf", size)
+        except Exception:
+            return ImageFont.load_default()
+
+    def _draw_gradient_bg(img):
+        draw = ImageDraw.Draw(img)
+        c1 = (8, 15, 35)
+        c2 = (26, 54, 112)
+        c3 = (19, 35, 74)
+        for y in range(height):
+            ratio = y / max(height - 1, 1)
+            if ratio < 0.55:
+                t = ratio / 0.55
+                r = int(c1[0] * (1 - t) + c2[0] * t)
+                g = int(c1[1] * (1 - t) + c2[1] * t)
+                b = int(c1[2] * (1 - t) + c2[2] * t)
+            else:
+                t = (ratio - 0.55) / 0.45
+                r = int(c2[0] * (1 - t) + c3[0] * t)
+                g = int(c2[1] * (1 - t) + c3[1] * t)
+                b = int(c2[2] * (1 - t) + c3[2] * t)
+            draw.line([(0, y), (width, y)], fill=(r, g, b))
+        # subtle glow circle
+        draw.ellipse((width - 250, -120, width + 150, 280), fill=(80, 132, 255, 48), outline=None)
+
+    def _pill(draw, xy, text, fill, border, text_fill):
+        x1, y1, x2, y2 = xy
+        draw.rounded_rectangle((x1, y1, x2, y2), radius=16, fill=fill, outline=border, width=1)
+        draw.text((x1 + 12, y1 + 7), text, fill=text_fill, font=_font(16))
+
+    def _wrap_text(draw, text: str, font, max_width: int) -> list[str]:
+        words = str(text or "").split()
+        if not words:
+            return [""]
+        out: list[str] = []
+        cur = words[0]
+        for w in words[1:]:
+            test = f"{cur} {w}"
+            if draw.textlength(test, font=font) <= max_width:
+                cur = test
+            else:
+                out.append(cur)
+                cur = w
+        out.append(cur)
+        return out[:3]
+
+    def _draw_card(title: str, is_cert: bool, out_name: str) -> str:
+        img = Image.new("RGB", (width, height), color=(12, 24, 54))
+        _draw_gradient_bg(img)
+        draw = ImageDraw.Draw(img)
+
+        # outer shell
+        draw.rounded_rectangle((14, 14, width - 14, height - 14), radius=26, outline=(175, 205, 255), width=2, fill=(10, 20, 44, 220))
+        draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=22, outline=(69, 102, 172), width=1)
+
+        draw.text((40, 34), "SISA GLOBAL AUCTION", fill=(196, 218, 255), font=_font(18, bold=True))
+        draw.text((40, 58), "Society of International Specialized Auctioneers", fill=(149, 178, 229), font=_font(13))
+        _pill(draw, (40, 84, 210, 116), "LIVE | 실시간 경매", (33, 88, 211), (130, 174, 255), (238, 245, 255))
+        _pill(draw, (218, 84, 380, 116), "CERTIFIED | 인증", (13, 81, 57), (97, 201, 159), (219, 255, 237))
+
+        draw.text((40, 138), f"{title} | Purchase Item Card", fill=(240, 247, 255), font=_font(36, bold=True))
+        draw.text((40, 182), f"{product_name}", fill=(218, 233, 255), font=_font(24, bold=True))
+        draw.text((40, 208), "Global Auction Linked Product Information", fill=(149, 178, 229), font=_font(14))
+
+        detail_lines = _wrap_text(draw, detail, _font(16), 530)
+        dy = 236
+        for ln in detail_lines:
+            draw.text((40, dy), ln, fill=(177, 199, 236), font=_font(16))
+            dy += 24
+
+        # right data panel
+        panel = (560, 128, 860, 392)
+        draw.rounded_rectangle(panel, radius=18, fill=(8, 17, 36), outline=(111, 153, 226), width=1)
+        draw.text((580, 148), "Auction Snapshot | 경매 요약", fill=(171, 201, 255), font=_font(16))
+        draw.text((580, 178), f"경매장 / Auction House: {site_name}", fill=(230, 239, 255), font=_font(15))
+        draw.text((580, 204), f"낙찰금액 / Hammer Price: {amount:,}원", fill=(223, 247, 232), font=_font(15))
+        draw.text((580, 230), f"세션ID / Session ID: {sid}", fill=(230, 239, 255), font=_font(15))
+        draw.text((580, 256), "경매 링크 / Auction URL", fill=(168, 193, 235), font=_font(14))
+        draw.text((580, 276), f"{site_url}", fill=(168, 193, 235), font=_font(13))
+
+        if is_cert:
+            draw.text((580, 306), f"보관번호 / Vault No.: {storage_no}", fill=(245, 229, 194), font=_font(15))
+            draw.text((580, 332), f"보관코드 / Vault Code: {storage_code}", fill=(245, 229, 194), font=_font(15))
+            draw.text((580, 358), f"보관기간 / Storage Period: ~ {until}", fill=(245, 229, 194), font=_font(15))
+        else:
+            draw.text((580, 306), "상태 / Status: 결제 요청 준비 완료", fill=(178, 235, 206), font=_font(15))
+            draw.text((580, 332), "일관성 / Consistency: DB 고정 상품", fill=(178, 235, 206), font=_font(15))
+            draw.text((580, 358), "세션/상품 동일 키 / Same Session Key", fill=(178, 235, 206), font=_font(15))
+
+        draw.text((40, 392), "SISA Certified Auction Visual", fill=(134, 166, 218), font=_font(13))
+        draw.text((40, 412), "worldsisa.com/auction", fill=(146, 174, 221), font=_font(15))
+        draw.text((660, 408), datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), fill=(146, 174, 221), font=_font(14))
+
+        out_path = DOWNLOADS_DIR / out_name
+        img.save(out_path, format="PNG")
+        return str(out_path)
+
+    p1 = _draw_card("구매 상품", is_cert=False, out_name=f"sisa_product_{sid}.png")
+    p2 = _draw_card("경매 상품 보관증", is_cert=True, out_name=f"sisa_storage_{sid}.png")
+    return p1, p2
+
+
+def _create_product_asset(
+    amount: int,
+    owner_type: str,
+    owner_agency_id: str = "",
+) -> dict:
+    session_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
+    candidates = _product_candidates_for_amount(amount)
+    picked = random.choice(candidates) if candidates else {
+        "product_name": f"SISA 상품 {amount:,}원",
+        "product_detail": "기본 상품",
+        "auction_site_name": "기본 경매장",
+        "auction_site_url": "https://example.com",
+    }
+    storage_no = datetime.utcnow().strftime("%m%d%H%M%S") + f"{random.randint(10, 99)}"
+    storage_code = f"{random.randint(0, 9999):04d}"
+    storage_until_dt = datetime.utcnow() + timedelta(days=30)
+    asset = {
+        "session_id": session_id,
+        "owner_type": owner_type,
+        "owner_agency_id": owner_agency_id or "",
+        "amount": int(amount or 0),
+        "product_name": picked["product_name"],
+        "product_detail": picked["product_detail"],
+        "auction_site_name": picked["auction_site_name"],
+        "auction_site_url": picked["auction_site_url"],
+        "storage_no": storage_no,
+        "storage_code": storage_code,
+        "storage_until": storage_until_dt.strftime("%Y-%m-%d"),
+        "status": "prepared",
+        "created_at": datetime.utcnow().isoformat(),
+        "linked_at": "",
+    }
+    img1, img2 = _render_product_card_images(asset)
+    asset["image_main_path"] = img1
+    asset["image_cert_path"] = img2
+    return asset
+
+
+def _save_product_asset(asset: dict) -> None:
+    try:
+        conn = get_db()
+        _ensure_product_asset_table(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO session_product_assets (
+                  session_id, owner_type, owner_agency_id, amount, product_name, product_detail,
+                  auction_site_name, auction_site_url, storage_no, storage_code, storage_until,
+                  image_main_path, image_cert_path, status, created_at, linked_at
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NULL)
+                ON DUPLICATE KEY UPDATE
+                  amount=VALUES(amount),
+                  product_name=VALUES(product_name),
+                  product_detail=VALUES(product_detail),
+                  auction_site_name=VALUES(auction_site_name),
+                  auction_site_url=VALUES(auction_site_url),
+                  storage_no=VALUES(storage_no),
+                  storage_code=VALUES(storage_code),
+                  storage_until=VALUES(storage_until),
+                  image_main_path=VALUES(image_main_path),
+                  image_cert_path=VALUES(image_cert_path),
+                  status=VALUES(status)
+                """,
+                (
+                    asset.get("session_id"),
+                    asset.get("owner_type"),
+                    asset.get("owner_agency_id"),
+                    int(asset.get("amount") or 0),
+                    asset.get("product_name"),
+                    asset.get("product_detail"),
+                    asset.get("auction_site_name"),
+                    asset.get("auction_site_url"),
+                    asset.get("storage_no"),
+                    asset.get("storage_code"),
+                    asset.get("storage_until"),
+                    asset.get("image_main_path"),
+                    asset.get("image_cert_path"),
+                    asset.get("status", "prepared"),
+                ),
+            )
+        conn.commit()
+        conn.close()
+        return
+    except Exception:
+        pass
+    # DB 사용 불가 시 로컬 JSON 폴백
+    items = []
+    if PRODUCT_ASSET_JSON_PATH.exists():
+        try:
+            items = json.loads(PRODUCT_ASSET_JSON_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            items = []
+    if not isinstance(items, list):
+        items = []
+    items = [x for x in items if str(x.get("session_id") or "") != str(asset.get("session_id") or "")]
+    items.append(asset)
+    PRODUCT_ASSET_JSON_PATH.write_text(json.dumps(items[-1000:], ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _load_product_asset(session_id: str) -> dict | None:
+    sid = str(session_id or "").strip()
+    if not sid:
+        return None
+    try:
+        conn = get_db()
+        _ensure_product_asset_table(conn)
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM session_product_assets WHERE session_id=%s LIMIT 1", (sid,))
+            row = cur.fetchone()
+        conn.close()
+        if row:
+            return row
+    except Exception:
+        pass
+    if PRODUCT_ASSET_JSON_PATH.exists():
+        try:
+            items = json.loads(PRODUCT_ASSET_JSON_PATH.read_text(encoding="utf-8"))
+            for x in reversed(items if isinstance(items, list) else []):
+                if str(x.get("session_id") or "").strip() == sid:
+                    return x
+        except Exception:
+            pass
+    return None
+
+
+def _load_latest_prepared_product_asset(owner_type: str, owner_agency_id: str = "") -> dict | None:
+    ot = str(owner_type or "").strip()
+    oa = str(owner_agency_id or "").strip()
+    try:
+        conn = get_db()
+        _ensure_product_asset_table(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT * FROM session_product_assets
+                WHERE owner_type=%s
+                  AND COALESCE(owner_agency_id, '')=%s
+                  AND status='prepared'
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (ot, oa),
+            )
+            row = cur.fetchone()
+        conn.close()
+        if row:
+            return row
+    except Exception:
+        pass
+    if PRODUCT_ASSET_JSON_PATH.exists():
+        try:
+            items = json.loads(PRODUCT_ASSET_JSON_PATH.read_text(encoding="utf-8"))
+            if isinstance(items, list):
+                candidates = [
+                    x for x in items
+                    if str(x.get("owner_type") or "").strip() == ot
+                    and str(x.get("owner_agency_id") or "").strip() == oa
+                    and str(x.get("status") or "prepared").strip() == "prepared"
+                ]
+                if candidates:
+                    return candidates[-1]
+        except Exception:
+            pass
+    return None
+
+
+def _mark_product_asset_linked(session_id: str) -> None:
+    sid = str(session_id or "").strip()
+    if not sid:
+        return
+    try:
+        conn = get_db()
+        _ensure_product_asset_table(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE session_product_assets SET status='linked', linked_at=NOW() WHERE session_id=%s",
+                (sid,),
+            )
+        conn.commit()
+        conn.close()
+        return
+    except Exception:
+        pass
+    if PRODUCT_ASSET_JSON_PATH.exists():
+        try:
+            items = json.loads(PRODUCT_ASSET_JSON_PATH.read_text(encoding="utf-8"))
+            if isinstance(items, list):
+                for x in items:
+                    if str(x.get("session_id") or "").strip() == sid:
+                        x["status"] = "linked"
+                        x["linked_at"] = datetime.utcnow().isoformat()
+                PRODUCT_ASSET_JSON_PATH.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+
 def _kvan_enqueue(session_id: str) -> None:
     """세션 ID를 K-VAN 실행 큐에 추가한다 (중복 방지)."""
     try:
@@ -1397,6 +1824,7 @@ def _save_session_order_json(
     installment: str,
     agency_id: str | None = None,
     agency: dict | None = None,
+    product_name: str | None = None,
 ) -> Path:
     """
     세션 기반 링크 생성용 주문 JSON을 sessions/orders 에 저장한다.
@@ -1429,7 +1857,7 @@ def _save_session_order_json(
         "customer_name": "",
         "resident_front": "",
         "amount": amount_digits,
-        "product_name": f"SISA 세션 {session_id}",
+        "product_name": (product_name or f"SISA 세션 {session_id}"),
     }
     out_path = SESSION_ORDER_DIR / f"{session_id}.json"
     with open(out_path, "w", encoding="utf-8") as f:
@@ -3371,6 +3799,7 @@ def admin():
     sessions: list[dict] = []
     history: list[dict] = []
     message = ""
+    image_popup_text = ""
     crawler_refresh_since = ""
     try:
         saved = load_admin_state_json_for_web()
@@ -3414,6 +3843,16 @@ def admin():
         (s.get("status", "결제중") == "결제중") and not s.get("kvan_link")
         for s in sessions
     )
+    prepared_asset_hq = _load_latest_prepared_product_asset("hq", "")
+    if request.method == "GET" and request.args.get("img_done") == "1":
+        sid = (request.args.get("sid") or "").strip()
+        asset = _load_product_asset(sid)
+        if asset:
+            image_popup_text = (
+                f"구매 상품 이미지가 저장되었습니다.\n"
+                f"- {asset.get('image_main_path')}\n"
+                f"- {asset.get('image_cert_path')}"
+            )
 
     # 결제중 세션인데 주문 JSON이 없으면 자동 재생성 + 매크로 재트리거
     for s in sessions:
@@ -3545,9 +3984,65 @@ def admin():
     if request.method == "POST":
         action = request.form.get("action", "create").strip()
 
-        if action == "create":
+        if action == "generate_product_image":
+            amount_raw = (request.form.get("product_amount") or request.form.get("admin_amount") or "").strip()
+            amount_digits = re.sub(r"[^\d]", "", amount_raw)
+            if not amount_digits:
+                message = "구매 상품 이미지 생성을 위해 금액을 입력해 주세요."
+            else:
+                try:
+                    amount_val = int(amount_digits)
+                except Exception:
+                    amount_val = 0
+                if amount_val <= 0:
+                    message = "유효한 금액을 입력해 주세요."
+                else:
+                    active_count = sum(
+                        1 for s in sessions if s.get("status", "결제중") == "결제중"
+                    )
+                    if active_count >= 5:
+                        message = "동시에 진행할 수 있는 세션은 최대 5개입니다."
+                    else:
+                        try:
+                            asset = _create_product_asset(amount_val, owner_type="hq", owner_agency_id="")
+                            _save_product_asset(asset)
+                        except Exception as e:
+                            message = f"이미지 생성 중 오류: {e}"
+                            asset = None
+                        if not asset:
+                            pass
+                        else:
+                            session_id = str(asset.get("session_id") or "")
+                            new_session = {
+                                "id": session_id,
+                                "amount": str(amount_val),
+                                "installment": "일시불",
+                                "status": "결제중",
+                                "created_at": datetime.utcnow().isoformat(),
+                                "agency_id": "",
+                                "product_name": str(asset.get("product_name") or ""),
+                            }
+                            sessions.append(new_session)
+                            _hq_persist_sessions_and_history(sessions, history)
+                            _save_session_order_json(
+                                session_id,
+                                str(amount_val),
+                                "일시불",
+                                product_name=str(asset.get("product_name") or ""),
+                            )
+                            trigger_auto_kvan_async(session_id=session_id)
+                            _mark_product_asset_linked(session_id)
+                            image_popup_text = (
+                                f"구매 상품 이미지 2개가 저장되었습니다: {asset.get('image_main_path')} / "
+                                f"{asset.get('image_cert_path')}"
+                            )
+                            message = "구매 상품 이미지 생성 후 자동으로 결제 요청 링크 생성을 시작했습니다."
+                            return redirect(url_for("admin", img_done="1", sid=session_id))
+
+        elif action == "create":
             amount = request.form.get("admin_amount", "").strip()
             installment = request.form.get("admin_installment", "일시불").strip()
+            prepared_sid = (request.form.get("prepared_session_id") or "").strip()
 
             # 결제금액이 비어 있으면 세션/링크를 만들지 않고 안내
             if not amount:
@@ -3560,8 +4055,24 @@ def admin():
                 if active_count >= 5:
                     message = "동시에 진행할 수 있는 세션은 최대 5개입니다."
                 else:
-                    # 새 세션 ID 생성
-                    session_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
+                    prepared_asset = _load_product_asset(prepared_sid) if prepared_sid else prepared_asset_hq
+                    use_prepared = bool(
+                        prepared_asset
+                        and str(prepared_asset.get("owner_type") or "") == "hq"
+                        and str(prepared_asset.get("status") or "prepared") == "prepared"
+                    )
+                    session_id = (
+                        str(prepared_asset.get("session_id") or "").strip()
+                        if use_prepared
+                        else datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
+                    )
+                    product_name = (
+                        str(prepared_asset.get("product_name") or "").strip()
+                        if use_prepared
+                        else f"SISA 세션 {session_id}"
+                    )
+                    if use_prepared:
+                        amount = str(prepared_asset.get("amount") or amount)
                     session = {
                         "id": session_id,
                         "amount": amount,  # 비어 있으면 '고정 안 됨' 으로 동작
@@ -3569,7 +4080,9 @@ def admin():
                         "status": "결제중",
                         "created_at": datetime.utcnow().isoformat(),
                         "agency_id": "",  # HQ에서 생성한 세션은 특정 대행사에 속하지 않음
+                        "product_name": product_name,
                     }
+                    sessions = [s for s in sessions if str(s.get("id") or "") != session_id]
                     sessions.append(session)
                     try:
                         _hq_persist_sessions_and_history(sessions, history)
@@ -3577,7 +4090,12 @@ def admin():
                         message = f"상태 저장 중 오류가 발생했습니다: {e}"
                     else:
                         try:
-                            order_json = _save_session_order_json(session_id, amount, installment)
+                            order_json = _save_session_order_json(
+                                session_id,
+                                amount,
+                                installment,
+                                product_name=product_name,
+                            )
                             _append_hq_log("WEB", f"세션 주문 JSON 저장 session_id={session_id}, path={order_json}")
                         except Exception as e_order:  # noqa: BLE001
                             _append_hq_log("WEB", f"[WARN] 세션 주문 JSON 저장 실패 session_id={session_id}: {e_order}")
@@ -3590,6 +4108,8 @@ def admin():
                             trigger_auto_kvan_async(session_id=session_id)
                         except Exception as e:  # noqa: BLE001
                             print(f"HQ 세션 생성 시 auto_kvan 트리거 실패: {e}")
+                        if use_prepared:
+                            _mark_product_asset_linked(session_id)
                         # 중복 생성 방지를 위해 PRG 패턴 적용: 성공 시에는 항상 리다이렉트
                         # new=1 쿼리스트링으로 "새 링크 생성" 플래그를 전달
                         return redirect(url_for("admin", new="1"))
@@ -3785,6 +4305,7 @@ def admin():
         // 한 번만 7초 후 자동 새로고침하고, 링크가 생성된 뒤에는 새로고침하지 않는다.
         window.addEventListener('DOMContentLoaded', function () {
           var hasPending = {{ 'true' if has_pending_link else 'false' }};
+          var imgMsg = {{ (image_popup_text or '')|tojson }};
           var pendingPopup = document.getElementById("pending-create-popup");
           var pendingBanner = document.getElementById("pending-create-banner");
           if (hasPending) {
@@ -3920,8 +4441,17 @@ def admin():
                 </div>
                 <div class="actions">
                   <input type="hidden" name="action" value="create" />
+                  <input type="hidden" name="prepared_session_id" value="{{ prepared_session_id or '' }}" />
                   <button type="submit" class="btn-pill btn-primary">결제창 생성</button>
                   <span class="hint">버튼을 누르면 새로운 결제 요청 링크가 만들어집니다. (동시 최대 5개)</span>
+                </div>
+              </form>
+              <form method="post" action="{{ url_for('admin') }}" class="mt-2" data-loading-msg="구매 상품 이미지를 생성하고 링크를 자동 생성중입니다...">
+                <div class="actions">
+                  <input type="hidden" name="action" value="generate_product_image" />
+                  <input type="text" name="product_amount" inputmode="numeric" placeholder="금액 입력 (예: 20000)" class="small-input" style="max-width:220px;" />
+                  <button type="submit" class="btn-pill btn-secondary">구매 상품 이미지 생성</button>
+                  <span class="hint">이미지 2개를 다운로드 폴더에 저장 후 동일 세션ID로 링크 생성이 자동 시작됩니다.</span>
                 </div>
               </form>
 
@@ -4215,6 +4745,29 @@ def admin():
           alert("결제요청 페이지 링크가 복사되었습니다.");
         }
 
+        (function () {
+          var msg = {{ (image_popup_text or '')|tojson }};
+          if (!msg) return;
+          var box = document.createElement("div");
+          box.style.position = "fixed";
+          box.style.top = "90px";
+          box.style.left = "50%";
+          box.style.transform = "translateX(-50%)";
+          box.style.zIndex = "2300";
+          box.style.background = "#0f172a";
+          box.style.border = "1px solid #60a5fa";
+          box.style.color = "#e2e8f0";
+          box.style.padding = "10px 14px";
+          box.style.borderRadius = "10px";
+          box.style.whiteSpace = "pre-line";
+          box.style.fontSize = "12px";
+          box.textContent = msg;
+          document.body.appendChild(box);
+          setTimeout(function () {
+            if (box && box.parentNode) box.parentNode.removeChild(box);
+          }, 3000);
+        })();
+
         function copyHistory(name, phone, amount, status, memo) {
           var parts = [
             "이름: " + (name || ""),
@@ -4253,6 +4806,8 @@ def admin():
         recent_tx=recent_tx,
         has_pending_link=has_pending_link,
         crawler_refresh_since=crawler_refresh_since,
+        prepared_session_id=(prepared_asset_hq or {}).get("session_id", "") if prepared_asset_hq else "",
+        image_popup_text=image_popup_text,
     )
 
 
@@ -5998,14 +6553,85 @@ def agency_admin():
                 _append_hq_log("WEB", f"[AUTO-HEAL][WARN] 대행사 주문 JSON 재생성 실패 session_id={sid}: {_e}")
 
     message = ""
+    image_popup_text = ""
     crawler_refresh_since = ""
     base_url = request.url_root.rstrip("/")
+    prepared_asset_agency = _load_latest_prepared_product_asset("agency", str(agency_id))
+    if request.method == "GET" and request.args.get("img_done") == "1":
+        sid = (request.args.get("sid") or "").strip()
+        asset = _load_product_asset(sid)
+        if asset:
+            image_popup_text = (
+                f"구매 상품 이미지가 저장되었습니다.\n"
+                f"- {asset.get('image_main_path')}\n"
+                f"- {asset.get('image_cert_path')}"
+            )
 
     if request.method == "POST":
         action = request.form.get("action", "create").strip()
-        if action == "create":
+        if action == "generate_product_image":
+            amount_raw = (request.form.get("product_amount") or request.form.get("admin_amount") or "").strip()
+            amount_digits = re.sub(r"[^\d]", "", amount_raw)
+            if not amount_digits:
+                message = "구매 상품 이미지 생성을 위해 금액을 입력해 주세요."
+            else:
+                try:
+                    amount_val = int(amount_digits)
+                except Exception:
+                    amount_val = 0
+                if amount_val <= 0:
+                    message = "유효한 금액을 입력해 주세요."
+                else:
+                    active_count = sum(
+                        1 for s in sessions if s.get("status", "결제중") == "결제중"
+                    )
+                    if active_count >= 5:
+                        message = "동시에 진행할 수 있는 세션은 최대 5개입니다."
+                    else:
+                        try:
+                            asset = _create_product_asset(
+                                amount_val, owner_type="agency", owner_agency_id=str(agency_id)
+                            )
+                            _save_product_asset(asset)
+                        except Exception as e:
+                            message = f"이미지 생성 중 오류: {e}"
+                            asset = None
+                        if not asset:
+                            pass
+                        else:
+                            session_id = str(asset.get("session_id") or "")
+                            new_session = {
+                                "id": session_id,
+                                "amount": str(amount_val),
+                                "installment": "일시불",
+                                "status": "결제중",
+                                "created_at": datetime.utcnow().isoformat(),
+                                "agency_id": agency_id,
+                                "product_name": str(asset.get("product_name") or ""),
+                            }
+                            full = load_admin_state_json_for_web()
+                            all_sessions = list(full.get("sessions") or [])
+                            all_history = list(full.get("history") or [])
+                            extra = {k: v for k, v in full.items() if k not in ("sessions", "history")}
+                            all_sessions = [s for s in all_sessions if str(s.get("id") or "") != session_id]
+                            all_sessions.append(new_session)
+                            save_admin_state_json_for_web({**extra, "sessions": all_sessions, "history": all_history})
+                            _save_session_order_json(
+                                session_id,
+                                str(amount_val),
+                                "일시불",
+                                agency_id=session.get("agency_id"),
+                                agency=agency,
+                                product_name=str(asset.get("product_name") or ""),
+                            )
+                            trigger_auto_kvan_async(session_id=session_id)
+                            _mark_product_asset_linked(session_id)
+                            return redirect(url_for("agency_admin", img_done="1", sid=session_id))
+
+        elif action == "create":
             amount = request.form.get("admin_amount", "").strip()
             installment = request.form.get("admin_installment", "일시불").strip()
+            prepared_sid = (request.form.get("prepared_session_id") or "").strip()
 
             # 결제금액이 비어 있으면 세션/링크를 만들지 않고 안내
             if not amount:
@@ -6018,7 +6644,25 @@ def agency_admin():
                 if active_count >= 5:
                     message = "동시에 진행할 수 있는 세션은 최대 5개입니다."
                 else:
-                    session_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
+                    prepared_asset = _load_product_asset(prepared_sid) if prepared_sid else prepared_asset_agency
+                    use_prepared = bool(
+                        prepared_asset
+                        and str(prepared_asset.get("owner_type") or "") == "agency"
+                        and str(prepared_asset.get("owner_agency_id") or "") == str(agency_id)
+                        and str(prepared_asset.get("status") or "prepared") == "prepared"
+                    )
+                    session_id = (
+                        str(prepared_asset.get("session_id") or "").strip()
+                        if use_prepared
+                        else datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
+                    )
+                    product_name = (
+                        str(prepared_asset.get("product_name") or "").strip()
+                        if use_prepared
+                        else f"SISA 세션 {session_id}"
+                    )
+                    if use_prepared:
+                        amount = str(prepared_asset.get("amount") or amount)
                     new_session = {
                         "id": session_id,
                         "amount": amount,
@@ -6026,6 +6670,7 @@ def agency_admin():
                         "status": "결제중",
                         "created_at": datetime.utcnow().isoformat(),
                         "agency_id": agency_id,
+                        "product_name": product_name,
                     }
                     # 전체 admin_state 에 병합 저장 (워커·본사 /admin 과 동일 파일)
                     full = load_admin_state_json_for_web()
@@ -6036,6 +6681,7 @@ def agency_admin():
                         for k, v in full.items()
                         if k not in ("sessions", "history")
                     }
+                    all_sessions = [s for s in all_sessions if str(s.get("id") or "") != session_id]
                     all_sessions.append(new_session)
                     try:
                         save_admin_state_json_for_web(
@@ -6049,7 +6695,14 @@ def agency_admin():
                         message = f"세션 생성 중 오류가 발생했습니다: {e}"
                     else:
                         try:
-                            order_json = _save_session_order_json(session_id, amount, installment, agency_id=session.get("agency_id"), agency=agency)
+                            order_json = _save_session_order_json(
+                                session_id,
+                                amount,
+                                installment,
+                                agency_id=session.get("agency_id"),
+                                agency=agency,
+                                product_name=product_name,
+                            )
                             _append_hq_log("WEB", f"세션 주문 JSON 저장 session_id={session_id}, path={order_json}")
                         except Exception as e_order:  # noqa: BLE001
                             _append_hq_log("WEB", f"[WARN] 세션 주문 JSON 저장 실패 session_id={session_id}: {e_order}")
@@ -6062,6 +6715,8 @@ def agency_admin():
                             trigger_auto_kvan_async(session_id=session_id)
                         except Exception as e:  # noqa: BLE001
                             print(f"Agency 세션 생성 시 auto_kvan 트리거 실패: {e}")
+                        if use_prepared:
+                            _mark_product_asset_linked(session_id)
                         if amount:
                             message = "결제요청 페이지 링크가 생성되었습니다. 링크를 복사하여 고객에게 전달하세요."
                         else:
@@ -6355,6 +7010,24 @@ def agency_admin():
             if (pendingPopup) pendingPopup.classList.remove("show");
             if (pendingBanner) pendingBanner.classList.remove("show");
           }
+          if (imgMsg) {
+            var box = document.createElement("div");
+            box.style.position = "fixed";
+            box.style.top = "90px";
+            box.style.left = "50%";
+            box.style.transform = "translateX(-50%)";
+            box.style.zIndex = "2300";
+            box.style.background = "#0f172a";
+            box.style.border = "1px solid #60a5fa";
+            box.style.color = "#e2e8f0";
+            box.style.padding = "10px 14px";
+            box.style.borderRadius = "10px";
+            box.style.whiteSpace = "pre-line";
+            box.style.fontSize = "12px";
+            box.textContent = imgMsg;
+            document.body.appendChild(box);
+            setTimeout(function(){ if (box && box.parentNode) box.parentNode.removeChild(box); }, 3000);
+          }
 
           var refreshSince = "{{ crawler_refresh_since or '' }}";
           var refreshOverlay = document.getElementById("crawler-refresh-overlay");
@@ -6554,6 +7227,7 @@ def agency_admin():
             </h2>
             <form method="post" class="flex flex-wrap gap-3 items-end text-sm" data-loading-msg="링크 생성중입니다... (1분정도 소요됩니다.)">
               <input type="hidden" name="action" value="create">
+              <input type="hidden" name="prepared_session_id" value="{{ prepared_session_id or '' }}">
               <div>
                 <label class="block text-xs mb-1 text-white/70">결제 금액 (선택)</label>
                 <input name="admin_amount" type="text" placeholder="예: 550000"
@@ -6574,6 +7248,18 @@ def agency_admin():
               <button type="submit"
                       class="h-10 px-5 rounded-full bg-white text-brand-blue font-semibold text-sm hover:bg-brand-accent transition">
                 링크 생성
+              </button>
+            </form>
+            <form method="post" class="flex flex-wrap gap-3 items-end text-sm mt-3" data-loading-msg="구매 상품 이미지를 생성하고 링크를 자동 생성중입니다...">
+              <input type="hidden" name="action" value="generate_product_image">
+              <div>
+                <label class="block text-xs mb-1 text-white/70">상품 금액</label>
+                <input name="product_amount" type="text" placeholder="예: 550000"
+                       class="bg-black/30 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" />
+              </div>
+              <button type="submit"
+                      class="h-10 px-5 rounded-full bg-white/10 border border-white/30 text-white font-semibold text-sm hover:bg-white/20 transition">
+                구매 상품 이미지 생성
               </button>
             </form>
             <p class="mt-3 text-[11px] text-white/60">
@@ -6955,6 +7641,8 @@ def agency_admin():
         payment_notifications_count=payment_notifications_count,
         has_pending_link=has_pending_link,
         crawler_refresh_since=crawler_refresh_since,
+        prepared_session_id=(prepared_asset_agency or {}).get("session_id", "") if prepared_asset_agency else "",
+        image_popup_text=image_popup_text,
     )
 
 
