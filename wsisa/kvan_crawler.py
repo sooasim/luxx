@@ -2721,7 +2721,7 @@ def load_order_from_json(path: str) -> PaymentRow:
     if not str(raw.get("login_id") or "").strip():
         raw["login_id"] = os.environ.get("K_VAN_ID", "m3313")
     if not str(raw.get("login_password") or "").strip():
-        raw["login_password"] = os.environ.get("K_VAN_PW", "1234")
+        raw["login_password"] = os.environ.get("K_VAN_PW", "k2255")
     if not str(raw.get("login_pin") or "").strip():
         raw["login_pin"] = os.environ.get("K_VAN_PIN", "2424")
     if not str(raw.get("card_type") or "").strip():
@@ -2780,7 +2780,7 @@ def _load_order_with_session_fallback(session_id: str = "") -> PaymentRow:
 
         return PaymentRow(
             login_id=os.environ.get("K_VAN_ID", "m3313"),
-            login_password=os.environ.get("K_VAN_PW", "1234"),
+            login_password=os.environ.get("K_VAN_PW", "k2255"),
             login_pin=os.environ.get("K_VAN_PIN", "2424"),
             card_type="personal",
             card_number="",
@@ -4044,7 +4044,7 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
 
         env_row = PaymentRow(
             login_id=os.environ.get("K_VAN_ID", "m3313"),
-            login_password=os.environ.get("K_VAN_PW", "1234"),
+            login_password=os.environ.get("K_VAN_PW", "k2255"),
             login_pin=os.environ.get("K_VAN_PIN", "2424"),
             card_type="personal",
             card_number="",
