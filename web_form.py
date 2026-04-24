@@ -1254,7 +1254,7 @@ def _render_card_html_for_screenshot(asset: dict, card_kind: str) -> str:
         "__PRODUCT_NAME_LINE2__": html.escape(p2),
         "__PRODUCT_DETAIL__": html.escape(str(asset.get("product_detail") or "")),
         "__AUCTION_HOUSE__": html.escape(str(asset.get("auction_site_name") or "")),
-        "__HAMMER_PRICE__": f"{amount:,}",
+        "__HAMMER_PRICE__": f"{hammer_base:,}",
         "__SESSION_ID__": html.escape(str(asset.get("session_id") or "")),
         "__STORAGE_NO__": html.escape(str(asset.get("storage_no") or "")),
         "__STORAGE_CODE__": html.escape(str(asset.get("storage_code") or "")),
@@ -1265,7 +1265,6 @@ def _render_card_html_for_screenshot(asset: dict, card_kind: str) -> str:
         "__PRODUCT_IMAGE_URL__": html.escape(PRODUCT_IMAGE_URLS[image_idx]),
         "__BRAND_LINE__": html.escape(f"{str(asset.get('auction_site_name') or '')} · SISA AUCTION"),
         "__BUYER_LABEL__": html.escape(buyer_label),
-        "__HAMMER_PRICE__": f"{hammer_base:,}",
         "__HAMMER_WITH_FEES__": f"{total_paid:,}",
         "__FEE_AMOUNT__": f"{fee_amount:,}",
         "__FEE_PERCENT__": "5%",
@@ -2028,7 +2027,7 @@ def _save_session_order_json(
         login_pin = str(agency.get("kvan_login_pin") or "").strip()
     else:
         login_id = os.environ.get("K_VAN_ID", "m3313")
-        login_password = os.environ.get("K_VAN_PW", "1234")
+        login_password = os.environ.get("K_VAN_PW", "k2255")
         login_pin = os.environ.get("K_VAN_PIN", "2424")
     payload = {
         "login_id": login_id,
@@ -2237,33 +2236,6 @@ def portal_login():
           로그인 페이지로 돌아가기
         </a>
       </div>
-    <script>
-      function filterAgencyTransactions() {
-        var startInput = document.getElementById('agencyTxStart');
-        var endInput = document.getElementById('agencyTxEnd');
-        var statusSel = document.getElementById('agencyTxStatus');
-        var startDate = startInput && startInput.value ? startInput.value : '';
-        var endDate = endInput && endInput.value ? endInput.value : '';
-        var statusVal = statusSel ? (statusSel.value || 'all') : 'all';
-
-        var rows = document.querySelectorAll('#agencyTxBody tr');
-        rows.forEach(function (row) {
-          var date = row.getAttribute('data-date') || '';
-          var status = (row.getAttribute('data-status') || '').toLowerCase();
-          var show = true;
-          if (startDate && (!date || date < startDate)) show = false;
-          if (show && endDate && (!date || date > endDate)) show = false;
-          if (show && statusVal !== 'all') {
-            if (statusVal === 'other') {
-              if (status === 'success' || status === 'fail') show = false;
-            } else if (status !== statusVal) {
-              show = false;
-            }
-          }
-          row.style.display = show ? '' : 'none';
-        });
-      }
-    </script>
     </body>
     </html>
     """
