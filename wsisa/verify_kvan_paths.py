@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 K-VAN 데이터 경로·플래그 일치 여부 빠른 점검 (DB 연결 없음).
@@ -24,7 +24,7 @@ os.chdir(str(WSISA))
 
 
 def web_form_style_data_dir() -> Path:
-    return Path(os.environ.get("SISA_DATA_DIR") or (ROOT / "data"))
+    return Path(os.environ.get("LUXX_DATA_DIR") or (ROOT / "data"))
 
 
 def main() -> int:
@@ -38,7 +38,7 @@ def main() -> int:
         return 1
 
     print("=== K-VAN 경로 검증 ===")
-    print(f"SISA_DATA_DIR env: {os.environ.get('SISA_DATA_DIR')!r}")
+    print(f"LUXX_DATA_DIR env: {os.environ.get('LUXX_DATA_DIR')!r}")
     print(f"web_form 스타일 DATA_DIR: {web_dd}")
     print(f"kvan_crawler DATA_DIR:    {crawler_dd}")
 

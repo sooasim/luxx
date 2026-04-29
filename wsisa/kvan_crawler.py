@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 K-VAN 통합 실행 파일
 - 로컬: JSON 저장소 사용
@@ -15,7 +15,7 @@ K-VAN 통합 실행 파일
     K_VAN_STARTUP_SLEEP_SEC      초반 대기(기본 2)
     K_VAN_ACTIVE_SESSION_WINDOW_MINUTES  '최근 세션' 판정 창(기본 3, 예전 10분은 과도)
     K_VAN_POPUP_SESSION_WINDOW_MINUTES   팝업 허용용(기본 30)
-배포 환경 감지: RAILWAY_ENVIRONMENT, RUN_HEADLESS, SISA_SERVER=1, K_VAN_SERVER=1
+배포 환경 감지: RAILWAY_ENVIRONMENT, RUN_HEADLESS, LUXX_SERVER=1, K_VAN_SERVER=1
 
 실행:
     python kvan_crawler.py
@@ -71,7 +71,7 @@ FILE_DIR = Path(__file__).resolve().parent
 # (예전: wsisa/data 만 쓰면 로컬에서 crawler_wakeup.flag 가 웹과 달라 크롤이 안 깨어남)
 PROJECT_ROOT = FILE_DIR.parent
 
-_raw_data_dir = os.environ.get("SISA_DATA_DIR", "").strip()
+_raw_data_dir = os.environ.get("LUXX_DATA_DIR", "").strip()
 if _raw_data_dir:
     DATA_DIR = Path(_raw_data_dir)
 else:
@@ -130,7 +130,7 @@ DATABASE_URL = (
 
 def _is_server_env() -> bool:
     """Railway·Docker·헤드리스 등 배포 환경 감지 (미설정 시 로컬로 간주)."""
-    s = str(os.environ.get("SISA_SERVER", "")).strip().lower()
+    s = str(os.environ.get("LUXX_SERVER", "")).strip().lower()
     k = str(os.environ.get("K_VAN_SERVER", "")).strip().lower()
     truthy = ("1", "true", "yes", "y", "on")
     mysql_host = str(
@@ -150,7 +150,7 @@ def _is_server_env() -> bool:
     )
 
 
-_local_flag = os.environ.get("SISA_LOCAL_TEST")
+_local_flag = os.environ.get("LUXX_LOCAL_TEST")
 _json_flag = os.environ.get("K_VAN_USE_JSON")
 if _local_flag is not None:
     LOCAL_TEST = _local_flag.strip().lower() in ("1", "true", "yes", "y")
@@ -2716,7 +2716,7 @@ def load_order_from_json(path: str) -> PaymentRow:
         raise ValueError("JSON 데이터에 결제 금액(amount)이 없습니다.")
 
     if not str(raw.get("product_name") or "").strip():
-        raw["product_name"] = "SISA 결제링크"
+        raw["product_name"] = "LUXX 결제링크"
 
     if not str(raw.get("login_id") or "").strip():
         raw["login_id"] = os.environ.get("K_VAN_ID", "m3313")
@@ -2792,14 +2792,14 @@ def _load_order_with_session_fallback(session_id: str = "") -> PaymentRow:
             customer_name="",
             resident_front="",
             amount=amount_val,
-            product_name=f"SISA 세션 {session_id}",
+            product_name=f"LUXX 세션 {session_id}",
         )
 
     return load_order_from_json(str(ORDER_JSON_PATH))
 
 
 def _choose_product_name_for_amount(amount: int) -> str:
-    return f"SISA 세션 결제 {amount:,}원"
+    return f"LUXX 세션 결제 {amount:,}원"
 
 
 def _go_to_create_link_page(driver: webdriver.Chrome) -> bool:

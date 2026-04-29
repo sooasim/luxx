@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
@@ -38,9 +38,9 @@ except Exception:  # noqa: BLE001
     ImageDraw = None
     ImageFont = None
 
-# 코드와 데이터 경로 분리: SISA_DATA_DIR (없으면 ./data)
+# 코드와 데이터 경로 분리: LUXX_DATA_DIR (없으면 ./data)
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = Path(os.environ.get("SISA_DATA_DIR") or (BASE_DIR / "data"))
+DATA_DIR = Path(os.environ.get("LUXX_DATA_DIR") or (BASE_DIR / "data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 _wsisa = BASE_DIR / "wsisa"
@@ -1259,11 +1259,11 @@ def _render_card_html_for_screenshot(asset: dict, card_kind: str) -> str:
         "__STORAGE_NO__": html.escape(str(asset.get("storage_no") or "")),
         "__STORAGE_CODE__": html.escape(str(asset.get("storage_code") or "")),
         "__STORAGE_UNTIL__": html.escape(str(asset.get("storage_until") or "")),
-        "__AUCTION_URL__": html.escape(str(asset.get("auction_site_url") or "https://worldsisa.com/auction.html")),
+        "__AUCTION_URL__": html.escape(str(asset.get("auction_site_url") or "https://luxxbid.com/auction.html")),
         "__GENERATED_AT__": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
         "__ORDER_NO__": html.escape(order_no),
         "__PRODUCT_IMAGE_URL__": html.escape(PRODUCT_IMAGE_URLS[image_idx]),
-        "__BRAND_LINE__": html.escape(f"{str(asset.get('auction_site_name') or '')} · SISA AUCTION"),
+        "__BRAND_LINE__": html.escape(f"{str(asset.get('auction_site_name') or '')} · LUXX AUCTION"),
         "__BUYER_LABEL__": html.escape(buyer_label),
         "__HAMMER_WITH_FEES__": f"{total_paid:,}",
         "__FEE_AMOUNT__": f"{fee_amount:,}",
@@ -1442,7 +1442,7 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
         draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=22, outline=(69, 102, 172), width=1)
 
         # watermark (HTML 샘플처럼 중앙에 크게)
-        draw.text((158, 146), "SISA VAULT", fill=(59, 130, 246, 20), font=_font(104, bold=True))
+        draw.text((158, 146), "LUXX VAULT", fill=(59, 130, 246, 20), font=_font(104, bold=True))
 
         # header icon + barcode block
         draw.rounded_rectangle((40, 32, 82, 74), radius=8, fill=(255, 255, 255, 16), outline=(220, 235, 255, 80), width=1)
@@ -1452,10 +1452,10 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
             draw.line((bx, 40, bx, 74), fill=(220, 235, 255, 120), width=bw)
         draw.text((742, 78), f"VAULT-{storage_no}", fill=(172, 196, 238), font=_font(10))
 
-        draw.text((40, 34), "SISA GLOBAL AUCTION", fill=(196, 218, 255), font=_font(18, bold=True))
-        draw.text((40, 58), "Society of International Specialized Auctioneers", fill=(149, 178, 229), font=_font(13))
+        draw.text((40, 34), "LUXX GLOBAL AUCTION", fill=(196, 218, 255), font=_font(18, bold=True))
+        draw.text((40, 58), "Luxury Auction Exchange", fill=(149, 178, 229), font=_font(13))
         _pill(draw, (40, 84, 205, 116), "LIVE | 실시간 경매", (31, 94, 214), (130, 174, 255), (238, 245, 255))
-        _pill(draw, (214, 84, 395, 116), "CERTIFIED | SISA 인증", (7, 89, 144), (80, 200, 246), (219, 255, 237))
+        _pill(draw, (214, 84, 395, 116), "CERTIFIED | LUXX 인증", (7, 89, 144), (80, 200, 246), (219, 255, 237))
 
         # 타이틀 라인은 카드 종류별 고정 (HTML 컨셉과 동일)
         title_line = "경매 상품 보관증 | Storage Certificate" if is_cert else "구매 상품 | Purchase Item"
@@ -1516,7 +1516,7 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
             draw.text((742, row_y), "동일 키 사용", fill=(178, 235, 206), font=_font(14, bold=True))
 
         draw.line((36, 390, 864, 390), fill=(255, 255, 255, 32), width=1)
-        draw.text((40, 400), "worldsisa.com/auction", fill=(146, 174, 221), font=_font(15))
+        draw.text((40, 400), "luxxbid.com/auction", fill=(146, 174, 221), font=_font(15))
         draw.text((666, 400), datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), fill=(146, 174, 221), font=_font(14))
 
         out_path = DOWNLOADS_DIR / out_name
@@ -1536,7 +1536,7 @@ def _create_product_asset(
     session_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-12:]
     candidates = _product_candidates_for_amount(amount)
     picked = random.choice(candidates) if candidates else {
-        "product_name": f"SISA 상품 {amount:,}원",
+        "product_name": f"LUXX 상품 {amount:,}원",
         "product_detail": "기본 상품",
         "auction_site_name": "기본 경매장",
         "auction_site_url": "https://example.com",
@@ -1844,9 +1844,9 @@ def trigger_kvan_crawler_refresh() -> None:
             or str(env.get("MYSQLHOST") or env.get("MYSQL_HOST") or "").lower().find("railway") >= 0
         )
         if is_server:
-            env.setdefault("SISA_SERVER", "1")
+            env.setdefault("LUXX_SERVER", "1")
             env.setdefault("K_VAN_SERVER", "1")
-            env.setdefault("SISA_LOCAL_TEST", "0")
+            env.setdefault("LUXX_LOCAL_TEST", "0")
             env.setdefault("K_VAN_USE_JSON", "0")
         p = subprocess.Popen(
             cmd,
@@ -2043,7 +2043,7 @@ def _save_session_order_json(
         "customer_name": "",
         "resident_front": "",
         "amount": amount_digits,
-        "product_name": (product_name or f"SISA 세션 {session_id}"),
+        "product_name": (product_name or f"LUXX 세션 {session_id}"),
     }
     out_path = SESSION_ORDER_DIR / f"{session_id}.json"
     with open(out_path, "w", encoding="utf-8") as f:
@@ -2096,7 +2096,7 @@ HEADERS: List[str] = [
 
 
 app = Flask(__name__)
-app.secret_key = "worldsisa-form-secret"
+app.secret_key = "luxxbid-form-secret"
 
 
 @app.route("/api/crawler-refresh-status", methods=["GET"])
@@ -2439,7 +2439,7 @@ FORM_TEMPLATE = """
         <div class="kv-inner">
           <h1 class="mb-1">구매 계약서 및 청구서</h1>
           <p class="text-xs text-gray-500 mb-4">
-            아래 정보는 SISA 해외 경매 구매대행 계약 및 대면 결제 청구서 작성에 사용됩니다.
+            아래 정보는 LUXX 해외 경매 구매대행 계약 및 대면 결제 청구서 작성에 사용됩니다.
           </p>
 
           {% if last_result and last_result.status in ['success', 'fail'] %}
@@ -2606,7 +2606,7 @@ FORM_TEMPLATE = """
               <div class="space-y-2 text-sm">
                 <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_service" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
-                  <span><strong class="text-white mr-1">[필수]</strong> SISA 서비스 이용약관 동의</span>
+                  <span><strong class="text-white mr-1">[필수]</strong> LUXX 서비스 이용약관 동의</span>
                 </label>
                 <label class="consent-label flex items-start gap-3 p-2 bg-white/5 rounded-xl border border-white/10 cursor-pointer">
                   <input id="agree_law" type="checkbox" class="mt-1 h-4 w-4 rounded border-white/40 bg-white/10 accent-blue-400" />
@@ -2850,18 +2850,18 @@ FORM_TEMPLATE = """
 def home():
     """도메인에 따라 다른 랜딩 페이지 제공.
 
-    - worldsisa.com / www.worldsisa.com -> 메인 랜딩(index.html)
-    - s.worldsisa.com -> 대행사 등록 페이지(/agency-register.html)로 리다이렉트
+    - luxxbid.com / www.luxxbid.com -> 메인 랜딩(index.html)
+    - s.luxxbid.com -> 대행사 등록 페이지(/agency-register.html)로 리다이렉트
     """
     host = (request.host or "").split(":")[0].lower()
-    if host.startswith("s.") or host == "s.worldsisa.com":
-        # 서브도메인 s.worldsisa.com 은 대행사 등록 신청 페이지로 이동
+    if host.startswith("s.") or host == "s.luxxbid.com":
+        # 서브도메인 s.luxxbid.com 은 대행사 등록 신청 페이지로 이동
         return redirect(url_for("agency_register_page"))
 
     index_path = BASE_DIR / "index.html"
     if index_path.exists():
         return send_file(index_path)
-    return "<h1>World SISA</h1>", 200
+    return "<h1>World LUXX</h1>", 200
 
 
 @app.route("/auction.html", methods=["GET"])
@@ -2881,15 +2881,15 @@ def seo_overseas_luxury():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>해외 중고 명품 경매 대행 사이트 | SISA 글로벌 옥션</title>
+      <title>해외 중고 명품 경매 대행 사이트 | LUXX 글로벌 옥션</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta name="description" content="해외 중고 명품 경매 대행 사이트 SISA. 일본 야후옥션, 미국 이베이, 유럽 명품 경매장에서 샤넬, 에르메스, 루이비통, 롤렉스 등 중고·빈티지 명품을 안전하게 입찰·구매 대행합니다." />
+      <meta name="description" content="해외 중고 명품 경매 대행 사이트 LUXX. 일본 야후옥션, 미국 이베이, 유럽 명품 경매장에서 샤넬, 에르메스, 루이비통, 롤렉스 등 중고·빈티지 명품을 안전하게 입찰·구매 대행합니다." />
       <meta name="keywords" content="해외 중고 명품,명품 경매 대행,해외 명품 경매,일본 야후옥션 명품,미국 이베이 명품,유럽 명품 경매,샤넬 중고 가방,에르메스 버킨 중고,롤렉스 시계 경매,명품 시계 입찰 대행,해외 명품 구매 대행,해외 빈티지 명품,명품 위탁 판매,해외 리세일 플랫폼,글로벌 럭셔리 옥션" />
       <meta name="robots" content="index,follow" />
     </head>
     <body>
-      <h1>해외 중고 명품 경매 대행 사이트 SISA</h1>
-      <p>해외 중고 명품 경매 대행 플랫폼 SISA는 일본 야후옥션, 미국 이베이, 유럽 현지 럭셔리 경매 하우스와 연동하여 전 세계 중고 명품을 한 곳에서 검색하고 입찰할 수 있도록 돕는 B2B 전문 사이트입니다.</p>
+      <h1>해외 중고 명품 경매 대행 사이트 LUXX</h1>
+      <p>해외 중고 명품 경매 대행 플랫폼 LUXX는 일본 야후옥션, 미국 이베이, 유럽 현지 럭셔리 경매 하우스와 연동하여 전 세계 중고 명품을 한 곳에서 검색하고 입찰할 수 있도록 돕는 B2B 전문 사이트입니다.</p>
       <h2>주요 서비스</h2>
       <ul>
         <li>일본 야후옥션·세컨스트리트·라쿠마 등 <strong>일본 중고 명품 경매 대행</strong></li>
@@ -2900,9 +2900,9 @@ def seo_overseas_luxury():
         <li>명품 시계·가방·주얼리 <strong>위탁 판매 및 글로벌 리세일</strong> 컨설팅</li>
       </ul>
       <h2>검색 키워드 예시</h2>
-      <p>해외 중고 명품, 해외 명품 경매, 중고 명품 경매 대행, 일본 야후옥션 명품 구매, 미국 이베이 명품 시계, 유럽 명품 가방 경매, 샤넬 클래식 플랩 중고, 에르메스 버킨 낙찰가, 롤렉스 서브마리너 경매, 해외 명품 시세 조회, 명품 위탁 판매 수수료, 글로벌 럭셔리 옥션 플랫폼 등 다양한 키워드로 SISA를 찾을 수 있습니다.</p>
-      <h2>SISA와 함께하는 안전한 해외 명품 경매</h2>
-      <p>SISA는 해외 법인 및 전문 감정 네트워크를 통해 위조품을 차단하고, 실시간 경매 정보, 관세·배송·보험까지 포함한 토털 솔루션으로 해외 중고 명품 경매 대행을 제공합니다.</p>
+      <p>해외 중고 명품, 해외 명품 경매, 중고 명품 경매 대행, 일본 야후옥션 명품 구매, 미국 이베이 명품 시계, 유럽 명품 가방 경매, 샤넬 클래식 플랩 중고, 에르메스 버킨 낙찰가, 롤렉스 서브마리너 경매, 해외 명품 시세 조회, 명품 위탁 판매 수수료, 글로벌 럭셔리 옥션 플랫폼 등 다양한 키워드로 LUXX를 찾을 수 있습니다.</p>
+      <h2>LUXX와 함께하는 안전한 해외 명품 경매</h2>
+      <p>LUXX는 해외 법인 및 전문 감정 네트워크를 통해 위조품을 차단하고, 실시간 경매 정보, 관세·배송·보험까지 포함한 토털 솔루션으로 해외 중고 명품 경매 대행을 제공합니다.</p>
     </body>
     </html>
     """
@@ -2913,7 +2913,7 @@ def seo_overseas_luxury():
 @app.route("/favicon.png", methods=["GET"])
 @app.route("/favicon.svg", methods=["GET"])
 def favicon():
-    """SISA 브랜드 파비콘 (SVG) 반환."""
+    """LUXX 브랜드 파비콘 (SVG) 반환."""
     svg = (
         "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"
         "<rect width='100' height='100' rx='22' fill='%232f4b9f'/>"
@@ -3323,9 +3323,9 @@ def debug_paths():
     if not session.get("hq_logged_in"):
         return redirect(url_for("hq_login"))
 
-    env_sisa_data_dir = (os.environ.get("SISA_DATA_DIR") or "").strip()
+    env_LUXX_DATA_DIR = (os.environ.get("LUXX_DATA_DIR") or "").strip()
     auto_base_dir = BASE_DIR / "wsisa"
-    auto_env_data_dir = Path(env_sisa_data_dir) if env_sisa_data_dir else (auto_base_dir.parent / "data")
+    auto_env_data_dir = Path(env_LUXX_DATA_DIR) if env_LUXX_DATA_DIR else (auto_base_dir.parent / "data")
     repair_report: list[str] = []
     repair_message = ""
 
@@ -3463,7 +3463,7 @@ def debug_paths():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>SISA Debug Paths</title>
+      <title>LUXX Debug Paths</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
@@ -3500,7 +3500,7 @@ def debug_paths():
 
         <section class="rounded border border-slate-700 p-3 bg-slate-900/60">
           <h2 class="text-sm font-semibold mb-2">환경 변수</h2>
-          <div class="text-xs font-mono break-all">SISA_DATA_DIR={{ env_sisa_data_dir or '(비어있음)' }}</div>
+          <div class="text-xs font-mono break-all">LUXX_DATA_DIR={{ env_LUXX_DATA_DIR or '(비어있음)' }}</div>
           <div class="text-xs font-mono break-all mt-1">WEB DATA_DIR={{ web_data_dir }}</div>
           <div class="text-xs font-mono break-all mt-1">AUTO 예상 DATA_DIR={{ auto_data_dir }}</div>
         </section>
@@ -3602,7 +3602,7 @@ def debug_paths():
     """
     return render_template_string(
         template,
-        env_sisa_data_dir=env_sisa_data_dir,
+        env_LUXX_DATA_DIR=env_LUXX_DATA_DIR,
         web_data_dir=str(DATA_DIR),
         auto_data_dir=str(auto_env_data_dir),
         repair_message=repair_message,
@@ -3859,11 +3859,11 @@ def agency_apply():
         print(f"[ERROR] agency_apply DB insert 실패: {e}")
 
     if db_ok:
-        status_message = "대행사 신청 정보가 데이터베이스에 정상 저장되었습니다. SISA 본사에서 검토 후 개별 연락을 드립니다."
+        status_message = "대행사 신청 정보가 데이터베이스에 정상 저장되었습니다. LUXX 본사에서 검토 후 개별 연락을 드립니다."
     else:
         status_message = "신청 접수 과정에서 오류가 발생했을 수 있습니다. 잠시 후 다시 시도하시거나 본사에 문의해 주세요."
 
-    # 간단한 접수 완료 페이지 반환 (SISA 스타일)
+    # 간단한 접수 완료 페이지 반환 (LUXX 스타일)
     return f"""
 <!DOCTYPE html>
 <html lang="ko">
@@ -3882,7 +3882,7 @@ def agency_apply():
     <h1 class="text-2xl font-bold mb-2">대행사 등록 신청이 접수되었습니다.</h1>
     <p class="text-sm text-white/70 mb-4 leading-relaxed">{status_message}</p>
     <p class="text-[11px] text-white/60 mb-6">
-      아래 버튼을 누르시면 SISA 메인 페이지로 이동합니다.
+      아래 버튼을 누르시면 LUXX 메인 페이지로 이동합니다.
     </p>
     <button onclick="window.location.href='/'"
             class="mt-2 inline-flex items-center justify-center px-5 py-2 rounded-full bg-white text-[#2f4b9f] text-sm font-semibold hover:bg-[#e6edf7] transition">
@@ -3923,14 +3923,14 @@ def terms_consent_pdf():
 
     text = c.beginText(40, 800)
     text.setFont("Helvetica-Bold", 14)
-    text.textLine("SISA 플랫폼 서비스 이용약관 동의서")
+    text.textLine("LUXX 플랫폼 서비스 이용약관 동의서")
     text.textLine("")
     text.setFont("Helvetica", 11)
     text.textLine(f"이름: {name}")
     text.textLine(f"전화번호: {phone}")
     text.textLine(f"동의 일시: {now.strftime('%Y-%m-%d %H:%M:%S')}")
     text.textLine("")
-    text.textLine("위 고객은 SISA 플랫폼 서비스 이용약관 및 결제 전 필수 동의 항목에 모두 동의하였습니다.")
+    text.textLine("위 고객은 LUXX 플랫폼 서비스 이용약관 및 결제 전 필수 동의 항목에 모두 동의하였습니다.")
 
     c.drawText(text)
     c.showPage()
@@ -4229,7 +4229,7 @@ def admin():
                     product_name = (
                         str(prepared_asset.get("product_name") or "").strip()
                         if use_prepared
-                        else f"SISA 세션 {session_id}"
+                        else f"LUXX 세션 {session_id}"
                     )
                     if use_prepared:
                         amount = str(prepared_asset.get("amount") or amount)
@@ -4365,9 +4365,9 @@ def admin():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>SISA K-VAN 결제 어드민</title>
+      <title>LUXX K-VAN 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
-      <!-- SISA 브랜드 파비콘 -->
+      <!-- LUXX 브랜드 파비콘 -->
       <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
       <script>
         if (screen.width < 1280) {
@@ -4545,7 +4545,7 @@ def admin():
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-globe text-white text-xl drop-shadow-sm"></i>
             <div class="flex flex-col leading-tight">
-              <span class="text-xs font-semibold tracking-[0.18em] uppercase text-white/70">SISA</span>
+              <span class="text-xs font-semibold tracking-[0.18em] uppercase text-white/70">LUXX</span>
               <span class="text-xs text-white/80">K-VAN Payment Admin</span>
             </div>
           </div>
@@ -4575,7 +4575,7 @@ def admin():
             <div class="admin-card-inner">
               <div class="flex items-center justify-between mb-4">
                 <div>
-                  <h1 class="text-xl font-semibold text-white mb-1">World SISA 대면결제 세션 어드민</h1>
+                  <h1 class="text-xl font-semibold text-white mb-1">World LUXX 대면결제 세션 어드민</h1>
                   <p class="text-xs text-slate-300">
                     고객에게 보낼 결제 링크를 생성하고, 진행 중인 결제와 완료된 결제를 한 곳에서 확인합니다.
                   </p>
@@ -4990,7 +4990,7 @@ def hq_login():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>SISA HQ 어드민 로그인</title>
+      <title>LUXX HQ 어드민 로그인</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
       <script>
         if (screen.width < 1280) {
@@ -5011,7 +5011,7 @@ def hq_login():
     </head>
     <body class="bg-[#2f4b9f] text-white font-[Inter] min-h-screen flex items-center justify-center">
       <div class="bg-white/10 border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
-        <h1 class="text-xl font-bold mb-2 text-center">SISA HQ Admin</h1>
+        <h1 class="text-xl font-bold mb-2 text-center">LUXX HQ Admin</h1>
         <p class="text-xs text-white/70 text-center mb-6">본사 전용 어드민 로그인</p>
         <form method="post" class="space-y-4">
           <div>
@@ -5060,7 +5060,7 @@ def agency_login():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>SISA 대행사 어드민 로그인</title>
+      <title>LUXX 대행사 어드민 로그인</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
       <script>
         if (screen.width < 1280) {
@@ -5094,7 +5094,7 @@ def agency_login():
     </head>
     <body class="bg-brand-blue text-white font-sans antialiased min-h-screen flex items-center justify-center">
       <div class="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
-        <h1 class="text-xl font-bold mb-2 text-center text-white">SISA Agency Admin</h1>
+        <h1 class="text-xl font-bold mb-2 text-center text-white">LUXX Agency Admin</h1>
         <p class="text-xs text-white/80 text-center mb-6">승인된 대행사 전용 어드민 로그인</p>
         <form method="post" class="space-y-4">
           <div>
@@ -5611,9 +5611,9 @@ def hq_admin():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>SISA HQ Admin</title>
+      <title>LUXX HQ Admin</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
-      <!-- SISA 브랜드 파비콘 -->
+      <!-- LUXX 브랜드 파비콘 -->
       <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
       <script>
         if (screen.width < 1280) {
@@ -5727,7 +5727,7 @@ def hq_admin():
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-shield-halved text-white text-xl"></i>
             <div class="flex flex-col leading-tight">
-              <span class="text-sm font-semibold tracking-[0.16em] uppercase text-white/70">SISA HQ</span>
+              <span class="text-sm font-semibold tracking-[0.16em] uppercase text-white/70">LUXX HQ</span>
               <span class="text-xs text-white/80">Global Agency & Settlement Admin</span>
             </div>
           </div>
@@ -5735,7 +5735,7 @@ def hq_admin():
             <div class="text-[11px] text-white/70">
               대행사 신청 URL:
               <span class="font-mono bg-white/10 px-2 py-1 rounded-full border border-white/20">
-                https://worldsisa.com/agency-register.html
+                https://luxxbid.com/agency-register.html
               </span>
             </div>
             <a href="{{ url_for('admin') }}" class="px-3 py-1.5 rounded-lg bg-brand-accent text-brand-blue text-sm font-semibold hover:bg-white transition">
@@ -6819,7 +6819,7 @@ def agency_admin():
                     product_name = (
                         str(prepared_asset.get("product_name") or "").strip()
                         if use_prepared
-                        else f"SISA 세션 {session_id}"
+                        else f"LUXX 세션 {session_id}"
                     )
                     if use_prepared:
                         amount = str(prepared_asset.get("amount") or amount)
@@ -7146,9 +7146,9 @@ def agency_admin():
     <html lang="ko">
     <head>
       <meta charset="UTF-8" />
-      <title>SISA 대행사 결제 어드민</title>
+      <title>LUXX 대행사 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
-      <!-- SISA 브랜드 파비콘 -->
+      <!-- LUXX 브랜드 파비콘 -->
       <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
       <script>
         if (screen.width < 1280) {
@@ -7345,7 +7345,7 @@ def agency_admin():
             <i class="fa-solid fa-store text-white text-xl"></i>
             <div class="flex flex-col leading-tight">
               <span class="text-sm font-semibold text-white/80">{{ agency.company_name }}</span>
-              <span class="text-[11px] text-white/60">SISA 대행사 결제 어드민</span>
+              <span class="text-[11px] text-white/60">LUXX 대행사 결제 어드민</span>
             </div>
           </div>
           <div class="flex items-center gap-3 flex-wrap">

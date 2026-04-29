@@ -1,4 +1,4 @@
-# worldsisa.com - K-VAN 자동 입력 도우미
+﻿# luxxbid.com - K-VAN 자동 입력 도우미
 
 이 프로젝트는 `https://store.k-van.app` 에 접속해서
 

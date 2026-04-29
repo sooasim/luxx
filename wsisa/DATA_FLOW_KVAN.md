@@ -1,6 +1,6 @@
-# K-VAN 연동 데이터 흐름 (시뮬레이션)
+﻿# K-VAN 연동 데이터 흐름 (시뮬레이션)
 
-동일 **`SISA_DATA_DIR`**(또는 Docker `/app/data`, 로컬에서는 리포지토리 루트 **`./data`**) + 동일 **MySQL `MYSQL*`** 환경변수가  
+동일 **`LUXX_DATA_DIR`**(또는 Docker `/app/data`, 로컬에서는 리포지토리 루트 **`./data`**) + 동일 **MySQL `MYSQL*`** 환경변수가  
 `web_form.py`, `kvan_crawler.py`, `auto_kvan.py` 에 공유되어야 표시/저장·`crawler_wakeup.flag` 가 일치합니다.
 
 ## 1) 본사 `/admin` — 세션·링크 생성 (웹)

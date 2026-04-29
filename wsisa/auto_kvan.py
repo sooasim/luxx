@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import time
@@ -37,10 +37,10 @@ from kvan_tx_table_scrape import extract_kvan_transactions_from_page
 # Railway/Docker 배포에서는 web_form.py 와 동일한 /app/data 를 공유해야 한다.
 BASE_DIR = Path(__file__).resolve().parent.parent  # /app
 
-# 배포 환경에서 SISA_DATA_DIR 이 설정되지 않은 경우,
+# 배포 환경에서 LUXX_DATA_DIR 이 설정되지 않은 경우,
 # auto_kvan.py 가 위치한 wsisa 폴더의 부모(/app) 기준 data 폴더를 사용한다.
 # web_form.py 도 동일하게 /app/data 를 사용하므로 파일이 공유된다.
-_raw_data_dir = os.environ.get("SISA_DATA_DIR", "").strip()
+_raw_data_dir = os.environ.get("LUXX_DATA_DIR", "").strip()
 if _raw_data_dir:
     DATA_DIR = Path(_raw_data_dir)
 else:
@@ -62,7 +62,7 @@ def _append_admin_log(source: str, message: str) -> None:
 
 # 서버(Railway 등)에서 실행 시 헤드리스 + 자동 종료
 def _is_server_env() -> bool:
-    s = str(os.environ.get("SISA_SERVER", "")).strip().lower()
+    s = str(os.environ.get("LUXX_SERVER", "")).strip().lower()
     k = str(os.environ.get("K_VAN_SERVER", "")).strip().lower()
     truthy = ("1", "true", "yes", "y", "on")
     mysql_host = str(
@@ -294,15 +294,15 @@ def _wait_payment_link_page_ready(driver: webdriver.Chrome, timeout_sec: float =
         return False
 
 
-# 경로는 파일 상단에서 이미 초기화된 DATA_DIR(/app/data 또는 SISA_DATA_DIR)를 그대로 사용한다.
+# 경로는 파일 상단에서 이미 초기화된 DATA_DIR(/app/data 또는 LUXX_DATA_DIR)를 그대로 사용한다.
 # (중복 재정의 시 web_form.py 와 경로가 갈라져 lock/heartbeat/wakeup 파일 불일치가 발생할 수 있음)
 
 WAKEUP_FLAG_PATH = DATA_DIR / "crawler_wakeup.flag"
 
 # 로컬 테스트 모드: DB 에는 아무 것도 쓰지 않고, 크롤링/매크로 동작만 확인할 때 사용
-# - SISA_LOCAL_TEST 가 명시되면 그 값을 따르고
+# - LUXX_LOCAL_TEST 가 명시되면 그 값을 따르고
 # - 없으면 "서버 환경이 아니면" 기본적으로 LOCAL_TEST=True 로 동작하게 만든다.
-_local_flag = os.environ.get("SISA_LOCAL_TEST")
+_local_flag = os.environ.get("LUXX_LOCAL_TEST")
 _json_flag = os.environ.get("K_VAN_USE_JSON")
 if _local_flag is not None:
     LOCAL_TEST = _local_flag.strip().lower() in ("1", "true", "yes", "y")
@@ -559,18 +559,18 @@ def _choose_product_name_for_amount(amount: int) -> str:
     """
     _load_auction_items()
     if not AUCTION_ITEMS:
-        return "SISA 글로벌 옥션 상품"
+        return "LUXX 글로벌 옥션 상품"
     # 신청 금액 이상인 옥션 상품만 (같은 금액이 없으면 그 다음 구간 사용)
     candidates = [it for it in AUCTION_ITEMS if (it.get("price") or 0) >= amount]
     if not candidates:
-        return "SISA 글로벌 옥션 상품"
+        return "LUXX 글로벌 옥션 상품"
     # 그중 가장 낮은 금액 구간(예: 217만 → 220만원 구간)
     min_tier = min(it["price"] for it in candidates)
     tier_items = [it for it in candidates if it["price"] == min_tier]
     if len(tier_items) > 10:
         tier_items = random.sample(tier_items, 10)
     chosen = random.choice(tier_items)
-    return chosen.get("name") or "SISA 글로벌 옥션 상품"
+    return chosen.get("name") or "LUXX 글로벌 옥션 상품"
 
 # MySQL 환경 변수 (Railway 용) - web_form.py 와 동일하게
 DB_HOST = os.environ.get("MYSQLHOST") or os.environ.get("MYSQL_HOST") or "localhost"
@@ -1065,7 +1065,7 @@ def load_order_from_json(path: str) -> PaymentRow:
     if "amount" not in raw or raw.get("amount") in ("", None, "0"):
         raise ValueError("JSON 데이터에 결제 금액(amount)이 없습니다.")
     if not str(raw.get("product_name") or "").strip():
-        raw["product_name"] = "SISA 결제링크"
+        raw["product_name"] = "LUXX 결제링크"
     if not str(raw.get("login_id") or "").strip():
         raw["login_id"] = os.environ.get("K_VAN_ID", "m3313")
     if not str(raw.get("login_password") or "").strip():
@@ -4555,7 +4555,7 @@ def main() -> None:
                     customer_name="",
                     resident_front="",
                     amount=amount_val,
-                    product_name=f"SISA 세션 {session_id}",
+                    product_name=f"LUXX 세션 {session_id}",
                 )
             except Exception as e2:  # noqa: BLE001
                 _append_admin_log(

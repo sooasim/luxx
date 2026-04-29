@@ -1,4 +1,4 @@
-"""
+﻿"""
 auto_kvan_runner.py - K-VAN 링크 생성 직렬 큐 실행기
 
 K-VAN 은 동일 계정으로 동시 로그인이 불가하다.
@@ -24,7 +24,7 @@ from datetime import datetime
 _SELF_DIR = Path(__file__).resolve().parent
 _AUTO_KVAN = _SELF_DIR / "auto_kvan.py"
 _BASE_DIR = _SELF_DIR.parent
-_DATA_DIR = Path(os.environ.get("SISA_DATA_DIR", "").strip() or str(_BASE_DIR / "data"))
+_DATA_DIR = Path(os.environ.get("LUXX_DATA_DIR", "").strip() or str(_BASE_DIR / "data"))
 _LOG_PATH = _DATA_DIR / "hq_logs.log"
 
 
