@@ -16,10 +16,10 @@
         content="해외 중고 명품 경매 대행 사이트 LUXX. 일본 야후옥션, 미국 이베이, 유럽 명품 경매에서 샤넬, 에르메스, 루이비통, 롤렉스 등 중고·빈티지 명품을 안전하게 입찰·구매 대행하는 글로벌 럭셔리 옥션 플랫폼입니다.">
     <meta name="keywords"
         content="해외 중고 명품,해외 명품 경매 대행,중고 명품 경매 사이트,일본 야후옥션 명품,미국 이베이 명품,유럽 명품 경매,샤넬 중고 가방,에르메스 버킨 중고,루이비통 네버풀 중고,롤렉스 서브마리너 경매,명품 시계 입찰 대행,해외 명품 구매 대행,해외 빈티지 명품,명품 위탁 판매,글로벌 럭셔리 옥션,LUXX 옥션">
-    <!-- LUXX 브랜드 파비콘 (딥블루 배경의 둥근 지구본) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
+    <!-- LUXX 브랜드 파비콘 (블랙 배경의 왕관) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230A0A0A'/><text y='.9em' font-size='80' x='50%' dominant-baseline='middle' text-anchor='middle'>👑</text></svg>">
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS -->
@@ -29,19 +29,22 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Cormorant Garamond', 'Inter', 'serif'],
                     },
                     colors: {
                         brand: {
-                            blue: '#2f4b9f',
-                            dark: '#1e326b',
-                            accent: '#e6edf7'
+                            gold: '#D4AF37',
+                            'gold-light': '#F5D57B',
+                            'gold-dark': '#9B7A1C',
+                            black: '#0A0A0A',
+                            dark: '#111111',
                         }
                     },
                     animation: {
                         'marquee': 'marquee 40s linear infinite',
                         'float': 'float 6s ease-in-out infinite',
                         'float-delayed': 'float 6s ease-in-out 3s infinite',
+                        'shimmer': 'shimmer 2s linear infinite',
                     },
                     keyframes: {
                         marquee: {
@@ -51,38 +54,29 @@
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
                             '50%': { transform: 'translateY(-20px)' },
-                        }
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '200% center' },
+                            '100%': { backgroundPosition: '-200% center' },
+                        },
                     }
                 }
             }
         }
     </script>
     <style>
-        /* Custom Glassmorphism Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0A0A0A; }
+        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F5D57B; }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+        .gold-gradient { background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%); }
+        .gold-text { background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200% auto; animation: shimmer 3s linear infinite; }
+        .glass-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(212,175,55,0.15); }
+        .glass-card-gold { background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(155,122,28,0.05) 100%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(212,175,55,0.25); box-shadow: 0 0 30px rgba(212,175,55,0.05); }
+        .gold-border { border: 1px solid rgba(212,175,55,0.3); }
+        .gold-divider { border-color: rgba(212,175,55,0.2); }
         /* 혹시 다른 페이지에서 사용하던 결제 결과 오버레이 DOM 이 남아 있어도
            메인 랜딩 페이지에서는 항상 숨긴다. */
         #result-modal,
@@ -92,38 +86,37 @@
     </style>
 </head>
 
-<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased">
+<body class="bg-[#0A0A0A] text-white font-sans overflow-x-hidden antialiased">
 
     <!-- Fixed Top Navigation Bar -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10">
+    <header class="fixed w-full top-0 z-50 glass-card border-b border-[rgba(212,175,55,0.15)]">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <!-- Logo Area (클릭 시 첫 페이지로 이동) -->
             <a href="/" class="flex items-center gap-3 hover:opacity-90 transition">
                 <div class="flex items-center justify-center">
-                    <i class="fa-solid fa-globe text-white text-3xl drop-shadow-md"></i>
+                    <i class="fa-solid fa-crown text-[#D4AF37] text-3xl drop-shadow-md"></i>
                 </div>
                 <div class="flex flex-col justify-center">
                     <div class="flex items-end gap-2 mb-1">
-                        <span class="text-3xl font-black tracking-tighter text-white leading-none">LUXX</span>
+                        <span class="text-3xl font-black tracking-tighter leading-none gold-text">LUXX</span>
                         <span
-                            class="text-[10px] font-mono bg-white/10 text-blue-200 px-2 py-0.5 rounded border border-white/10 tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
+                            class="text-[10px] font-mono bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-0.5 rounded border border-[rgba(212,175,55,0.3)] tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
                     </div>
                     <span
-                        class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Society
-                        of International Specialized Auctioneers</span>
+                        class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Luxury Auction Exchange</span>
                 </div>
             </a>
 
             <!-- Central Menu -->
-            <nav class="hidden md:flex bg-white/10 rounded-full p-1 border border-white/10 text-sm font-medium">
-                <a href="/" class="px-5 py-2 rounded-full bg-white/20 text-white transition">HOME</a>
-                <a href="/auction.html" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">GLOBAL
+            <nav class="hidden md:flex bg-[rgba(212,175,55,0.05)] rounded-full p-1 border border-[rgba(212,175,55,0.15)] text-sm font-medium">
+                <a href="/" class="px-5 py-2 rounded-full bg-[rgba(212,175,55,0.15)] text-[#D4AF37] transition">HOME</a>
+                <a href="/auction.html" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition">GLOBAL
                     AUCTION</a>
                 <a href="/"
-                    class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
+                    class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition flex items-center gap-1">
                     <i class="fa-solid fa-lock text-xs"></i> LUXX VAULT
                 </a>
-                <a id="auth-nav-link" href="login.html" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY
+                <a id="auth-nav-link" href="login.html" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition">MY
                     LUXX</a>
             </nav>
 
@@ -132,39 +125,39 @@
                 <!-- Language Selector (10 Countries) -->
                 <div class="relative group hidden sm:block">
                     <button
-                        class="flex items-center gap-1 cursor-pointer text-white/80 hover:text-white py-2 uppercase">
+                        class="flex items-center gap-1 cursor-pointer text-white/80 hover:text-[#D4AF37] py-2 uppercase transition">
                         EN <i class="fa-solid fa-chevron-down text-[10px]"></i>
                     </button>
                     <!-- Dropdown Menu -->
                     <div
-                        class="absolute right-0 top-full mt-1 w-32 bg-[#1e326b]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        class="absolute right-0 top-full mt-1 w-32 bg-[#111111]/95 backdrop-blur-md border border-[rgba(212,175,55,0.2)] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <ul class="py-2 text-white/80">
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇺🇸
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇺🇸
                                     English</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇰🇷
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇰🇷
                                     한국어</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇯🇵
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇯🇵
                                     日本語</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇨🇳
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇨🇳
                                     中文</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇫🇷
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇫🇷
                                     Français</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇩🇪
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇩🇪
                                     Deutsch</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇪🇸
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇪🇸
                                     Español</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇮🇹
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇮🇹
                                     Italiano</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇦🇪
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇦🇪
                                     العربية</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇷🇺
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇷🇺
                                     Русский</a></li>
                         </ul>
                     </div>
                 </div>
                 <!-- Login / Logout (로그인 시 로그아웃으로 전환) -->
                 <button id="auth-btn" onclick="window.location.href='login.html'"
-                    class="flex items-center gap-2 bg-white text-brand-blue px-4 py-2 rounded-lg hover:bg-brand-accent transition shadow-md text-sm font-bold">
+                    class="flex items-center gap-2 gold-gradient text-[#0A0A0A] px-4 py-2 rounded-lg hover:brightness-110 transition shadow-lg text-sm font-bold">
                     <span>Login</span>
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 </button>
@@ -191,66 +184,66 @@
     <!-- Main Content Wrapper -->
     <main class="pt-20">
         <!-- Vault Ticker (Seamless Marquee) -->
-        <div class="w-full overflow-hidden bg-black/20 h-10 flex items-center border-b border-white/10">
+        <div class="w-full overflow-hidden bg-[#111111] h-10 flex items-center border-b border-[rgba(212,175,55,0.15)]">
             <div class="flex animate-marquee w-max">
                 <!-- First Text Set -->
                 <div class="flex items-center whitespace-nowrap text-sm text-white/80 font-mono tracking-wide shrink-0">
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-1049</span> (Rolex Submariner) $10,800 ➔
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-1049</span> (Rolex Submariner) $10,800 ➔
                         Purchased by Anonymous Dealer</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-blue-300"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-8821</span> (Hermès Birkin 30) $21,000 ➔
+                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-8821</span> (Hermès Birkin 30) $21,000 ➔
                         Awaiting Final Bid</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-0012</span> (Patek Philippe Nautilus) $85,000
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0012</span> (Patek Philippe Nautilus) $85,000
                         ➔ Arrived at LUXX VAULT</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-yellow-400">⚡ LIVE</span> Christie's London High-End Watch
+                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Christie's London High-End Watch
                         Auction is Live</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-2934</span> (Chanel Classic Medium) $9,500 ➔
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-2934</span> (Chanel Classic Medium) $9,500 ➔
                         LUXX Authentication Complete</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-blue-300"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-7710</span> (Audemars Piguet Royal Oak) $48,000
+                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-7710</span> (Audemars Piguet Royal Oak) $48,000
                         ➔ VIP Private Trade Concluded</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-yellow-400">⚡ LIVE</span> Sotheby's New York Contemporary Art
+                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Sotheby's New York Contemporary Art
                         Auction Started</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-0922</span> (Van Cleef & Arpels Alhambra)
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0922</span> (Van Cleef & Arpels Alhambra)
                         $6,100 ➔ Bidding on Yahoo! Japan</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-purple-400">🔒 LUXX VAULT</span> Global Deposited Assets Exceed
+                    <span class="mx-4"><span class="text-[#D4AF37]">🔒 LUXX VAULT</span> Global Deposited Assets Exceed
                         $110M</span>
                     <span class="mx-4 text-white/30">|</span>
                 </div>
                 <!-- Second Text Set (Duplicate for Marquee) -->
                 <div class="flex items-center whitespace-nowrap text-sm text-white/80 font-mono tracking-wide shrink-0"
                     aria-hidden="true">
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-1049</span> (Rolex Submariner) $10,800 ➔
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-1049</span> (Rolex Submariner) $10,800 ➔
                         Purchased by Anonymous Dealer</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-blue-300"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-8821</span> (Hermès Birkin 30) $21,000 ➔
+                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-8821</span> (Hermès Birkin 30) $21,000 ➔
                         Awaiting Final Bid</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-0012</span> (Patek Philippe Nautilus) $85,000
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0012</span> (Patek Philippe Nautilus) $85,000
                         ➔ Arrived at LUXX VAULT</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-yellow-400">⚡ LIVE</span> Christie's London High-End Watch
+                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Christie's London High-End Watch
                         Auction is Live</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-2934</span> (Chanel Classic Medium) $9,500 ➔
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-2934</span> (Chanel Classic Medium) $9,500 ➔
                         LUXX Authentication Complete</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-blue-300"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-7710</span> (Audemars Piguet Royal Oak) $48,000
+                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-7710</span> (Audemars Piguet Royal Oak) $48,000
                         ➔ VIP Private Trade Concluded</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-yellow-400">⚡ LIVE</span> Sotheby's New York Contemporary Art
+                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Sotheby's New York Contemporary Art
                         Auction Started</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-green-400">🔔 SV-0922</span> (Van Cleef & Arpels Alhambra)
+                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0922</span> (Van Cleef & Arpels Alhambra)
                         $6,100 ➔ Bidding on Yahoo! Japan</span>
                     <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-purple-400">🔒 LUXX VAULT</span> Global Deposited Assets Exceed
+                    <span class="mx-4"><span class="text-[#D4AF37]">🔒 LUXX VAULT</span> Global Deposited Assets Exceed
                         $110M</span>
                     <span class="mx-4 text-white/30">|</span>
                 </div>
@@ -260,6 +253,9 @@
         <!-- Hero Section -->
         <section
             class="relative max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col items-center justify-center min-h-[70vh]">
+
+            <!-- Gold Glow Orb Background -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[rgba(212,175,55,0.04)] rounded-full blur-[120px] pointer-events-none"></div>
 
             <!-- Floating Cards Background -->
             <div class="relative w-full max-w-4xl h-[400px] mb-16 flex justify-center items-center">
@@ -286,7 +282,7 @@
                             <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i> Auto Bid
                         </button>
                         <button
-                            class="flex-1 bg-brand-blue hover:bg-brand-dark text-white py-3 rounded-xl font-medium transition text-sm flex flex-col items-center justify-center gap-1 shadow-md">
+                            class="flex-1 bg-[#D4AF37] hover:bg-[#9B7A1C] text-[#0A0A0A] py-3 rounded-xl font-medium transition text-sm flex flex-col items-center justify-center gap-1 shadow-md">
                             <i class="fa-solid fa-arrow-up text-xs"></i> Bid Now
                         </button>
                     </div>
@@ -294,27 +290,27 @@
 
                 <!-- Bottom Left Floating Card -->
                 <div
-                    class="absolute z-10 -left-4 md:left-12 bottom-0 glass-card p-4 rounded-2xl w-64 shadow-2xl animate-float-delayed flex items-center gap-4 border-l-4 border-l-blue-400">
+                    class="absolute z-10 -left-4 md:left-12 bottom-0 glass-card-gold p-4 rounded-2xl w-64 shadow-2xl animate-float-delayed flex items-center gap-4 border-l-4 border-l-[#D4AF37]">
                     <div class="w-16 h-16 rounded-xl bg-cover bg-center"
                         style="background-image: url('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80');">
                     </div>
                     <div>
                         <p class="text-xs text-white/60 mb-1">LUXX Auth Guarantee</p>
                         <p class="font-bold text-lg text-white">Verified <i
-                                class="fa-solid fa-circle-check text-blue-400 text-sm"></i></p>
+                                class="fa-solid fa-circle-check text-[#D4AF37] text-sm"></i></p>
                     </div>
                 </div>
 
                 <!-- Top Right Floating Card -->
                 <div
-                    class="absolute z-10 -right-4 md:right-12 top-10 glass-card p-5 rounded-2xl w-56 shadow-2xl animate-float">
+                    class="absolute z-10 -right-4 md:right-12 top-10 glass-card-gold p-5 rounded-2xl w-56 shadow-2xl animate-float">
                     <div class="flex justify-between items-center mb-3 text-sm">
                         <span class="text-white/70">Conversion</span>
                         <i class="fa-solid fa-ellipsis text-white/50"></i>
                     </div>
-                    <div class="flex justify-between items-end mb-2 border-b border-white/10 pb-2">
+                    <div class="flex justify-between items-end mb-2 border-b border-[rgba(212,175,55,0.2)] pb-2">
                         <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-blue-500"></div> USD
+                            <div class="w-4 h-4 rounded-full bg-[#D4AF37]"></div> USD
                         </div>
                         <div class="font-bold">$ 12,000</div>
                     </div>
@@ -328,15 +324,15 @@
 
                 <!-- Bottom Right Mini Card (QR Concept) -->
                 <div
-                    class="absolute z-0 right-10 md:right-24 bottom-10 glass-card p-3 rounded-xl shadow-2xl animate-float">
-                    <p class="text-[10px] text-white/60 mb-2">Item Vault Code</p>
+                    class="absolute z-0 right-10 md:right-24 bottom-10 glass-card-gold p-3 rounded-xl shadow-2xl animate-float">
+                    <p class="text-[10px] text-[#D4AF37] mb-2">Item Vault Code</p>
                     <i class="fa-solid fa-qrcode text-5xl text-white/90"></i>
                 </div>
             </div>
 
             <!-- Bottom Hero Text -->
             <div class="text-center z-30 mt-8">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 leading-tight">
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 leading-tight text-white">
                     The World's Finest Luxury<br>Auctions, Right in Your Hands
                 </h1>
                 <p class="text-lg md:text-xl text-white/70 max-w-2xl mx-auto font-light mb-8">
@@ -344,10 +340,10 @@
                 </p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <button onclick="window.location.href='/'"
-                        class="px-8 py-4 bg-brand-accent text-brand-blue font-bold rounded-xl hover:bg-white transition shadow-lg shadow-white/10">Start
+                        class="px-8 py-4 gold-gradient text-[#0A0A0A] font-bold rounded-xl hover:brightness-110 transition shadow-lg">Start
                         Bidding Now</button>
                     <button onclick="window.location.href='/agency-register.html'"
-                        class="px-8 py-4 bg-white/10 border border-white/20 text-white font-bold rounded-xl hover:bg-white/20 transition">Find
+                        class="px-8 py-4 border border-[rgba(212,175,55,0.3)] text-white font-bold rounded-xl hover:bg-[rgba(212,175,55,0.1)] transition">Find
                         Auctioneers</button>
                 </div>
             </div>
@@ -355,8 +351,8 @@
 
         <!-- Trust Indicators -->
         <section class="max-w-7xl mx-auto px-6 -mt-10 relative z-40">
-            <div class="glass-card rounded-2xl p-6 shadow-2xl bg-brand-dark/50">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x divide-white/10 text-center">
+            <div class="glass-card-gold rounded-2xl p-6 shadow-2xl">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x divide-[rgba(212,175,55,0.15)] text-center">
                     <div>
                         <p class="text-white/60 text-sm mb-1">Total Traded Volume</p>
                         <p class="text-3xl font-bold text-white counter" data-target="2.5" data-prefix="$"
@@ -364,7 +360,7 @@
                     </div>
                     <div>
                         <p class="text-white/60 text-sm mb-1">Certified Auctioneers</p>
-                        <p class="text-3xl font-bold text-blue-300"><span class="counter" data-target="247">0</span></p>
+                        <p class="text-3xl font-bold gold-text"><span class="counter" data-target="247">0</span></p>
                     </div>
                     <div>
                         <p class="text-white/60 text-sm mb-1">Total Members</p>
@@ -380,20 +376,20 @@
         </section>
 
         <!-- Live Popular Auctions & Filters -->
-        <section class="max-w-7xl mx-auto px-6 py-24">
+        <section class="bg-[#0A0A0A] max-w-7xl mx-auto px-6 py-24">
             <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
                 <div>
                     <h2 class="text-3xl font-bold mb-2 flex items-center gap-3"><i
-                            class="fa-solid fa-fire text-red-500"></i> Live Popular Auctions</h2>
+                            class="fa-solid fa-fire text-[#D4AF37]"></i> Live Popular Auctions</h2>
                     <p class="text-white/60">Check out the hottest global items sorted by ending soon, popularity, and
                         price.</p>
                 </div>
                 <div class="flex gap-2">
                     <button
-                        class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition border border-white/10"><i
+                        class="text-xs bg-[rgba(212,175,55,0.08)] hover:bg-[rgba(212,175,55,0.15)] px-4 py-2 rounded-lg transition border border-[rgba(212,175,55,0.2)] text-white/80"><i
                             class="fa-solid fa-arrow-down-short-wide"></i> Sort By</button>
                     <button
-                        class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition border border-white/10"><i
+                        class="text-xs bg-[rgba(212,175,55,0.08)] hover:bg-[rgba(212,175,55,0.15)] px-4 py-2 rounded-lg transition border border-[rgba(212,175,55,0.2)] text-white/80"><i
                             class="fa-solid fa-sliders"></i> Advanced Filter</button>
                 </div>
             </div>
@@ -401,35 +397,35 @@
             <!-- Brand & Category Filter -->
             <div class="flex gap-2 overflow-x-auto pb-4 mb-4" style="scrollbar-width: none;">
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-blue-500 text-white text-sm font-medium shadow-lg shadow-blue-500/30 border border-blue-400">Ending
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-[rgba(212,175,55,0.2)] text-[#D4AF37] text-sm font-medium shadow-lg border border-[rgba(212,175,55,0.4)]">Ending
                     Soon</button>
-                <div class="w-px h-6 bg-white/20 my-auto mx-2"></div>
+                <div class="w-px h-6 bg-[rgba(212,175,55,0.2)] my-auto mx-2"></div>
                 <!-- Brand Pavilion -->
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">👜
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">👜
                     Hermès</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">⌚
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">⌚
                     Rolex</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">👜
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">👜
                     Chanel</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">🧳
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">🧳
                     Louis Vuitton</button>
-                <div class="w-px h-6 bg-white/20 my-auto mx-2"></div>
+                <div class="w-px h-6 bg-[rgba(212,175,55,0.2)] my-auto mx-2"></div>
                 <!-- Categories -->
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">Handbags</button>
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Handbags</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">Watches</button>
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Watches</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">Jewelry</button>
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Jewelry</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">Art
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Art
                     & Vintage</button>
                 <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition border border-white/5">Apparel
+                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Apparel
                     & Shoes</button>
             </div>
 
@@ -437,7 +433,7 @@
             <div class="flex gap-6 overflow-x-auto pb-8 snap-x" style="scrollbar-width: none;">
                 <!-- Card 1 -->
                 <div
-                    class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start group cursor-pointer border border-white/10">
+                    class="min-w-[280px] w-[280px] glass-card-gold rounded-2xl overflow-hidden snap-start group cursor-pointer border border-[rgba(212,175,55,0.15)]">
                     <div class="h-48 bg-cover bg-center relative p-4 flex items-start justify-between"
                         style="background-image: url('https://images.unsplash.com/photo-1584916201218-f4242ceb4809?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
                         <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500"></div>
@@ -457,7 +453,7 @@
                             <span class="text-xs text-green-400 font-medium">14 Bids</span>
                         </div>
                         <button
-                            class="w-full bg-brand-accent text-brand-blue font-bold py-2.5 rounded-lg hover:bg-white transition flex items-center justify-center gap-2">
+                            class="w-full gold-gradient text-[#0A0A0A] font-bold py-2.5 rounded-lg hover:brightness-110 transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-crosshairs"></i> Sniper Bid
                         </button>
                     </div>
@@ -465,12 +461,12 @@
 
                 <!-- Card 2 -->
                 <div
-                    class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start group cursor-pointer border border-white/10">
+                    class="min-w-[280px] w-[280px] glass-card-gold rounded-2xl overflow-hidden snap-start group cursor-pointer border border-[rgba(212,175,55,0.15)]">
                     <div class="h-48 bg-cover bg-center relative p-4 flex items-start justify-between"
                         style="background-image: url('https://images.unsplash.com/photo-1523170335258-f5ed11844a49?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
                         <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500"></div>
                         <span
-                            class="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded shadow-lg relative z-10">LIVE
+                            class="bg-[#F5D57B] text-[#0A0A0A] text-xs font-bold px-2 py-1 rounded shadow-lg relative z-10">LIVE
                             Auction</span>
                         <div
                             class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition relative z-10">
@@ -485,7 +481,7 @@
                             <span class="text-xs text-green-400 font-medium">32 Bids</span>
                         </div>
                         <button
-                            class="w-full bg-blue-500 text-white font-bold py-2.5 rounded-lg hover:bg-blue-400 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30">
+                            class="w-full gold-gradient text-[#0A0A0A] font-bold py-2.5 rounded-lg hover:brightness-110 transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-gavel"></i> Join Live Bidding
                         </button>
                     </div>
@@ -493,12 +489,12 @@
 
                 <!-- Card 3 -->
                 <div
-                    class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start group cursor-pointer border border-white/10">
+                    class="min-w-[280px] w-[280px] glass-card-gold rounded-2xl overflow-hidden snap-start group cursor-pointer border border-[rgba(212,175,55,0.15)]">
                     <div class="h-48 bg-cover bg-center relative p-4 flex items-start justify-between"
                         style="background-image: url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
                         <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500"></div>
                         <span
-                            class="bg-white/20 backdrop-blur-md text-white border border-white/30 text-xs font-bold px-2 py-1 rounded relative z-10">Ends
+                            class="bg-[rgba(212,175,55,0.2)] backdrop-blur-md text-[#D4AF37] border border-[rgba(212,175,55,0.4)] text-xs font-bold px-2 py-1 rounded relative z-10">Ends
                             in 24h</span>
                         <div
                             class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition relative z-10">
@@ -513,7 +509,7 @@
                             <span class="text-xs text-green-400 font-medium">5 Bids</span>
                         </div>
                         <button
-                            class="w-full bg-brand-accent text-brand-blue font-bold py-2.5 rounded-lg hover:bg-white transition flex items-center justify-center gap-2">
+                            class="w-full gold-gradient text-[#0A0A0A] font-bold py-2.5 rounded-lg hover:brightness-110 transition flex items-center justify-center gap-2">
                             <i class="fa-solid fa-crosshairs"></i> Sniper Bid
                         </button>
                     </div>
@@ -521,11 +517,11 @@
 
                 <!-- Card 4 (View All) -->
                 <a href="/auction.html"
-                    class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start flex items-center justify-center group cursor-pointer border-dashed border-2 border-white/20 hover:bg-white/5 transition">
+                    class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start flex items-center justify-center group cursor-pointer border-dashed border-2 border-[rgba(212,175,55,0.2)] hover:bg-[rgba(212,175,55,0.05)] transition">
                     <div class="text-center">
                         <div
-                            class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-white/20 group-hover:scale-110 transition duration-300">
-                            <i class="fa-solid fa-arrow-right text-2xl text-white/80"></i>
+                            class="w-14 h-14 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[rgba(212,175,55,0.2)] group-hover:scale-110 transition duration-300">
+                            <i class="fa-solid fa-arrow-right text-2xl text-[#D4AF37]"></i>
                         </div>
                         <p class="font-bold text-lg">View All Auctions</p>
                         <p class="text-sm text-white/50 mt-1">12,450+ items in progress</p>
@@ -535,21 +531,21 @@
         </section>
 
         <!-- LUXX CERTIFIED System -->
-        <section class="border-y border-white/10 bg-brand-dark/30 py-24 relative overflow-hidden">
+        <section class="border-y border-[rgba(212,175,55,0.1)] bg-[#111111] py-24 relative overflow-hidden">
             <div
-                class="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none">
+                class="absolute top-0 right-0 w-[500px] h-[500px] bg-[rgba(212,175,55,0.06)] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none">
             </div>
 
             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12 relative z-10">
                 <!-- Badge Area -->
                 <div class="w-full md:w-1/3 flex justify-center">
                     <div class="relative w-56 h-56 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-blue-500 blur-3xl opacity-30 animate-pulse rounded-full"></div>
+                        <div class="absolute inset-0 bg-[#D4AF37] blur-3xl opacity-20 animate-pulse rounded-full"></div>
                         <div
-                            class="relative z-10 w-48 h-48 glass-card rounded-full border-4 border-blue-400/50 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.4)] bg-gradient-to-br from-blue-900/80 to-brand-blue/80">
-                            <i class="fa-solid fa-shield-halved text-6xl text-blue-300 mb-2 drop-shadow-lg"></i>
+                            class="relative z-10 w-48 h-48 glass-card-gold rounded-full border-4 border-[rgba(212,175,55,0.4)] flex flex-col items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.25)]">
+                            <i class="fa-solid fa-shield-halved text-6xl text-[#D4AF37] mb-2 drop-shadow-lg"></i>
                             <span class="font-extrabold text-2xl tracking-widest text-white drop-shadow-md">LUXX</span>
-                            <span class="text-[11px] tracking-[0.2em] text-blue-200 uppercase mt-1">Certified</span>
+                            <span class="text-[11px] tracking-[0.2em] text-[#F5D57B] uppercase mt-1">Certified</span>
                         </div>
                     </div>
                 </div>
@@ -557,7 +553,7 @@
                 <!-- Text & Checklist -->
                 <div class="w-full md:w-2/3">
                     <div
-                        class="mb-4 inline-block px-3 py-1 bg-blue-500/20 border border-blue-400/30 rounded-full text-blue-300 text-xs font-bold tracking-wider">
+                        class="mb-4 inline-block px-3 py-1 bg-[rgba(212,175,55,0.15)] border border-[rgba(212,175,55,0.3)] rounded-full text-[#D4AF37] text-xs font-bold tracking-wider">
                         CERTIFICATION STANDARDS</div>
                     <h2 class="text-3xl md:text-4xl font-bold mb-4">LUXX CERTIFIED <span
                             class="font-light text-white/60">Mark?</span></h2>
@@ -570,7 +566,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10">
                         <div class="flex items-start gap-4">
                             <div
-                                class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30">
+                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
                                 <i class="fa-solid fa-check text-sm"></i></div>
                             <div>
                                 <h4 class="font-bold text-white text-lg">Strict Screening Criteria</h4>
@@ -581,7 +577,7 @@
                         </div>
                         <div class="flex items-start gap-4">
                             <div
-                                class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30">
+                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
                                 <i class="fa-solid fa-check text-sm"></i></div>
                             <div>
                                 <h4 class="font-bold text-white text-lg">100% Authenticity Guarantee</h4>
@@ -592,7 +588,7 @@
                         </div>
                         <div class="flex items-start gap-4">
                             <div
-                                class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30">
+                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
                                 <i class="fa-solid fa-check text-sm"></i></div>
                             <div>
                                 <h4 class="font-bold text-white text-lg">Transparent Transaction History</h4>
@@ -603,7 +599,7 @@
                         </div>
                         <div class="flex items-start gap-4">
                             <div
-                                class="mt-1 bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-full text-blue-400 shrink-0 border border-blue-500/30">
+                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
                                 <i class="fa-solid fa-check text-sm"></i></div>
                             <div>
                                 <h4 class="font-bold text-white text-lg">Secure Escrow Payment</h4>
@@ -614,7 +610,7 @@
                     </div>
 
                     <button
-                        class="px-7 py-3.5 bg-transparent border border-white/30 text-white font-bold rounded-xl hover:bg-white hover:text-brand-dark transition flex items-center gap-2 group">
+                        class="px-7 py-3.5 bg-transparent border border-[rgba(212,175,55,0.3)] text-white font-bold rounded-xl hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition flex items-center gap-2 group">
                         View Certification Criteria <i
                             class="fa-solid fa-arrow-right text-sm group-hover:translate-x-1 transition"></i>
                     </button>
@@ -626,10 +622,10 @@
         <section class="max-w-7xl mx-auto px-6 py-24">
             <div class="text-center mb-16">
                 <span
-                    class="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 inline-block">B2B
+                    class="bg-[rgba(212,175,55,0.15)] text-[#D4AF37] border border-[rgba(212,175,55,0.3)] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 inline-block">B2B
                     Exclusive</span>
                 <h2 class="text-3xl md:text-5xl font-bold mb-4 flex items-center justify-center gap-4">
-                    <i class="fa-solid fa-lock text-white/30 text-4xl"></i> PRIVATE HALL
+                    <i class="fa-solid fa-lock text-[rgba(212,175,55,0.4)] text-4xl"></i> PRIVATE HALL
                 </h2>
                 <p class="text-lg text-white/60 max-w-2xl mx-auto">A B2B closed market and premium storage service
                     accessible only to LUXX-certified global partner members.</p>
@@ -637,52 +633,52 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Wholesale Market -->
-                <div class="glass-card p-8 rounded-2xl hover:bg-white/10 transition duration-300 group">
+                <div class="glass-card p-8 rounded-2xl hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group border border-[rgba(212,175,55,0.1)]">
                     <div
-                        class="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/20 group-hover:bg-blue-500 transition duration-300">
+                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.2)] group-hover:bg-[#D4AF37] transition duration-300">
                         <i
-                            class="fa-solid fa-boxes-stacked text-2xl text-blue-300 group-hover:text-white transition"></i>
+                            class="fa-solid fa-boxes-stacked text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4 text-white">Wholesale Market</h3>
                     <ul class="text-white/70 space-y-3 text-sm">
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-blue-400 mt-1 mr-3"></i>Exclusive access to bulk
+                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Exclusive access to bulk
                             listed items from European and Japanese members</li>
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-blue-400 mt-1 mr-3"></i>Support for Lot-based bundle
+                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Support for Lot-based bundle
                             sales for efficient inventory securing</li>
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-blue-400 mt-1 mr-3"></i>Auctions based on reasonable
+                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Auctions based on reasonable
                             wholesale prices compared to general consumer prices</li>
                     </ul>
                 </div>
 
                 <!-- Dealer's Choice -->
-                <div class="glass-card p-8 rounded-2xl hover:bg-white/10 transition duration-300 group">
+                <div class="glass-card p-8 rounded-2xl hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group border border-[rgba(212,175,55,0.1)]">
                     <div
-                        class="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/20 group-hover:bg-yellow-500 transition duration-300">
-                        <i class="fa-solid fa-star text-2xl text-yellow-300 group-hover:text-white transition"></i>
+                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.2)] group-hover:bg-[#D4AF37] transition duration-300">
+                        <i class="fa-solid fa-star text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4 text-white">Dealer's Choice <span
                             class="text-lg font-light text-white/50 ml-1">(Curator Picks)</span></h3>
                     <ul class="text-white/70 space-y-3 text-sm">
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-yellow-400 mt-1 mr-3"></i>High-yield expected luxury
+                                class="fa-solid fa-caret-right text-[#F5D57B] mt-1 mr-3"></i>High-yield expected luxury
                             items carefully selected by LUXX chief curators</li>
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-yellow-400 mt-1 mr-3"></i>Detailed investment value
+                                class="fa-solid fa-caret-right text-[#F5D57B] mt-1 mr-3"></i>Detailed investment value
                             analysis reports including scarcity and market trends</li>
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-yellow-400 mt-1 mr-3"></i>Objective expected return
+                                class="fa-solid fa-caret-right text-[#F5D57B] mt-1 mr-3"></i>Objective expected return
                             guidance based on past winning bid big data</li>
                     </ul>
                 </div>
 
                 <!-- Direct Trade -->
-                <div class="glass-card p-8 rounded-2xl hover:bg-white/10 transition duration-300 group">
+                <div class="glass-card p-8 rounded-2xl hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group border border-[rgba(212,175,55,0.1)]">
                     <div
-                        class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/20 group-hover:bg-green-500 transition duration-300">
-                        <i class="fa-solid fa-handshake text-2xl text-green-300 group-hover:text-white transition"></i>
+                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.2)] group-hover:bg-[#D4AF37] transition duration-300">
+                        <i class="fa-solid fa-handshake text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4 text-white">Direct Trade <span
                             class="text-lg font-light text-white/50 ml-1">(Member to Member)</span></h3>
@@ -701,25 +697,25 @@
 
                 <!-- LUXX VAULT -->
                 <div
-                    class="glass-card p-8 rounded-2xl border border-purple-500/30 hover:bg-purple-900/20 transition duration-300 group relative overflow-hidden">
-                    <div class="absolute -right-10 -bottom-10 opacity-10 transform -rotate-12"><i
+                    class="glass-card p-8 rounded-2xl border border-[rgba(212,175,55,0.25)] hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 opacity-5 transform -rotate-12 text-[#D4AF37]"><i
                             class="fa-solid fa-vault text-[150px]"></i></div>
                     <div
-                        class="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 group-hover:bg-purple-500 transition duration-300 relative z-10">
+                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.3)] group-hover:bg-[#D4AF37] transition duration-300 relative z-10">
                         <i
-                            class="fa-solid fa-shield-halved text-2xl text-purple-300 group-hover:text-white transition"></i>
+                            class="fa-solid fa-shield-halved text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
                     </div>
                     <h3 class="text-2xl font-bold mb-4 text-white relative z-10">LUXX VAULT <span
                             class="text-lg font-light text-white/50 ml-1">(Premium Storage)</span></h3>
                     <ul class="text-white/70 space-y-3 text-sm relative z-10">
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-purple-400 mt-1 mr-3"></i>Physical storage of
+                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Physical storage of
                             high-value goods in major global hubs like Geneva and Hong Kong</li>
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-purple-400 mt-1 mr-3"></i>Perfect constant
+                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Perfect constant
                             temperature/humidity for artworks and 24-hour military-grade security</li>
                         <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-purple-400 mt-1 mr-3"></i>Immediate trading system
+                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Immediate trading system
                             solely through ownership (NFT receipt) without physical delivery</li>
                     </ul>
                 </div>
@@ -728,9 +724,9 @@
 
         <!-- LUXX LAB -->
         <section class="max-w-7xl mx-auto px-6 py-20 mb-10">
-            <div class="mb-12 border-b border-white/10 pb-8">
+            <div class="mb-12 border-b border-[rgba(212,175,55,0.1)] pb-8">
                 <h2 class="text-3xl font-bold mb-3 flex items-center gap-3">
-                    <i class="fa-solid fa-flask text-blue-400"></i> LUXX LAB <span
+                    <i class="fa-solid fa-flask text-[#D4AF37]"></i> LUXX LAB <span
                         class="text-xl font-light text-white/60 ml-2">Data & Academy</span>
                 </h2>
                 <p class="text-white/70 text-lg">LUXX's exclusive knowledge content hub providing expertise and added
@@ -739,57 +735,57 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Market Intelligence -->
-                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
-                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
-                        <i class="fa-solid fa-chart-line text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
+                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-chart-line text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
                     </div>
                     <h4 class="font-bold text-lg mb-3 text-white">Market Intelligence</h4>
                     <p class="text-sm text-white/60 mb-6 leading-relaxed">AI-based global luxury market price analysis,
                         return statistics by high-end brand, and regular investment value prediction reports.</p>
                     <a href="#"
-                        class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">View
+                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">View
                         Market Trends <i class="fa-solid fa-arrow-right text-xs"></i></a>
                 </div>
 
                 <!-- Authentication Guide -->
-                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
-                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
+                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
                         <i
-                            class="fa-solid fa-magnifying-glass text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                            class="fa-solid fa-magnifying-glass text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
                     </div>
                     <h4 class="font-bold text-lg mb-3 text-white">Authentication Guide</h4>
                     <p class="text-sm text-white/60 mb-6 leading-relaxed">In-depth guide to authenticity detection
                         methods by major brands, LUXX appraiser online authenticity judgment service, and counterfeit
                         case DB.</p>
                     <a href="#"
-                        class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">Read
+                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">Read
                         Guide <i class="fa-solid fa-arrow-right text-xs"></i></a>
                 </div>
 
                 <!-- Investment Academy -->
-                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
-                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
+                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
+                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
                         <i
-                            class="fa-solid fa-graduation-cap text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                            class="fa-solid fa-graduation-cap text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
                     </div>
                     <h4 class="font-bold text-lg mb-3 text-white">Investment Academy</h4>
                     <p class="text-sm text-white/60 mb-6 leading-relaxed">Successful luxury investment strategy
                         education, top industry expert columns, online live seminars, and beginner's guide.</p>
                     <a href="#"
-                        class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">Take
+                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">Take
                         Courses <i class="fa-solid fa-arrow-right text-xs"></i></a>
                 </div>
 
                 <!-- Auction Dictionary -->
-                <div class="bg-white/5 hover:bg-white/10 p-8 rounded-2xl border border-white/10 transition group">
-                    <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-6">
-                        <i class="fa-solid fa-book text-2xl text-blue-400 group-hover:scale-110 transition"></i>
+                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
+                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
+                        <i class="fa-solid fa-book text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
                     </div>
                     <h4 class="font-bold text-lg mb-3 text-white">Auction Dictionary</h4>
                     <p class="text-sm text-white/60 mb-6 leading-relaxed">A comprehensive collection of easily confusing
                         global auction terminologies like Buyer's Premium, Reserve Price, and Condition Report.</p>
                     <a href="#"
-                        class="text-sm text-blue-300 font-semibold hover:text-white transition flex items-center gap-1">Search
+                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">Search
                         Dictionary <i class="fa-solid fa-arrow-right text-xs"></i></a>
                 </div>
             </div>
@@ -799,7 +795,7 @@
         <section class="max-w-7xl mx-auto px-6 py-20">
             <div class="mb-10">
                 <h2 class="text-3xl font-bold mb-3 flex items-center gap-3">
-                    <i class="fa-solid fa-globe text-blue-400"></i> LUXX GLOBAL AUCTION Network
+                    <i class="fa-solid fa-globe text-[#D4AF37]"></i> LUXX GLOBAL AUCTION Network
                 </h2>
                 <p class="text-white/70 text-lg">
                     LUXX is linked with top-tier luxury auctioneers and marketplaces worldwide via real-time API.<br
@@ -813,7 +809,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left whitespace-nowrap">
                         <thead>
-                            <tr class="bg-white/10 text-white text-sm uppercase tracking-wider">
+                            <tr class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] text-sm uppercase tracking-wider">
                                 <th class="px-6 py-4 font-semibold">Region</th>
                                 <th class="px-6 py-4 font-semibold">Site (Auctioneer)</th>
                                 <th class="px-6 py-4 font-semibold">Core Category</th>
@@ -826,7 +822,7 @@
                             <!-- US Group -->
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">US</span>
+                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Sotheby's</td>
                                 <td class="px-6 py-4">High-end Handbags/Watches</td>
@@ -837,7 +833,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">US</span>
+                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">eBay</td>
                                 <td class="px-6 py-4">All Categories (Largest)</td>
@@ -847,7 +843,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">US</span>
+                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Heritage Auctions</td>
                                 <td class="px-6 py-4">Vintage, Couture</td>
@@ -857,7 +853,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">US</span>
+                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">LiveAuctioneers</td>
                                 <td class="px-6 py-4">Jewelry, Watch Platform</td>
@@ -867,7 +863,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-blue-900/50 text-blue-200 px-2 py-1 rounded text-xs font-bold border border-blue-500/30">US</span>
+                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Invaluable</td>
                                 <td class="px-6 py-4">Jewelry, Watch Platform</td>
@@ -879,7 +875,7 @@
                             <!-- UK Group -->
                             <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-red-900/50 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500/30">UK</span>
+                                        class="bg-[rgba(255,255,255,0.08)] text-white/80 px-2 py-1 rounded text-xs font-bold border border-white/20">UK</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Christie's</td>
                                 <td class="px-6 py-4">Luxury Handbags (Hermès)</td>
@@ -890,7 +886,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-red-900/50 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500/30">UK</span>
+                                        class="bg-[rgba(255,255,255,0.08)] text-white/80 px-2 py-1 rounded text-xs font-bold border border-white/20">UK</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Phillips</td>
                                 <td class="px-6 py-4">High-end Watches/Jewelry</td>
@@ -900,7 +896,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-red-900/50 text-red-200 px-2 py-1 rounded text-xs font-bold border border-red-500/30">UK</span>
+                                        class="bg-[rgba(255,255,255,0.08)] text-white/80 px-2 py-1 rounded text-xs font-bold border border-white/20">UK</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Bonhams</td>
                                 <td class="px-6 py-4">Jewelry/Watches</td>
@@ -912,7 +908,7 @@
                             <!-- EU Group -->
                             <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20">
                                 <td class="px-6 py-4"><span
-                                        class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">EU</span>
+                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Catawiki (NL)</td>
                                 <td class="px-6 py-4">Fashion, Watches</td>
@@ -922,7 +918,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">EU</span>
+                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Drouot.com (FR)</td>
                                 <td class="px-6 py-4">Watches, Brand Jewelry</td>
@@ -932,7 +928,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">EU</span>
+                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Antiquorum (CH)</td>
                                 <td class="px-6 py-4">Watch-focused Auctions</td>
@@ -943,7 +939,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">EU</span>
+                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">the-saleroom.com</td>
                                 <td class="px-6 py-4">General (UK-focused)</td>
@@ -953,7 +949,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-purple-900/50 text-purple-200 px-2 py-1 rounded text-xs font-bold border border-purple-500/30">EU</span>
+                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Lot-tissimo (DE)</td>
                                 <td class="px-6 py-4">Antiques, Select Luxury</td>
@@ -965,7 +961,7 @@
                             <!-- Japan Group -->
                             <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">JP</span>
+                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">Yahoo! Auctions</td>
                                 <td class="px-6 py-4">General C2C Luxury</td>
@@ -976,7 +972,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">JP</span>
+                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">JBA</td>
                                 <td class="px-6 py-4">B2B Luxury Auctions</td>
@@ -987,7 +983,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
                                 <td class="px-6 py-4"><span
-                                        class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">JP</span>
+                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">KOMEHYO Auction</td>
                                 <td class="px-6 py-4">Corporate Auctions</td>
@@ -997,7 +993,7 @@
                             </tr>
                             <tr class="hover:bg-white/5 transition duration-150">
                                 <td class="px-6 py-4"><span
-                                        class="bg-indigo-900/50 text-indigo-200 px-2 py-1 rounded text-xs font-bold border border-indigo-500/30">JP</span>
+                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
                                 </td>
                                 <td class="px-6 py-4 font-bold text-white">ALLU AUCTION</td>
                                 <td class="px-6 py-4">Rare Watches</td>
@@ -1015,12 +1011,12 @@
         <section class="max-w-7xl mx-auto px-6 pt-6 pb-10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl md:text-2xl font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-gavel text-yellow-300"></i>
+                    <i class="fa-solid fa-gavel text-[#D4AF37]"></i>
                     Featured Luxury Lots
                 </h2>
                 <p class="text-[11px] md:text-xs text-white/60">Tap any item to sign in and join bidding.</p>
             </div>
-            <div class="glass-card rounded-2xl p-4 border border-white/10 shadow-2xl overflow-hidden">
+            <div class="glass-card-gold rounded-2xl p-4 border border-[rgba(212,175,55,0.2)] shadow-2xl overflow-hidden">
                 <div id="footer-auction-slider" class="flex items-stretch justify-start gap-3 transition-transform duration-500 ease-out">
                     <!-- JS에서 글로벌 옥션 상품을 순차적으로 렌더링 -->
                 </div>
@@ -1028,10 +1024,10 @@
         </section>
 
         <!-- Footer -->
-        <footer class="border-t border-white/10 mt-20 bg-brand-dark/40 pt-16 pb-10 text-white/60 text-xs">
+        <footer class="border-t border-[rgba(212,175,55,0.1)] mt-20 bg-[#0A0A0A] pt-16 pb-10 text-white/60 text-xs">
             <div class="max-w-7xl mx-auto px-6">
                 <!-- Corporate Info -->
-                <div class="mb-10 pb-10 border-b border-white/10">
+                <div class="mb-10 pb-10 border-b border-[rgba(212,175,55,0.1)]">
                     <h3 class="text-white font-bold text-lg mb-5 tracking-wide">Society of International Specialized
                         Auctioneers (LUXX LLC.)</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-[11px] leading-relaxed">
@@ -1063,11 +1059,11 @@
                 <div class="flex flex-col md:flex-row items-center justify-between pt-6 flex-wrap gap-4">
                     <p class="font-mono text-[10px]">Copyright &copy; 2026 LUXX LLC. All Rights Reserved.</p>
                     <div class="flex gap-4 font-medium text-white/70">
-                        <a href="/terms" class="hover:text-white transition">Terms of Service</a>
+                        <a href="/terms" class="hover:text-[#D4AF37] transition">Terms of Service</a>
                         <span class="text-white/20">|</span>
-                        <a href="#" class="hover:text-white transition">Privacy Policy</a>
+                        <a href="#" class="hover:text-[#D4AF37] transition">Privacy Policy</a>
                         <span class="text-white/20">|</span>
-                        <a href="#" class="hover:text-white transition">Vault Agreement</a>
+                        <a href="#" class="hover:text-[#D4AF37] transition">Vault Agreement</a>
                     </div>
                 </div>
             </div>
@@ -1157,7 +1153,7 @@
                         { badge: 'LIVE', color: 'bg-yellow-400', tag: 'Ends in 02:14' },
                         { badge: 'BUY NOW', color: 'bg-emerald-400', tag: 'New York' },
                         { badge: 'HOT', color: 'bg-red-400', tag: '12 Bids' },
-                        { badge: 'RESERVE', color: 'bg-blue-400', tag: 'EU · Online' }
+                        { badge: 'RESERVE', color: 'bg-[#9B7A1C]', tag: 'EU · Online' }
                     ];
                     const b = badges[Math.floor(Math.random() * badges.length)];
 
@@ -1194,7 +1190,7 @@
                             </div>
                             <div class="p-2.5 md:p-3 space-y-0.5 md:space-y-1 flex-1">
                                 <p class="text-[10px] md:text-[11px] text-white/70 truncate">${item.title}</p>
-                                <p class="text-[11px] md:text-xs font-bold text-blue-300">${item.price}</p>
+                                <p class="text-[11px] md:text-xs font-bold text-[#D4AF37]">${item.price}</p>
                                 <p class="text-[9px] md:text-[10px] text-white/50 truncate">${item.meta}</p>
                             </div>
                         </button>`;

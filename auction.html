@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko" translate="no">
 <head>
     <meta charset="UTF-8">
@@ -11,14 +11,14 @@
         }
     </script>
     <title>Global Auctions | LUXX</title>
-    
+
     <!-- LUXX 브랜드 파비콘 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23D4AF37'/><circle cx='50' cy='50' r='28' fill='none' stroke='%230A0A0A' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%230A0A0A' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%230A0A0A' stroke-width='4'/></svg>">
 
     <!-- 폰트 및 아이콘 -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,54 +27,110 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand: { blue: '#2f4b9f', dark: '#1e326b', accent: '#e6edf7' }
+                        brand: {
+                            gold: '#D4AF37',
+                            'gold-light': '#F5D57B',
+                            'gold-dark': '#9B7A1C',
+                            black: '#0A0A0A'
+                        }
                     }
                 }
             }
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
-        
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0A0A0A; }
+        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
+
+        body { background: #0A0A0A; }
+
         .glass-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.04);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(212,175,55,0.15);
         }
-        
+
+        .glass-card-gold {
+            background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(15,15,15,0.95) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212,175,55,0.2);
+            border-top-color: rgba(245,213,123,0.35);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(212,175,55,0.04);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
+        }
+
+        .gold-text {
+            background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-gold {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(212,175,55,0.2);
+            color: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-gold:focus {
+            outline: none;
+            border-color: rgba(212,175,55,0.5);
+            background: rgba(212,175,55,0.05);
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+        }
+        .input-gold::placeholder { color: rgba(255,255,255,0.3); }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
+            color: #0A0A0A;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .btn-gold:hover { opacity: 0.9; }
+
         /* 타이머 폰트 고정폭(Monospace) 처리로 너비 흔들림 방지 */
         .timer-text { font-variant-numeric: tabular-nums; }
     </style>
 </head>
-<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
+<body class="text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen" style="background:#0A0A0A;">
 
     <!-- 상단 네비게이션 바 (공통) -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10">
+    <header class="fixed w-full top-0 z-50 glass-card border-b border-[rgba(212,175,55,0.15)]">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/'">
                 <div class="flex items-center justify-center">
-                    <i class="fa-solid fa-globe text-white text-3xl drop-shadow-md"></i>
+                    <i class="fa-solid fa-crown text-[#D4AF37] text-3xl drop-shadow-md"></i>
                 </div>
                 <div class="flex flex-col justify-center">
                     <div class="flex items-end gap-2 mb-1">
-                        <span class="text-3xl font-black tracking-tighter text-white leading-none">LUXX</span>
-                        <span class="text-[10px] font-mono bg-white/10 text-blue-200 px-2 py-0.5 rounded border border-white/10 tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
+                        <span class="text-3xl font-black tracking-tighter leading-none gold-text">LUXX</span>
+                        <span class="text-[10px] font-mono bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-0.5 rounded border border-[rgba(212,175,55,0.2)] tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
                     </div>
                     <span class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Luxury Auction Exchange</span>
                 </div>
             </div>
 
-            <nav class="hidden md:flex bg-white/10 rounded-full p-1 border border-white/10 text-sm font-medium">
-                <a href="/" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">HOME</a>
-                <a href="/auction.html" class="px-5 py-2 rounded-full bg-white/20 text-white transition">GLOBAL AUCTION</a>
-                <a href="/" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
+            <nav class="hidden md:flex bg-[rgba(255,255,255,0.04)] rounded-full p-1 border border-[rgba(212,175,55,0.15)] text-sm font-medium">
+                <a href="/" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition">HOME</a>
+                <a href="/auction.html" class="px-5 py-2 rounded-full bg-[rgba(212,175,55,0.15)] text-[#D4AF37] transition">GLOBAL AUCTION</a>
+                <a href="/" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition flex items-center gap-1">
                     <i class="fa-solid fa-lock text-xs"></i> LUXX VAULT
                 </a>
-                <a href="login.html" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY LUXX</a>
+                <a href="login.html" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition">MY LUXX</a>
             </nav>
 
             <div class="flex items-center gap-4 text-sm font-semibold">
@@ -83,22 +139,22 @@
                         KR <i class="fa-solid fa-chevron-down text-[10px]"></i>
                     </button>
                     <!-- 드롭다운 메뉴 (10개국) -->
-                    <div class="absolute right-0 top-full mt-1 w-32 bg-[#1e326b]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div class="absolute right-0 top-full mt-1 w-32 bg-[#111111]/95 backdrop-blur-md border border-[rgba(212,175,55,0.15)] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <ul class="py-2 text-white/80">
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇺🇸 English</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇰🇷 한국어</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇯🇵 日本語</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇨🇳 中文</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇫🇷 Français</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇩🇪 Deutsch</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇪🇸 Español</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇮🇹 Italiano</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇦🇪 العربية</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇷🇺 Русский</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇺🇸 English</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇰🇷 한국어</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇯🇵 日本語</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇨🇳 中文</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇫🇷 Français</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇩🇪 Deutsch</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇪🇸 Español</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇮🇹 Italiano</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇦🇪 العربية</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-white transition">🇷🇺 Русский</a></li>
                         </ul>
                     </div>
                 </div>
-                <a href="login.html" class="flex items-center gap-2 bg-white text-brand-blue px-6 py-2.5 rounded-lg hover:bg-brand-accent transition shadow-lg">
+                <a href="login.html" class="flex items-center gap-2 gold-gradient text-[#0A0A0A] px-6 py-2.5 rounded-lg hover:opacity-90 transition shadow-lg font-bold">
                     <span>로그인</span>
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 </a>
@@ -108,47 +164,47 @@
 
     <!-- 메인 컨텐츠 영역 -->
     <main class="flex-grow pt-28 pb-20 px-6 relative z-10 max-w-7xl mx-auto w-full">
-        
+
         <!-- 대형 검색 및 필터 섹션 -->
-        <section class="glass-card rounded-3xl p-8 md:p-12 shadow-2xl border border-white/20 mb-12 relative overflow-hidden bg-gradient-to-br from-brand-dark/80 to-brand-blue/50">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-400/20 rounded-full blur-[80px] pointer-events-none"></div>
-            
+        <section class="glass-card-gold rounded-3xl p-8 md:p-12 shadow-2xl mb-12 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-[rgba(212,175,55,0.06)] rounded-full blur-[80px] pointer-events-none"></div>
+
             <div class="relative z-10 flex flex-col md:flex-row gap-8 items-end justify-between">
                 <div class="w-full md:w-2/3">
-                    <h1 class="text-3xl md:text-5xl font-black mb-4 tracking-tight"><i class="fa-solid fa-magnifying-glass text-blue-300 mr-2"></i> 명품 경매 검색</h1>
+                    <h1 class="text-3xl md:text-5xl font-black mb-4 tracking-tight"><i class="fa-solid fa-magnifying-glass text-[#D4AF37] mr-2"></i> 명품 경매 검색</h1>
                     <p class="text-white/70 text-lg mb-6">구매하고자 하는 <strong class="text-white">최대 예산</strong>을 입력하시면 조건에 맞는 상품만 필터링됩니다.</p>
-                    
+
                     <!-- 대형 한화 가격 검색창 -->
                     <div class="relative w-full max-w-lg">
                         <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                            <span class="text-2xl font-bold text-white/50">₩</span>
+                            <span class="text-2xl font-bold text-[rgba(212,175,55,0.5)]">₩</span>
                         </div>
-                        <input type="number" id="priceFilter" placeholder="예: 1500000" class="w-full bg-black/30 border-2 border-blue-400/50 rounded-2xl py-5 pl-14 pr-24 text-white text-2xl font-bold placeholder-white/20 focus:outline-none focus:border-white focus:bg-black/50 transition shadow-inner">
+                        <input type="number" id="priceFilter" placeholder="예: 1500000" class="w-full bg-black/30 border-2 border-[rgba(212,175,55,0.4)] rounded-2xl py-5 pl-14 pr-24 text-white text-2xl font-bold placeholder-white/20 focus:outline-none focus:border-[#D4AF37] focus:bg-black/50 transition shadow-inner" style="color:white;">
                         <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
-                            <span class="text-sm font-bold text-blue-300">원 이하</span>
+                            <span class="text-sm font-bold text-[#D4AF37]">원 이하</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- 경매 방식 선택 롤박스 -->
                 <div class="w-full md:w-1/3 flex flex-col">
-                    <label class="text-sm text-white/60 mb-2 font-bold tracking-widest uppercase">경매 진행 방식</label>
+                    <label class="text-sm text-[rgba(212,175,55,0.8)] mb-2 font-bold tracking-widest uppercase text-[11px]">경매 진행 방식</label>
                     <div class="relative">
-                        <select id="typeFilter" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-5 py-4 text-white text-lg font-bold focus:outline-none focus:border-blue-400 appearance-none shadow-inner cursor-pointer backdrop-blur-md">
-                            <option value="buy_it_now" class="text-black" selected>즉시구매 가능 상품</option>
-                            <option value="live" class="text-black">경매 진행 중 상품</option>
-                            <option value="all" class="text-black">전체보기</option>
+                        <select id="typeFilter" class="w-full bg-[rgba(255,255,255,0.04)] border-2 border-[rgba(212,175,55,0.3)] rounded-xl px-5 py-4 text-white text-lg font-bold focus:outline-none focus:border-[#D4AF37] appearance-none shadow-inner cursor-pointer backdrop-blur-md">
+                            <option value="buy_it_now" class="text-black bg-[#111]" selected>즉시구매 가능 상품</option>
+                            <option value="live" class="text-black bg-[#111]">경매 진행 중 상품</option>
+                            <option value="all" class="text-black bg-[#111]">전체보기</option>
                         </select>
-                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-white/50 pointer-events-none text-lg"></i>
+                        <i class="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-[#D4AF37] pointer-events-none text-lg"></i>
                     </div>
                 </div>
             </div>
-            
+
             <!-- 현재 검색 결과 요약 -->
-            <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-between text-sm">
+            <div class="mt-6 pt-6 border-t border-[rgba(212,175,55,0.15)] flex items-center justify-between text-sm">
                 <p class="text-white/70">총 <span id="resultCount" class="font-bold text-white text-lg mx-1">300</span>개의 상품이 검색되었습니다.</p>
                 <div class="flex gap-2">
-                    <span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-3 py-1 rounded text-xs font-bold">최고가순 정렬</span>
+                    <span class="bg-[rgba(212,175,55,0.15)] text-[#D4AF37] border border-[rgba(212,175,55,0.4)] px-3 py-1 rounded text-xs font-bold">최고가순 정렬</span>
                 </div>
             </div>
         </section>
@@ -161,7 +217,7 @@
     </main>
 
     <!-- 하단 푸터 -->
-    <footer class="border-t border-white/10 bg-brand-dark/40 pt-16 pb-10 text-white/60 text-xs">
+    <footer class="border-t border-[rgba(212,175,55,0.1)] bg-[rgba(0,0,0,0.6)] pt-16 pb-10 text-white/60 text-xs">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row items-center justify-between flex-wrap gap-4">
                 <p class="font-mono text-[10px]">Copyright &copy; 2026 LUXX LLC. All Rights Reserved.</p>
@@ -496,21 +552,18 @@
         const rows = csvData.trim().split('\n').slice(1);
         let items = rows.map((row, index) => {
             const cols = row.split(',');
-            const krwPrice = parseInt(cols[0], 10); // 원래 금액 그대로 사용
-            
-            // 환율 1,300원 적용 USD 계산
-            const baseUsd = Math.round(krwPrice / 1300 / 10) * 10; 
-            
-            // 경매가(랜덤 40~95%) 1만 단위 반올림
+            const krwPrice = parseInt(cols[0], 10);
+
+            const baseUsd = Math.round(krwPrice / 1300 / 10) * 10;
+
             const currentKrw = Math.floor(krwPrice * (0.4 + Math.random() * 0.55) / 10000) * 10000;
             const currentUsd = Math.round(currentKrw / 1300 / 10) * 10;
 
-            const isLive = Math.random() > 0.4; // 60% 경매 진행중
-            const bids = Math.floor(Math.random() * 10) + 1; // 입찰수 1~10
-            
-            // 랜덤 종료 시간 할당 (현재 시간 + 1초~7일 사이)
+            const isLive = Math.random() > 0.4;
+            const bids = Math.floor(Math.random() * 10) + 1;
+
             const now = new Date().getTime();
-            const randomTimeToAdd = Math.floor(Math.random() * (7 * 24 * 60 * 60 * 1000)) + 5000; // 최소 5초 확보
+            const randomTimeToAdd = Math.floor(Math.random() * (7 * 24 * 60 * 60 * 1000)) + 5000;
             const endTime = now + randomTimeToAdd;
 
             return {
@@ -551,23 +604,26 @@
                 <script src="https://cdn.tailwindcss.com"><\/script>
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
-                    body { background-color: #030b18; color: white; font-family: 'Inter', sans-serif; background-image: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #030b18 80%); }
+                    body { background-color: #0A0A0A; color: white; font-family: 'Inter', sans-serif; background-image: radial-gradient(ellipse at top, rgba(212,175,55,0.06) 0%, #0A0A0A 60%); }
                     .glass-card {
-                        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(255, 255, 255, 0.15);
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                        background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(15,15,15,0.95) 100%);
+                        backdrop-filter: blur(16px);
+                        border: 1px solid rgba(212,175,55,0.2);
+                        border-top-color: rgba(245,213,123,0.35);
+                        box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(212,175,55,0.04);
                     }
+                    .gold-gradient { background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%); }
+                    .gold-text { background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
                     .timer-text { font-variant-numeric: tabular-nums; }
                     ::-webkit-scrollbar { width: 6px; }
-                    ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
-                    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+                    ::-webkit-scrollbar-track { background: #0A0A0A; }
+                    ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
                 </style>
             </head>
             <body class="p-6 md:p-12 min-h-screen flex justify-center">
                 <div class="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none">
-                    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]"></div>
-                    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px]"></div>
+                    <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[100px]" style="background:rgba(212,175,55,0.06);"></div>
+                    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-[100px]" style="background:rgba(245,213,123,0.04);"></div>
                 </div>
 
                 <div class="max-w-6xl w-full pt-4 pb-20">
@@ -579,52 +635,52 @@
                         <div class="lg:col-span-7 flex flex-col gap-4">
                             <div class="glass-card rounded-3xl overflow-hidden relative shadow-2xl aspect-[4/3] bg-gray-900 group">
                                 <img src="${item.img}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                                <span class="bg-${item.isLive ? 'yellow-500 text-black' : 'blue-500 text-white'} text-xs font-bold px-3 py-1.5 rounded shadow-lg absolute top-5 left-5">${isLiveText}</span>
+                                <span class="${item.isLive ? 'bg-[rgba(212,175,55,0.15)] text-[#D4AF37] border border-[rgba(212,175,55,0.4)]' : 'bg-[rgba(255,255,255,0.08)] text-white/80 border border-white/20'} text-xs font-bold px-3 py-1.5 rounded shadow-lg absolute top-5 left-5">${isLiveText}</span>
                                 <button class="bg-black/50 backdrop-blur-md rounded-full w-10 h-10 flex items-center justify-center text-white/80 hover:text-red-400 hover:bg-black/70 transition absolute top-5 right-5 z-10 shadow-lg"><i class="fa-regular fa-heart text-lg"></i></button>
                             </div>
 
                             <div class="grid grid-cols-4 gap-4">
-                                <div class="glass-card rounded-xl overflow-hidden aspect-square border-2 border-blue-400 opacity-100 relative"><img src="${item.img}" class="w-full h-full object-cover"></div>
-                                <div class="glass-card rounded-xl overflow-hidden aspect-square border border-white/20 opacity-50 hover:opacity-100 transition cursor-pointer relative"><img src="${item.img}" class="w-full h-full object-cover grayscale hover:grayscale-0"></div>
-                                <div class="glass-card rounded-xl overflow-hidden aspect-square border border-white/20 opacity-50 hover:opacity-100 transition cursor-pointer relative"><img src="${item.img}" class="w-full h-full object-cover grayscale hover:grayscale-0"></div>
-                                <div class="glass-card rounded-xl overflow-hidden aspect-square border border-white/20 flex flex-col items-center justify-center bg-white/5 text-white/40 text-[10px] text-center cursor-pointer hover:bg-white/10 hover:text-white transition">
+                                <div class="glass-card rounded-xl overflow-hidden aspect-square border-2 opacity-100 relative" style="border-color:#D4AF37;"><img src="${item.img}" class="w-full h-full object-cover"></div>
+                                <div class="glass-card rounded-xl overflow-hidden aspect-square border border-[rgba(212,175,55,0.15)] opacity-50 hover:opacity-100 transition cursor-pointer relative"><img src="${item.img}" class="w-full h-full object-cover grayscale hover:grayscale-0"></div>
+                                <div class="glass-card rounded-xl overflow-hidden aspect-square border border-[rgba(212,175,55,0.15)] opacity-50 hover:opacity-100 transition cursor-pointer relative"><img src="${item.img}" class="w-full h-full object-cover grayscale hover:grayscale-0"></div>
+                                <div class="glass-card rounded-xl overflow-hidden aspect-square border border-[rgba(212,175,55,0.15)] flex flex-col items-center justify-center text-white/40 text-[10px] text-center cursor-pointer hover:text-white transition">
                                     <i class="fa-solid fa-plus mb-1 block text-lg"></i>전체 사진 보기
                                 </div>
                             </div>
                         </div>
 
                         <div class="lg:col-span-5 flex flex-col">
-                            <div class="mb-6 border-b border-white/10 pb-6">
-                                <span class="px-2.5 py-1 bg-white/10 rounded border border-white/20 text-xs font-bold text-white/70 tracking-wider">${item.exchange} 파트너센터</span>
+                            <div class="mb-6 border-b border-[rgba(212,175,55,0.15)] pb-6">
+                                <span class="px-2.5 py-1 bg-[rgba(212,175,55,0.08)] rounded border border-[rgba(212,175,55,0.2)] text-xs font-bold text-[rgba(212,175,55,0.8)] tracking-wider">${item.exchange} 파트너센터</span>
                                 <h1 class="text-3xl md:text-4xl font-bold leading-tight mt-4 mb-2">${item.model}</h1>
-                                <p class="text-blue-300 font-bold tracking-wider text-lg">${item.brand}</p>
+                                <p class="font-bold tracking-wider text-lg" style="color:#D4AF37;">${item.brand}</p>
                             </div>
 
-                            <div class="glass-card bg-gradient-to-r from-blue-900/40 to-transparent p-6 rounded-2xl border border-white/10 shadow-lg mb-4">
-                                <p class="text-xs text-white/70 mb-2 font-bold uppercase tracking-widest"><i class="fa-solid fa-bolt text-yellow-400 mr-1"></i> 즉시 구매가 (Buy It Now)</p>
+                            <div class="glass-card p-6 rounded-2xl mb-4" style="background:linear-gradient(135deg,rgba(212,175,55,0.08) 0%,rgba(15,15,15,0.95) 100%);">
+                                <p class="text-xs text-white/70 mb-2 font-bold uppercase tracking-widest"><i class="fa-solid fa-bolt text-[#D4AF37] mr-1"></i> 즉시 구매가 (Buy It Now)</p>
                                 <div class="flex items-end gap-3 flex-wrap">
                                     <span class="text-4xl font-black text-white">₩${formatMoney(item.buyItNowKrw)}</span>
                                     <span class="text-lg text-white/50 font-medium mb-1">/ $${formatMoney(item.buyItNowUsd)}</span>
                                 </div>
                             </div>
 
-                            <div class="glass-card bg-black/30 p-6 rounded-2xl border border-white/5 mb-6">
+                            <div class="glass-card bg-black/30 p-6 rounded-2xl border border-[rgba(212,175,55,0.1)] mb-6">
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
                                         <p class="text-xs text-white/50 mb-1 font-bold uppercase tracking-widest">현재 최고 입찰가</p>
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-2xl font-bold text-cyan-300">₩${formatMoney(item.currentKrw)}</span>
+                                            <span class="text-2xl font-bold" style="color:#D4AF37;">₩${formatMoney(item.currentKrw)}</span>
                                             <span class="text-xs text-white/40">($${formatMoney(item.currentUsd)})</span>
                                         </div>
                                     </div>
-                                    <div class="text-right bg-white/5 px-3 py-2 rounded-lg border border-white/10">
+                                    <div class="text-right bg-[rgba(212,175,55,0.05)] px-3 py-2 rounded-lg border border-[rgba(212,175,55,0.15)]">
                                         <p class="text-[10px] text-white/50 mb-1 uppercase tracking-wide">남은 시간</p>
-                                        <div id="popup-timer" class="text-yellow-400 font-bold text-lg timer-text"><i class="fa-regular fa-clock"></i> 계산중...</div>
+                                        <div id="popup-timer" class="font-bold text-lg timer-text" style="color:#D4AF37;"><i class="fa-regular fa-clock"></i> 계산중...</div>
                                     </div>
                                 </div>
 
                                 <div class="w-full bg-white/10 rounded-full h-1.5 mb-2 relative overflow-hidden">
-                                    <div class="bg-cyan-400 h-1.5 rounded-full" style="width: ${progressPercent}%"></div>
+                                    <div class="h-1.5 rounded-full gold-gradient" style="width: ${progressPercent}%"></div>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <p class="text-xs text-green-400 font-bold"><i class="fa-solid fa-fire mr-1 text-red-400"></i> 현재 ${item.bids}명 경쟁 입찰 중</p>
@@ -633,24 +689,24 @@
                             </div>
 
                             <div class="flex flex-col gap-3 mb-6">
-                                <button onclick="alert('경매 참여(입찰) 화면으로 이동합니다.')" class="w-full bg-blue-100 text-blue-900 font-bold text-lg py-4 rounded-xl hover:bg-white transition shadow-lg flex justify-center items-center gap-2 border border-blue-200">
+                                <button onclick="alert('경매 참여(입찰) 화면으로 이동합니다.')" class="w-full font-bold text-lg py-4 rounded-xl transition shadow-lg flex justify-center items-center gap-2 gold-gradient" style="color:#0A0A0A;">
                                     <i class="fa-solid fa-arrow-up"></i> 경매 참여 하기
                                 </button>
-                                <button onclick="alert('즉시 구매 화면으로 이동합니다.')" class="w-full bg-transparent border-2 border-white/20 text-white font-bold text-lg py-4 rounded-xl hover:bg-white/10 transition shadow-lg flex justify-center items-center gap-2">
-                                    <i class="fa-solid fa-cart-shopping text-yellow-400"></i> 즉시 구매 진행
+                                <button onclick="alert('즉시 구매 화면으로 이동합니다.')" class="w-full bg-transparent border-2 border-[rgba(212,175,55,0.2)] text-white font-bold text-lg py-4 rounded-xl hover:bg-[rgba(212,175,55,0.05)] transition shadow-lg flex justify-center items-center gap-2">
+                                    <i class="fa-solid fa-cart-shopping" style="color:#D4AF37;"></i> 즉시 구매 진행
                                 </button>
                             </div>
 
                             <div class="grid grid-cols-3 gap-3 mt-auto">
-                                <div class="glass-card p-3 rounded-xl flex flex-col items-center text-center gap-2 bg-white/5 border border-white/5">
+                                <div class="glass-card p-3 rounded-xl flex flex-col items-center text-center gap-2">
                                     <i class="fa-solid fa-shield-check text-emerald-400 text-xl"></i>
                                     <span class="text-[10px] text-white/80 font-bold leading-tight">100% 진품<br>보증 (LUXX)</span>
                                 </div>
-                                <div class="glass-card p-3 rounded-xl flex flex-col items-center text-center gap-2 bg-white/5 border border-white/5">
-                                    <i class="fa-solid fa-lock text-blue-400 text-xl"></i>
+                                <div class="glass-card p-3 rounded-xl flex flex-col items-center text-center gap-2">
+                                    <i class="fa-solid fa-lock text-xl" style="color:#D4AF37;"></i>
                                     <span class="text-[10px] text-white/80 font-bold leading-tight">안전 결제<br>에스크로</span>
                                 </div>
-                                <div class="glass-card p-3 rounded-xl flex flex-col items-center text-center gap-2 bg-white/5 border border-white/5">
+                                <div class="glass-card p-3 rounded-xl flex flex-col items-center text-center gap-2">
                                     <i class="fa-solid fa-plane-departure text-purple-400 text-xl"></i>
                                     <span class="text-[10px] text-white/80 font-bold leading-tight">글로벌 안심<br>특급 배송</span>
                                 </div>
@@ -659,27 +715,27 @@
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div class="lg:col-span-2 glass-card rounded-3xl p-8 border border-white/10">
-                            <h3 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
-                                <i class="fa-solid fa-circle-info text-blue-400"></i> 상품 상세 스펙
+                        <div class="lg:col-span-2 glass-card rounded-3xl p-8 border border-[rgba(212,175,55,0.15)]">
+                            <h3 class="text-xl font-bold text-white mb-6 border-b border-[rgba(212,175,55,0.15)] pb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info" style="color:#D4AF37;"></i> 상품 상세 스펙
                             </h3>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
                                 <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-white/50">상품 상태 (Condition)</span><span class="font-bold text-white">S급 (미사용 신품급)</span></div>
                                 <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-white/50">보증서 유무</span><span class="font-bold text-white">포함 (Original)</span></div>
                                 <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-white/50">원산지 (Origin)</span><span class="font-bold text-white">유럽 (France/Swiss/Italy)</span></div>
                                 <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-white/50">부속품 (Included)</span><span class="font-bold text-white">풀세트 (박스, 더스트백 등)</span></div>
-                                <div class="flex justify-between border-b border-white/5 pb-2 sm:col-span-2 mt-2"><span class="text-white/50">출품 파트너 (Location)</span><span class="font-bold text-blue-300"><i class="fa-solid fa-location-dot mr-1"></i> ${item.exchange}</span></div>
+                                <div class="flex justify-between border-b border-white/5 pb-2 sm:col-span-2 mt-2"><span class="text-white/50">출품 파트너 (Location)</span><span class="font-bold" style="color:#D4AF37;"><i class="fa-solid fa-location-dot mr-1"></i> ${item.exchange}</span></div>
                             </div>
                         </div>
 
-                        <div class="glass-card rounded-3xl p-6 border border-white/10 flex flex-col">
-                            <h3 class="text-lg font-bold text-white mb-4 border-b border-white/10 pb-3 flex items-center gap-2">
-                                <i class="fa-solid fa-clock-rotate-left text-blue-400"></i> 실시간 입찰 내역
+                        <div class="glass-card rounded-3xl p-6 border border-[rgba(212,175,55,0.15)] flex flex-col">
+                            <h3 class="text-lg font-bold text-white mb-4 border-b border-[rgba(212,175,55,0.15)] pb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left" style="color:#D4AF37;"></i> 실시간 입찰 내역
                             </h3>
                             <div class="flex-grow overflow-y-auto pr-2 space-y-3 max-h-[350px]">
-                                <div class="flex justify-between items-center bg-blue-900/40 p-3 rounded-lg border border-blue-400/50 shadow-md">
-                                    <div class="flex items-center gap-3"><div class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold shadow-lg">1위</div><span class="text-xs font-bold text-white">user_kr***</span></div>
-                                    <div class="text-right"><span class="block text-sm font-bold text-cyan-300">₩${formatMoney(item.currentKrw)}</span><span class="block text-[9px] text-white/50 mt-0.5">방금 전</span></div>
+                                <div class="flex justify-between items-center p-3 rounded-lg border shadow-md" style="background:rgba(212,175,55,0.08);border-color:rgba(212,175,55,0.3);">
+                                    <div class="flex items-center gap-3"><div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg gold-gradient" style="color:#0A0A0A;">1위</div><span class="text-xs font-bold text-white">user_kr***</span></div>
+                                    <div class="text-right"><span class="block text-sm font-bold" style="color:#D4AF37;">₩${formatMoney(item.currentKrw)}</span><span class="block text-[9px] text-white/50 mt-0.5">방금 전</span></div>
                                 </div>
                                 <div class="flex justify-between items-center p-3 rounded-lg border border-white/5 bg-white/5"><div class="flex items-center gap-3"><div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white/50">2위</div><span class="text-xs text-white/60">johnd***</span></div><div class="text-right"><span class="block text-xs font-bold text-white/70">₩${formatMoney(fakeBid1)}</span><span class="block text-[9px] text-white/40 mt-0.5">12분 전</span></div></div>
                                 <div class="flex justify-between items-center p-3 rounded-lg border border-white/5 bg-white/5"><div class="flex items-center gap-3"><div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-bold text-white/50">3위</div><span class="text-xs text-white/60">alice_***</span></div><div class="text-right"><span class="block text-xs font-bold text-white/70">₩${formatMoney(fakeBid2)}</span><span class="block text-[9px] text-white/40 mt-0.5">1시간 전</span></div></div>
@@ -732,45 +788,45 @@
             let html = '';
 
             items.forEach((item, index) => {
-                item.renderIndex = index; 
+                item.renderIndex = index;
 
-                const badgeHtml = item.isLive 
-                    ? `<span class="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg absolute top-3 left-3 z-10">경매 진행중</span>`
-                    : `<span class="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg absolute top-3 left-3 z-10">즉시구매 가능</span>`;
-                
+                const badgeHtml = item.isLive
+                    ? `<span class="text-[10px] font-bold px-2 py-1 rounded shadow-lg absolute top-3 left-3 z-10 border" style="background:rgba(212,175,55,0.15);color:#D4AF37;border-color:rgba(212,175,55,0.4);">경매 진행중</span>`
+                    : `<span class="bg-red-900/80 text-red-300 text-[10px] font-bold px-2 py-1 rounded shadow-lg absolute top-3 left-3 z-10">즉시구매 가능</span>`;
+
                 html += `
-                <div class="auction-card glass-card rounded-2xl overflow-hidden group border border-white/10 flex flex-col shadow-xl hover:bg-white/5 transition duration-300 text-[10px]" data-price="${item.buyItNowKrw}" data-type="${item.isLive ? 'live' : 'buy_it_now'}">
-                    
-                    <div onclick="openProductDetail(${index})" class="h-40 md:h-44 bg-gray-800 relative overflow-hidden cursor-pointer">
+                <div class="auction-card glass-card-gold rounded-2xl overflow-hidden group flex flex-col shadow-xl hover:border-[rgba(212,175,55,0.35)] transition duration-300 text-[10px]" data-price="${item.buyItNowKrw}" data-type="${item.isLive ? 'live' : 'buy_it_now'}">
+
+                    <div onclick="openProductDetail(${index})" class="h-40 md:h-44 bg-gray-900 relative overflow-hidden cursor-pointer">
                         <img src="${item.img}" alt="${item.model}" class="absolute inset-0 w-full h-full object-cover z-0" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=400&q=80';">
                         <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500 z-0"></div>
                         ${badgeHtml}
                         <div onclick="event.stopPropagation();" class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition absolute top-3 right-3 z-10 cursor-pointer"><i class="fa-regular fa-heart"></i></div>
-                        
+
                         <!-- 샘플 이미지 안내 문구 -->
-                        <div class="absolute bottom-0 w-full bg-black/70 backdrop-blur-md py-1 px-2 text-center border-t border-white/10 z-10">
+                        <div class="absolute bottom-0 w-full bg-black/70 backdrop-blur-md py-1 px-2 text-center border-t border-[rgba(212,175,55,0.1)] z-10">
                             <p class="text-[8px] md:text-[9px] text-white/90 font-medium tracking-wide leading-tight">
                                 샘플이미지 입니다.<br class="sm:hidden"> 로그인 후 실제 사진을 확인 할 수 있습니다.
                             </p>
                         </div>
                     </div>
-                    
+
                     <div class="p-3 md:p-4 flex flex-col justify-between w-full relative">
                         <div>
                             <p class="text-[8px] md:text-[9px] text-white/50 mb-0.5 font-medium">${item.exchange} · ${item.brand}</p>
-                            <h3 onclick="openProductDetail(${index})" class="font-bold text-xs md:text-[13px] mb-1.5 leading-tight truncate cursor-pointer hover:text-blue-300 transition" title="${item.model}">${item.model}</h3>
-                            
+                            <h3 onclick="openProductDetail(${index})" class="font-bold text-xs md:text-[13px] mb-1.5 leading-tight truncate cursor-pointer hover:text-[#D4AF37] transition" title="${item.model}">${item.model}</h3>
+
                             <!-- 즉시 구매가 (고정) -->
-                            <div class="mb-1 bg-white/5 p-1.5 md:p-2.5 rounded-xl border border-white/5 relative overflow-hidden">
+                            <div class="mb-1 p-1.5 md:p-2.5 rounded-xl relative overflow-hidden" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.1);">
                                 <p class="text-[8px] md:text-[9px] text-white/60 mb-0.5 font-bold">즉시 구매가 (Buy It Now)</p>
                                 <div class="flex items-baseline gap-1 flex-wrap">
-                                    <span class="text-sm md:text-base font-black text-blue-300">₩${formatMoney(item.buyItNowKrw)}</span>
+                                    <span class="text-sm md:text-base font-black" style="color:#D4AF37;">₩${formatMoney(item.buyItNowKrw)}</span>
                                     <span class="text-[8px] md:text-[9px] text-white/50 font-medium">/ $${formatMoney(item.buyItNowUsd)}</span>
                                 </div>
                             </div>
                             <!-- 환율 안내 문구 -->
                             <p class="text-[8px] md:text-[9px] text-white/40 mb-1.5 ml-1 tracking-wide">* 평균 환율가격입니다.</p>
-                            
+
                             <!-- 현재 경매가 (랜덤) 및 타이머 -->
                             <div class="flex justify-between items-end mb-3 px-1">
                                 <div>
@@ -783,22 +839,22 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="text-[8px] md:text-[9px] text-white/50 mb-0.5">남은 시간</p>
-                                    <div id="timer-${index}" class="text-yellow-400 font-bold text-[10px] md:text-[11px] timer-text flex items-center gap-0.5 justify-end leading-none whitespace-nowrap">
+                                    <div id="timer-${index}" class="font-bold text-[10px] md:text-[11px] timer-text flex items-center gap-0.5 justify-end leading-none whitespace-nowrap" style="color:#D4AF37;">
                                         <i class="fa-regular fa-clock text-[9px] md:text-[10px]"></i><span>계산중...</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- 버튼 영역 -->
                         <div class="flex flex-col gap-1 mt-auto">
-                            <!-- 경매 참여 버튼 (로그인 이동) -->
-                            <button onclick="event.stopPropagation(); window.location.href='login.html'" class="w-full bg-brand-accent text-brand-blue font-bold py-1.5 rounded-xl hover:bg-white transition flex items-center justify-center gap-1.5 text-[10px] md:text-[11px] shadow-md">
+                            <!-- 경매 참여 버튼 -->
+                            <button onclick="event.stopPropagation(); window.location.href='login.html'" class="w-full gold-gradient font-bold py-1.5 rounded-xl hover:opacity-90 transition flex items-center justify-center gap-1.5 text-[10px] md:text-[11px] shadow-md" style="color:#0A0A0A;">
                                 <i class="fa-solid fa-arrow-up"></i> 경매 참여 하기
                             </button>
                             <!-- 즉시 구매 버튼 -->
-                            <button onclick="event.stopPropagation(); alert('즉시 구매 화면으로 이동합니다.')" class="w-full bg-white/10 text-white border border-white/20 font-bold py-1.5 rounded-xl hover:bg-white/20 transition flex items-center justify-center gap-1.5 text-[10px] md:text-[11px]">
-                                <i class="fa-solid fa-bolt"></i> 즉시 구매
+                            <button onclick="event.stopPropagation(); alert('즉시 구매 화면으로 이동합니다.')" class="w-full bg-white/5 text-white border border-[rgba(212,175,55,0.2)] font-bold py-1.5 rounded-xl hover:bg-[rgba(212,175,55,0.08)] transition flex items-center justify-center gap-1.5 text-[10px] md:text-[11px]">
+                                <i class="fa-solid fa-bolt" style="color:#D4AF37;"></i> 즉시 구매
                             </button>
                         </div>
                     </div>
@@ -811,37 +867,35 @@
         // 6. 타이머 업데이트 로직
         function updateTimers() {
             const now = new Date().getTime();
-            
+
             items.forEach((item) => {
                 let distance = item.endTime - now;
-                
-                // 시간이 다 되면 새로운 종료 시간 할당 (1일 ~ 3일 사이로 무한 리셋)
+
                 if (distance < 0) {
                     const newTimeToAdd = Math.floor(Math.random() * (3 * 24 * 60 * 60 * 1000)) + (24 * 60 * 60 * 1000);
                     item.endTime = now + newTimeToAdd;
                     distance = item.endTime - now;
-                    // 입찰수 1 추가 (자연스러운 갱신 연출)
-                    item.bids = item.bids < 20 ? item.bids + 1 : 1; 
+                    item.bids = item.bids < 20 ? item.bids + 1 : 1;
                 }
-                
+
                 const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                
+
                 const timerEl = document.getElementById(`timer-${item.renderIndex}`);
                 if (timerEl) {
-                    // 시간이 임박(1시간 미만)하면 붉은색 깜빡임 효과
                     if (days === 0 && hours === 0) {
                         timerEl.className = "text-red-400 font-bold text-sm timer-text flex items-center gap-1 justify-end animate-pulse";
                     } else {
-                        timerEl.className = "text-yellow-400 font-bold text-sm timer-text flex items-center gap-1 justify-end";
+                        timerEl.style.color = '#D4AF37';
+                        timerEl.className = "font-bold text-sm timer-text flex items-center gap-1 justify-end";
                     }
-                    
+
                     let timeStr = '';
                     if (days > 0) timeStr += `${days}일 `;
                     timeStr += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    
+
                     timerEl.innerHTML = `<i class="fa-regular fa-clock"></i> ${timeStr}`;
                 }
             });
@@ -852,14 +906,14 @@
             const maxKrwPriceInput = document.getElementById('priceFilter').value;
             const maxKrwPrice = maxKrwPriceInput === '' ? Infinity : parseInt(maxKrwPriceInput, 10);
             const auctionType = document.getElementById('typeFilter').value;
-            
+
             let visibleCount = 0;
             const cards = document.querySelectorAll('.auction-card');
-            
+
             cards.forEach(card => {
                 const cardPrice = parseInt(card.getAttribute('data-price'), 10);
                 const cardType = card.getAttribute('data-type');
-                
+
                 let showByPrice = cardPrice <= maxKrwPrice;
                 let showByType = (auctionType === 'all') || (auctionType === 'buy_it_now') || (auctionType === cardType);
 
@@ -874,23 +928,20 @@
                     card.style.display = 'none';
                 }
             });
-            
+
             document.getElementById('resultCount').innerText = visibleCount;
         }
 
         // 8. 초기화 및 이벤트 리스너
         document.addEventListener("DOMContentLoaded", () => {
             renderAuctions();
-            
-            // 타이머 시작 (1초마다 업데이트)
+
             updateTimers();
             setInterval(updateTimers, 1000);
-            
-            // 기본 필터 세팅
+
             document.getElementById('typeFilter').value = 'buy_it_now';
-            filterProducts(); 
-            
-            // 이벤트 연결
+            filterProducts();
+
             document.getElementById('priceFilter').addEventListener('input', filterProducts);
             document.getElementById('typeFilter').addEventListener('change', filterProducts);
         });
@@ -898,4 +949,3 @@
     </script>
 </body>
 </html>
-

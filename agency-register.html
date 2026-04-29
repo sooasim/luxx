@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
@@ -11,7 +11,7 @@
     </script>
     <title>대행사 등록 신청 | LUXX</title>
     <!-- LUXX 브랜드 파비콘 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23D4AF37'/><circle cx='50' cy='50' r='28' fill='none' stroke='%230A0A0A' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%230A0A0A' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%230A0A0A' stroke-width='4'/></svg>">
     <!-- 폰트 / 아이콘 / Tailwind -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,9 +25,10 @@
                     },
                     colors: {
                         brand: {
-                            blue: '#2f4b9f',
-                            dark: '#1e326b',
-                            accent: '#e6edf7'
+                            gold: '#D4AF37',
+                            'gold-light': '#F5D57B',
+                            'gold-dark': '#9B7A1C',
+                            black: '#0A0A0A'
                         }
                     }
                 }
@@ -35,49 +36,130 @@
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0A0A0A; }
+        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
+
+        body {
+            background: #0A0A0A;
+            background-image: radial-gradient(ellipse at top, rgba(212,175,55,0.06) 0%, #0A0A0A 60%);
+        }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.04);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(212,175,55,0.15);
         }
+
+        .glass-card-gold {
+            background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(15,15,15,0.95) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212,175,55,0.2);
+            border-top-color: rgba(245,213,123,0.35);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(212,175,55,0.04);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
+        }
+
+        .gold-text {
+            background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-gold {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(212,175,55,0.2);
+            color: white;
+            border-radius: 12px;
+            padding: 12px 16px;
+            width: 100%;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .input-gold:focus {
+            outline: none;
+            border-color: rgba(212,175,55,0.5);
+            background: rgba(212,175,55,0.05);
+            box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
+        }
+        .input-gold::placeholder { color: rgba(255,255,255,0.3); }
+
+        .label-gold {
+            display: block;
+            color: rgba(212,175,55,0.8);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            margin-bottom: 6px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
+            color: #0A0A0A;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .btn-gold:hover { opacity: 0.9; }
     </style>
 </head>
-<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
+<body class="text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
 
     <!-- 상단 네비게이션 (간단 버전) -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10">
+    <header class="fixed w-full top-0 z-50 glass-card border-b border-[rgba(212,175,55,0.15)]">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='index.html'">
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-500 flex items-center justify-center shadow-md shadow-purple-500/40 border border-white/20">
-                    <i class="fa-solid fa-globe text-white text-sm"></i>
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-md border border-[rgba(212,175,55,0.3)]" style="background:linear-gradient(135deg,rgba(212,175,55,0.15) 0%,rgba(15,15,15,0.9) 100%);">
+                    <i class="fa-solid fa-crown text-[#D4AF37] text-sm"></i>
                 </div>
                 <div class="flex flex-col justify-center">
-                    <span class="text-lg font-extrabold tracking-tight leading-none">LUXX</span>
+                    <span class="text-lg font-extrabold tracking-tight leading-none gold-text">LUXX</span>
                     <span class="text-[9px] text-white/70 font-semibold tracking-[0.16em] uppercase leading-none mt-0.5">Agency Registration</span>
                 </div>
             </div>
+            <span class="text-[10px] font-bold px-3 py-1 rounded-full border" style="background:rgba(212,175,55,0.1);color:#D4AF37;border-color:rgba(212,175,55,0.3);">
+                <i class="fa-solid fa-building mr-1"></i>파트너 등록
+            </span>
         </div>
     </header>
 
     <!-- 메인 영역 -->
     <main class="flex-grow pt-24 pb-16 px-4">
         <div class="max-w-3xl mx-auto">
-            <div class="glass-card rounded-[2rem] border border-white/20 shadow-2xl p-8 md:p-10">
-                <div class="mb-8">
-                    <h1 class="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
-                        <i class="fa-solid fa-building-circle-check text-brand-accent text-xl"></i>
-                        대행사 등록 신청
-                    </h1>
-                    <p class="text-sm md:text-[15px] text-white/70 leading-relaxed">
+            <div class="glass-card-gold rounded-3xl p-8 md:p-10 shadow-2xl">
+
+                <!-- 헤더 섹션 -->
+                <div class="mb-8 pb-6 border-b border-[rgba(212,175,55,0.15)]">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.25);">
+                            <i class="fa-solid fa-building-circle-check text-[#D4AF37] text-lg"></i>
+                        </div>
+                        <h1 class="text-2xl md:text-3xl font-bold">
+                            <span class="gold-text">대행사</span> 등록 신청
+                        </h1>
+                    </div>
+                    <p class="text-sm md:text-[15px] text-white/60 leading-relaxed">
                         아래 정보를 정확히 입력해 주시면 LUXX 본사 어드민에서 검토 후, 별도의 안내 메일 또는 연락을 드립니다.
                         이 페이지 링크를 파트너 후보에게 전달하여 온라인으로 신청을 받으실 수 있습니다.
                     </p>
+                    <!-- 서브도메인 URL 예시 -->
+                    <div class="mt-4 flex items-center gap-2 text-sm">
+                        <span class="text-white/50 text-xs">파트너 URL 예시:</span>
+                        <code class="font-mono bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded border border-[rgba(212,175,55,0.2)] text-xs">https://partner.luxxbid.com/agency</code>
+                    </div>
                 </div>
 
                 <!-- 신청 폼 -->
@@ -89,26 +171,22 @@
                 >
                     <!-- 업체명 -->
                     <div>
-                        <label for="company_name" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                            업체명
-                        </label>
+                        <label for="company_name" class="label-gold">업체명</label>
                         <input
                             id="company_name"
                             name="업체명"
                             type="text"
                             required
                             placeholder="예: 럭스빗 경매대행"
-                            class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                            class="input-gold"
                         />
                     </div>
 
                     <!-- 도메인(영문) -->
                     <div>
-                        <label for="domain" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                            도메인 (영문)
-                        </label>
+                        <label for="domain" class="label-gold">도메인 (영문)</label>
                         <div class="flex items-stretch gap-2">
-                            <span class="px-3 py-3 rounded-xl bg-black/30 border border-white/20 text-xs md:text-sm text-white/70 flex items-center">
+                            <span class="px-3 py-3 rounded-xl text-xs md:text-sm text-[rgba(212,175,55,0.7)] flex items-center border" style="background:rgba(212,175,55,0.05);border-color:rgba(212,175,55,0.2);">
                                 https://
                             </span>
                             <input
@@ -117,25 +195,24 @@
                                 type="text"
                                 required
                                 placeholder="예: example-auction.com"
-                                class="flex-1 bg-black/20 border border-white/20 rounded-xl py-3 px-3 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                                class="input-gold flex-1"
+                                style="width:auto;"
                             />
                         </div>
                     </div>
 
                     <!-- 전화번호 -->
                     <div>
-                        <label for="phone" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                            전화번호
-                        </label>
+                        <label for="phone" class="label-gold">전화번호</label>
                         <input
                             id="phone"
                             name="전화번호"
                             type="text"
                             required
                             placeholder="예: 02-123-4567 또는 010-1234-5678"
-                            class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                            class="input-gold"
                         />
-                        <p class="mt-1 text-[11px] text-white/55">
+                        <p class="mt-1 text-[11px] text-white/40">
                             숫자만 입력해도 자동으로 하이픈(-)이 추가됩니다.
                         </p>
                     </div>
@@ -143,31 +220,27 @@
                     <!-- 은행명 / 계좌번호 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="bank_name" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                                은행명
-                            </label>
+                            <label for="bank_name" class="label-gold">은행명</label>
                             <input
                                 id="bank_name"
                                 name="은행명"
                                 type="text"
                                 required
                                 placeholder="예: 카카오뱅크"
-                                class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                                class="input-gold"
                             />
                         </div>
                         <div>
-                            <label for="account_number" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                                계좌번호
-                            </label>
+                            <label for="account_number" class="label-gold">계좌번호</label>
                             <input
                                 id="account_number"
                                 name="계좌번호"
                                 type="text"
                                 required
                                 placeholder="예: 3333-12-3456789"
-                                class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                                class="input-gold"
                             />
-                            <p class="mt-1 text-[11px] text-white/55">
+                            <p class="mt-1 text-[11px] text-white/40">
                                 숫자만 입력해도 은행 계좌 형식으로 자동으로 하이픈(-)이 들어갑니다.
                             </p>
                         </div>
@@ -175,69 +248,93 @@
 
                     <!-- 이메일 또는 구글 시트 -->
                     <div>
-                        <label for="email_or_sheet" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                            이메일 또는 구글 시트
-                        </label>
+                        <label for="email_or_sheet" class="label-gold">이메일 또는 구글 시트</label>
                         <input
                             id="email_or_sheet"
                             name="이메일_또는_구글시트"
                             type="text"
                             required
                             placeholder="예: partner@example.com 또는 Google Sheet 공유 링크"
-                            class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                            class="input-gold"
                         />
-                        <p class="mt-1 text-[11px] text-white/60">
+                        <p class="mt-1 text-[11px] text-white/40">
                             정산 및 거래 보고를 받을 이메일 주소 또는 본사의 정산용 Google Sheet 공유 링크를 입력해 주세요.
                         </p>
                     </div>
 
                     <!-- 로그인 아이디 -->
                     <div>
-                        <label for="agency_login_id" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                            로그인 아이디
-                        </label>
+                        <label for="agency_login_id" class="label-gold">로그인 아이디</label>
                         <input
                             id="agency_login_id"
                             name="대행사아이디"
                             type="text"
                             required
                             placeholder="예: agency001"
-                            class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                            class="input-gold"
                         />
                     </div>
 
                     <!-- 로그인 비밀번호 (가시형) -->
                     <div>
-                        <label for="agency_login_pw" class="block text-xs font-semibold text-white/70 mb-1 uppercase tracking-[0.16em]">
-                            로그인 비밀번호
-                        </label>
+                        <label for="agency_login_pw" class="label-gold">로그인 비밀번호</label>
                         <input
                             id="agency_login_pw"
                             name="대행사비밀번호"
                             type="text"
                             required
                             placeholder="영문/숫자 조합 8자 이상"
-                            class="w-full bg-black/20 border border-white/20 rounded-xl py-3 px-4 text-sm md:text-base text-white placeholder-white/40 focus:outline-none focus:border-brand-accent focus:bg-white/5 transition"
+                            class="input-gold"
                         />
-                        <p class="mt-1 text-[11px] text-white/55">
+                        <p class="mt-1 text-[11px] text-white/40">
                             신청 단계에서는 비밀번호가 보이도록 설정되어 있습니다. 실제 운영 시에는 사내 절차에 맞게 변경해 주세요.
                         </p>
                     </div>
 
+                    <!-- 약관 동의 -->
+                    <div class="flex items-start gap-3 pt-1">
+                        <input type="checkbox" id="agree_terms" required class="mt-0.5 w-4 h-4 rounded cursor-pointer" style="accent-color:#D4AF37;" />
+                        <label for="agree_terms" class="text-xs text-white/60 leading-relaxed cursor-pointer">
+                            <a href="#" class="text-[#D4AF37] hover:opacity-80 transition">이용약관</a> 및
+                            <a href="#" class="text-[#D4AF37] hover:opacity-80 transition">개인정보 처리방침</a>에 동의합니다.
+                            LUXX 파트너 등록 신청서를 제출하며 본사의 심사를 받는 것에 동의합니다.
+                        </label>
+                    </div>
+
                     <!-- 신청하기 버튼 -->
                     <div class="pt-4">
-                        <button
-                            type="submit"
-                            class="w-full bg-brand-accent text-brand-blue font-bold text-base md:text-lg py-3.5 md:py-4 rounded-xl hover:bg-white transition shadow-[0_0_18px_rgba(230,237,247,0.35)] flex items-center justify-center gap-2"
-                        >
+                        <button type="submit" class="btn-gold flex items-center justify-center gap-2 text-base md:text-lg py-4">
                             <i class="fa-solid fa-paper-plane"></i>
                             신청하기
                         </button>
-                        <p class="mt-3 text-[11px] text-white/55 text-center leading-relaxed">
+                        <p class="mt-3 text-[11px] text-white/40 text-center leading-relaxed">
                             버튼을 누르시면 현재 입력하신 내용이 LUXX 본사 어드민 시스템으로 전송됩니다.
                         </p>
                     </div>
                 </form>
+
+                <!-- 특장점 리스트 -->
+                <div class="mt-8 pt-6 border-t border-[rgba(212,175,55,0.15)]">
+                    <p class="label-gold mb-4">LUXX 파트너 혜택</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-sm text-white/70">
+                            <i class="fa-solid fa-check mt-0.5 flex-shrink-0" style="color:#D4AF37;"></i>
+                            글로벌 경매 플랫폼 자동 연동 및 상품 노출
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-white/70">
+                            <i class="fa-solid fa-check mt-0.5 flex-shrink-0" style="color:#D4AF37;"></i>
+                            전담 어드민 페이지 및 실시간 정산 대시보드 제공
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-white/70">
+                            <i class="fa-solid fa-check mt-0.5 flex-shrink-0" style="color:#D4AF37;"></i>
+                            LUXX 브랜드 인증 마크 부여 및 마케팅 지원
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-white/70">
+                            <i class="fa-solid fa-check mt-0.5 flex-shrink-0" style="color:#D4AF37;"></i>
+                            전문 감정사 네트워크 우선 연결 서비스
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </main>
@@ -259,7 +356,6 @@
 
       function formatAccount(value) {
         var digits = value.replace(/[^0-9]/g, '');
-        // 3-2-4-? 형태로 대략적인 계좌번호 포맷팅
         if (digits.length <= 3) return digits;
         if (digits.length <= 5) return digits.slice(0,3) + '-' + digits.slice(3);
         if (digits.length <= 9) return digits.slice(0,3) + '-' + digits.slice(3,5) + '-' + digits.slice(5);
@@ -271,14 +367,12 @@
         var account = document.getElementById('account_number');
         if (phone) {
           phone.addEventListener('input', function () {
-            var pos = this.selectionStart;
             this.value = formatPhone(this.value);
             this.selectionEnd = this.selectionStart = this.value.length;
           });
         }
         if (account) {
           account.addEventListener('input', function () {
-            var pos = this.selectionStart;
             this.value = formatAccount(this.value);
             this.selectionEnd = this.selectionStart = this.value.length;
           });
@@ -295,4 +389,3 @@
 
 </body>
 </html>
-

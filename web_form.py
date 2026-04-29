@@ -1316,7 +1316,7 @@ def _screenshot_card_html(html_text: str, out_path: Path) -> None:
                     mask = Image.new("L", (w, h), 0)
                     mdraw = ImageDraw.Draw(mask)
                     mdraw.rounded_rectangle((0, 0, w - 1, h - 1), radius=32, fill=255)
-                    bg = Image.new("RGBA", (w, h), (3, 11, 24, 255))
+                    bg = Image.new("RGBA", (w, h), (8, 7, 3, 255))  # Black & Gold 배경
                     rounded = Image.composite(im, bg, mask)
                     rounded.save(out_path, format="PNG")
             except Exception:
@@ -1388,9 +1388,10 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
 
     def _draw_gradient_bg(img):
         draw = ImageDraw.Draw(img)
-        c1 = (8, 15, 35)
-        c2 = (26, 54, 112)
-        c3 = (19, 35, 74)
+        # Black & Gold 그라디언트 배경
+        c1 = (8, 7, 3)    # 거의 검정, 골드 힌트
+        c2 = (18, 15, 5)  # 아주 살짝 골드 틴트
+        c3 = (10, 9, 3)   # 다시 검정으로
         for y in range(height):
             ratio = y / max(height - 1, 1)
             if ratio < 0.55:
@@ -1404,8 +1405,8 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
                 g = int(c2[1] * (1 - t) + c3[1] * t)
                 b = int(c2[2] * (1 - t) + c3[2] * t)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
-        # subtle glow circle
-        draw.ellipse((width - 250, -120, width + 150, 280), fill=(80, 132, 255, 48), outline=None)
+        # subtle gold glow circle (상단 우측)
+        draw.ellipse((width - 250, -120, width + 150, 280), fill=(212, 175, 55, 18), outline=None)
 
     def _pill(draw, xy, text, fill, border, text_fill):
         x1, y1, x2, y2 = xy
@@ -1428,67 +1429,87 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
         out.append(cur)
         return out[:3]
 
+    # ── Black & Gold 팔레트 상수 ──────────────────────────────────────────
+    GOLD        = (212, 175, 55)
+    GOLD_LIGHT  = (245, 213, 123)
+    GOLD_DARK   = (155, 122, 28)
+    GOLD_MUTED  = (140, 118, 55)
+    GOLD_DIM    = (100, 82, 22)
+    WHITE       = (255, 255, 255)
+    WHITE_80    = (204, 204, 204)
+    WHITE_50    = (128, 128, 128)
+    BLACK_PANEL = (12, 10, 4)
+    GOLD_GLOW20 = (212, 175, 55, 20)
+    GOLD_GLOW40 = (212, 175, 55, 40)
+
     def _draw_card(title: str, is_cert: bool, out_name: str) -> str:
-        img = Image.new("RGB", (width, height), color=(12, 24, 54))
+        img = Image.new("RGB", (width, height), color=(8, 7, 3))
         _draw_gradient_bg(img)
         draw = ImageDraw.Draw(img)
 
-        # glow effects (HTML glass-card 느낌의 블루/시안 발광)
-        draw.ellipse((-160, 250, 220, 620), fill=(34, 211, 238, 44))
-        draw.ellipse((640, -180, 1010, 210), fill=(59, 130, 246, 68))
+        # ── 골드 글로우 효과 ────────────────────────────────────────────────
+        draw.ellipse((-160, 250, 220, 620), fill=(212, 175, 55, 18))
+        draw.ellipse((640, -180, 1010, 210), fill=(212, 175, 55, 28))
 
-        # outer shell
-        draw.rounded_rectangle((14, 14, width - 14, height - 14), radius=26, outline=(175, 205, 255), width=2, fill=(10, 20, 44, 220))
-        draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=22, outline=(69, 102, 172), width=1)
+        # ── 카드 외곽 프레임 (골드 테두리) ──────────────────────────────────
+        draw.rounded_rectangle((14, 14, width - 14, height - 14), radius=26,
+                               outline=(212, 175, 55), width=2, fill=(10, 8, 3, 230))
+        draw.rounded_rectangle((24, 24, width - 24, height - 24), radius=22,
+                               outline=(100, 82, 22), width=1)
 
-        # watermark (HTML 샘플처럼 중앙에 크게)
-        draw.text((158, 146), "LUXX VAULT", fill=(59, 130, 246, 20), font=_font(104, bold=True))
+        # ── 골드 워터마크 ────────────────────────────────────────────────────
+        draw.text((158, 146), "LUXX VAULT", fill=(212, 175, 55, 12), font=_font(104, bold=True))
 
-        # header icon + barcode block
-        draw.rounded_rectangle((40, 32, 82, 74), radius=8, fill=(255, 255, 255, 16), outline=(220, 235, 255, 80), width=1)
-        draw.ellipse((53, 44, 69, 60), outline=(147, 197, 253), width=1)
+        # ── 헤더 아이콘 박스 + 바코드 ────────────────────────────────────────
+        draw.rounded_rectangle((40, 32, 82, 74), radius=8,
+                               fill=(212, 175, 55, 18), outline=(212, 175, 55, 80), width=1)
+        draw.ellipse((53, 44, 69, 60), outline=(212, 175, 55), width=1)
         for bx in range(758, 840, 4):
             bw = 1 if bx % 8 == 0 else 2
-            draw.line((bx, 40, bx, 74), fill=(220, 235, 255, 120), width=bw)
-        draw.text((742, 78), f"VAULT-{storage_no}", fill=(172, 196, 238), font=_font(10))
+            draw.line((bx, 40, bx, 74), fill=(212, 175, 55, 90), width=bw)
+        draw.text((742, 78), f"VAULT-{storage_no}", fill=GOLD_MUTED, font=_font(10))
 
-        draw.text((40, 34), "LUXX GLOBAL AUCTION", fill=(196, 218, 255), font=_font(18, bold=True))
-        draw.text((40, 58), "Luxury Auction Exchange", fill=(149, 178, 229), font=_font(13))
-        _pill(draw, (40, 84, 205, 116), "LIVE | 실시간 경매", (31, 94, 214), (130, 174, 255), (238, 245, 255))
-        _pill(draw, (214, 84, 395, 116), "CERTIFIED | LUXX 인증", (7, 89, 144), (80, 200, 246), (219, 255, 237))
+        # ── 헤더 텍스트 ──────────────────────────────────────────────────────
+        draw.text((40, 34), "LUXX GLOBAL AUCTION", fill=GOLD, font=_font(18, bold=True))
+        draw.text((40, 58), "Luxury Auction Exchange", fill=GOLD_MUTED, font=_font(13))
+        _pill(draw, (40, 84, 205, 116), "LIVE | 실시간 경매",
+              (40, 32, 10), (212, 175, 55), (212, 175, 55))
+        _pill(draw, (214, 84, 395, 116), "CERTIFIED | LUXX 인증",
+              (35, 28, 8), (180, 145, 45), (245, 213, 123))
 
-        # 타이틀 라인은 카드 종류별 고정 (HTML 컨셉과 동일)
+        # ── 타이틀 라인 ──────────────────────────────────────────────────────
         title_line = "경매 상품 보관증 | Storage Certificate" if is_cert else "구매 상품 | Purchase Item"
-        draw.text((40, 140), title_line, fill=(240, 247, 255), font=_font(31, bold=True))
+        draw.text((40, 140), title_line, fill=WHITE, font=_font(31, bold=True))
 
-        # 상품명을 2줄 스타일로
+        # ── 상품명 2줄 ───────────────────────────────────────────────────────
         name_parts = product_name.split(" ", 1)
         line1 = name_parts[0] if name_parts else product_name
         line2 = name_parts[1] if len(name_parts) > 1 else ""
-        draw.text((40, 182), line1, fill=(230, 239, 255), font=_font(39, bold=True))
+        draw.text((40, 182), line1, fill=WHITE, font=_font(39, bold=True))
         if line2:
-            draw.text((40, 223), line2, fill=(198, 220, 255), font=_font(28, bold=True))
+            draw.text((40, 223), line2, fill=WHITE_80, font=_font(28, bold=True))
             info_y = 258
         else:
             info_y = 234
-        draw.text((40, info_y), "Global Auction Linked Product Information", fill=(149, 178, 229), font=_font(14))
+        draw.text((40, info_y), "Global Auction Linked Product Information",
+                  fill=GOLD_MUTED, font=_font(14))
 
         detail_lines = _wrap_text(draw, detail, _font(15), 520)
         dy = info_y + 28
         for ln in detail_lines:
-            draw.text((40, dy), ln, fill=(177, 199, 236), font=_font(16))
+            draw.text((40, dy), ln, fill=WHITE_80, font=_font(16))
             dy += 24
 
-        # right data panel (HTML 스냅샷 박스 구조와 유사)
+        # ── 우측 데이터 패널 ──────────────────────────────────────────────────
         panel = (558, 130, 864, 392)
-        draw.rounded_rectangle(panel, radius=20, fill=(8, 22, 54), outline=(89, 139, 230), width=1)
-        draw.ellipse((790, 130, 900, 240), fill=(34, 211, 238, 24))
-        draw.text((578, 148), "Auction Snapshot | 경매 요약", fill=(171, 201, 255), font=_font(16, bold=True))
+        draw.rounded_rectangle(panel, radius=20, fill=BLACK_PANEL, outline=(100, 82, 22), width=1)
+        draw.ellipse((790, 130, 900, 240), fill=(212, 175, 55, 15))
+        draw.text((578, 148), "Auction Snapshot | 경매 요약", fill=GOLD, font=_font(16, bold=True))
 
         row_y = 182
         row_step = 32
-        label_color = (152, 184, 242)
-        value_color = (238, 245, 255)
+        label_color = GOLD_MUTED
+        value_color = WHITE
         draw.text((578, row_y), "경매장 / Auction House", fill=label_color, font=_font(14))
         draw.text((742, row_y), site_name, fill=value_color, font=_font(14, bold=True)); row_y += row_step
         draw.text((578, row_y), "낙찰금액 / Hammer Price", fill=label_color, font=_font(14))
@@ -1496,28 +1517,30 @@ def _render_product_card_images(asset: dict) -> tuple[str, str]:
         draw.text((578, row_y), "세션ID / Session ID", fill=label_color, font=_font(14))
         draw.text((742, row_y), sid, fill=value_color, font=_font(14, bold=True)); row_y += row_step
         draw.text((578, row_y), "경매 링크 / Auction URL", fill=label_color, font=_font(14)); row_y += 20
-        draw.text((578, row_y), site_url, fill=(168, 193, 235), font=_font(12)); row_y += 30
+        draw.text((578, row_y), site_url, fill=GOLD_DIM, font=_font(12)); row_y += 30
 
         if is_cert:
             draw.text((578, row_y), "보관번호 / Vault No.", fill=label_color, font=_font(14))
             draw.text((742, row_y), storage_no, fill=value_color, font=_font(14, bold=True)); row_y += 30
-            # vault code 강조 줄
-            draw.rounded_rectangle((572, row_y - 2, 850, row_y + 26), radius=6, fill=(7, 89, 144), outline=(34, 211, 238), width=1)
-            draw.text((580, row_y + 2), "보관코드 / Vault Code", fill=(160, 240, 255), font=_font(13, bold=True))
-            draw.text((736, row_y + 1), storage_code, fill=(68, 247, 255), font=_font(18, bold=True)); row_y += 36
-            draw.text((578, row_y), "보관기간 / Storage Period", fill=(114, 241, 255), font=_font(14))
-            draw.text((742, row_y), f"~ {until}", fill=(114, 241, 255), font=_font(14, bold=True))
+            # ── Vault Code 골드 강조 ─────────────────────────────────────────
+            draw.rounded_rectangle((572, row_y - 2, 850, row_y + 26), radius=6,
+                                   fill=(40, 32, 10), outline=(212, 175, 55), width=1)
+            draw.text((580, row_y + 2), "보관코드 / Vault Code", fill=GOLD, font=_font(13, bold=True))
+            draw.text((736, row_y + 1), storage_code, fill=GOLD_LIGHT, font=_font(18, bold=True)); row_y += 36
+            draw.text((578, row_y), "보관기간 / Storage Period", fill=GOLD, font=_font(14))
+            draw.text((742, row_y), f"~ {until}", fill=GOLD, font=_font(14, bold=True))
         else:
-            draw.text((578, row_y), "상태 / Status", fill=(178, 235, 206), font=_font(14))
-            draw.text((742, row_y), "결제 요청 준비 완료", fill=(178, 235, 206), font=_font(14, bold=True)); row_y += 30
-            draw.text((578, row_y), "일관성 / Consistency", fill=(178, 235, 206), font=_font(14))
-            draw.text((742, row_y), "DB 고정 상품", fill=(178, 235, 206), font=_font(14, bold=True)); row_y += 30
-            draw.text((578, row_y), "세션키 / Session Key", fill=(178, 235, 206), font=_font(14))
-            draw.text((742, row_y), "동일 키 사용", fill=(178, 235, 206), font=_font(14, bold=True))
+            draw.text((578, row_y), "상태 / Status", fill=label_color, font=_font(14))
+            draw.text((742, row_y), "결제 요청 준비 완료", fill=WHITE_80, font=_font(14, bold=True)); row_y += 30
+            draw.text((578, row_y), "일관성 / Consistency", fill=label_color, font=_font(14))
+            draw.text((742, row_y), "DB 고정 상품", fill=WHITE_80, font=_font(14, bold=True)); row_y += 30
+            draw.text((578, row_y), "세션키 / Session Key", fill=label_color, font=_font(14))
+            draw.text((742, row_y), "동일 키 사용", fill=WHITE_80, font=_font(14, bold=True))
 
-        draw.line((36, 390, 864, 390), fill=(255, 255, 255, 32), width=1)
-        draw.text((40, 400), "luxxbid.com/auction", fill=(146, 174, 221), font=_font(15))
-        draw.text((666, 400), datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), fill=(146, 174, 221), font=_font(14))
+        # ── 푸터 구분선 + 텍스트 ─────────────────────────────────────────────
+        draw.line((36, 390, 864, 390), fill=(212, 175, 55, 50), width=1)
+        draw.text((40, 400), "luxxbid.com/auction", fill=GOLD_MUTED, font=_font(15))
+        draw.text((666, 400), datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"), fill=GOLD_MUTED, font=_font(14))
 
         out_path = DOWNLOADS_DIR / out_name
         img.save(out_path, format="PNG")
