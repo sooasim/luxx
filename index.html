@@ -1,1213 +1,999 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" translate="no">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
-    <meta name="google" content="notranslate">
-    <script>
-        // Force desktop viewport on mobile devices
-        if (screen.width < 1280) {
-            document.getElementById('viewport-meta').setAttribute('content', 'width=1280');
-        }
-    </script>
-    <title>해외 중고 명품 경매 대행 사이트 | LUXX 글로벌 옥션</title>
-    <meta name="description"
-        content="해외 중고 명품 경매 대행 사이트 LUXX. 일본 야후옥션, 미국 이베이, 유럽 명품 경매에서 샤넬, 에르메스, 루이비통, 롤렉스 등 중고·빈티지 명품을 안전하게 입찰·구매 대행하는 글로벌 럭셔리 옥션 플랫폼입니다.">
-    <meta name="keywords"
-        content="해외 중고 명품,해외 명품 경매 대행,중고 명품 경매 사이트,일본 야후옥션 명품,미국 이베이 명품,유럽 명품 경매,샤넬 중고 가방,에르메스 버킨 중고,루이비통 네버풀 중고,롤렉스 서브마리너 경매,명품 시계 입찰 대행,해외 명품 구매 대행,해외 빈티지 명품,명품 위탁 판매,글로벌 럭셔리 옥션,LUXX 옥션">
-    <!-- LUXX 브랜드 파비콘 (블랙 배경의 왕관) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230A0A0A'/><text y='.9em' font-size='80' x='50%' dominant-baseline='middle' text-anchor='middle'>👑</text></svg>">
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;900&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Cormorant Garamond', 'Inter', 'serif'],
-                    },
-                    colors: {
-                        brand: {
-                            gold: '#D4AF37',
-                            'gold-light': '#F5D57B',
-                            'gold-dark': '#9B7A1C',
-                            black: '#0A0A0A',
-                            dark: '#111111',
-                        }
-                    },
-                    animation: {
-                        'marquee': 'marquee 40s linear infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'float-delayed': 'float 6s ease-in-out 3s infinite',
-                        'shimmer': 'shimmer 2s linear infinite',
-                    },
-                    keyframes: {
-                        marquee: {
-                            '0%': { transform: 'translateX(0%)' },
-                            '100%': { transform: 'translateX(-100%)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        },
-                        shimmer: {
-                            '0%': { backgroundPosition: '200% center' },
-                            '100%': { backgroundPosition: '-200% center' },
-                        },
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0A0A0A; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #F5D57B; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
+  <meta name="google" content="notranslate">
+  <script>if(screen.width<1280){document.getElementById('viewport-meta').setAttribute('content','width=1280');}</script>
+  <title>LUXX Global Auction — World's Finest Luxury Bidding Platform</title>
+  <meta name="description" content="LUXX: 세계 최고 명품 경매 대행 플랫폼. 에르메스, 롤렉스, 샤넬, 파텍필립 등 글로벌 럭셔리 경매 입찰 대행.">
 
-        .gold-gradient { background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%); }
-        .gold-text { background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200% auto; animation: shimmer 3s linear infinite; }
-        .glass-card { background: rgba(255,255,255,0.04); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(212,175,55,0.15); }
-        .glass-card-gold { background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(155,122,28,0.05) 100%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(212,175,55,0.25); box-shadow: 0 0 30px rgba(212,175,55,0.05); }
-        .gold-border { border: 1px solid rgba(212,175,55,0.3); }
-        .gold-divider { border-color: rgba(212,175,55,0.2); }
-        /* 혹시 다른 페이지에서 사용하던 결제 결과 오버레이 DOM 이 남아 있어도
-           메인 랜딩 페이지에서는 항상 숨긴다. */
-        #result-modal,
-        .result-backdrop {
-            display: none !important;
+  <!-- Favicon: 골드 다이아몬드 SVG -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230A0A0A'/><polygon points='50,12 88,38 75,88 25,88 12,38' fill='none' stroke='%23D4AF37' stroke-width='4'/><polygon points='50,12 30,38 50,52 70,38' fill='%23D4AF37' opacity='.9'/><polygon points='30,38 25,88 50,52' fill='%23F5D57B' opacity='.7'/><polygon points='70,38 75,88 50,52' fill='%23C9A22A' opacity='.7'/><polygon points='25,88 75,88 50,52' fill='%23E8C84A' opacity='.8'/></svg>">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: {
+          serif: ['"Cormorant Garamond"', '"DM Serif Display"', 'Georgia', 'serif'],
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+        },
+        colors: {
+          gold: { DEFAULT:'#D4AF37', light:'#F5D57B', dark:'#9B7A1C', muted:'rgba(212,175,55,0.6)', dim:'rgba(212,175,55,0.2)' },
+          ink: { DEFAULT:'#0A0A0A', 2:'#111111', 3:'#1A1A1A', 4:'#242424' },
+        },
+        animation: {
+          marquee:'marquee 50s linear infinite',
+          'fade-up':'fadeUp .6s ease both',
+          shimmer:'shimmer 3s linear infinite',
+          pulse2:'pulse2 2s ease-in-out infinite',
+          float:'float 7s ease-in-out infinite',
+          'float2':'float 7s ease-in-out 3.5s infinite',
+        },
+        keyframes: {
+          marquee:{'0%':{transform:'translateX(0%)'},'100%':{transform:'translateX(-50%)'}},
+          fadeUp:{'0%':{opacity:'0',transform:'translateY(24px)'},'100%':{opacity:'1',transform:'translateY(0)'}},
+          shimmer:{'0%':{backgroundPosition:'200% center'},'100%':{backgroundPosition:'-200% center'}},
+          pulse2:{'0%,100%':{opacity:'1'},'50%':{opacity:'.5'}},
+          float:{'0%,100%':{transform:'translateY(0)'},'50%':{transform:'translateY(-16px)'}},
         }
-    </style>
+      }}
+    }
+  </script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    ::-webkit-scrollbar{width:5px;}
+    ::-webkit-scrollbar-track{background:#0A0A0A;}
+    ::-webkit-scrollbar-thumb{background:linear-gradient(#9B7A1C,#D4AF37);border-radius:3px;}
+
+    /* ── Gold utilities ─────────────────────────────────── */
+    .gtext{background:linear-gradient(135deg,#C9A22A,#F5D57B 45%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% auto;animation:shimmer 3s linear infinite;}
+    .gbg{background:linear-gradient(135deg,#9B7A1C 0%,#D4AF37 30%,#F5D57B 50%,#D4AF37 70%,#9B7A1C 100%);}
+    .gborder{border:1px solid rgba(212,175,55,.25);}
+    .gborder-t{border-top:1px solid rgba(212,175,55,.25);}
+    .gborder-b{border-bottom:1px solid rgba(212,175,55,.15);}
+
+    /* ── Glass cards ────────────────────────────────────── */
+    .glass{background:rgba(255,255,255,.04);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(212,175,55,.12);}
+    .glass-gold{background:linear-gradient(135deg,rgba(212,175,55,.07),rgba(0,0,0,.85));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(212,175,55,.22);border-top-color:rgba(245,213,123,.35);box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 0 rgba(212,175,55,.0);}
+    .glass-gold:hover{box-shadow:0 16px 60px rgba(0,0,0,.7),0 0 30px rgba(212,175,55,.06);}
+
+    /* ── Lot card image overlay ─────────────────────────── */
+    .lot-img{transition:transform .5s ease;}
+    .lot-card:hover .lot-img{transform:scale(1.06);}
+
+    /* ── Gold divider line ──────────────────────────────── */
+    .gdivider{height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent);}
+
+    /* ── Animated border glow on hover ─────────────────── */
+    .hover-glow:hover{box-shadow:0 0 0 1px rgba(212,175,55,.4),0 8px 40px rgba(212,175,55,.06);}
+
+    /* ── Section fade-in on scroll ─────────────────────── */
+    .reveal{opacity:0;transform:translateY(32px);transition:opacity .7s ease,transform .7s ease;}
+    .reveal.in{opacity:1;transform:none;}
+
+    /* ── Counter ────────────────────────────────────────── */
+    .counter{font-variant-numeric:tabular-nums;}
+
+    /* ── Hide result modal on index ─────────────────────── */
+    #result-modal,.result-backdrop{display:none!important;}
+
+    /* ── Custom badge pulse ─────────────────────────────── */
+    .live-dot{width:7px;height:7px;border-radius:50%;background:#D4AF37;animation:pulse2 1.6s ease-in-out infinite;}
+
+    /* ── Horizontal rule fancy ──────────────────────────── */
+    .fancy-hr{display:flex;align-items:center;gap:16px;}
+    .fancy-hr::before,.fancy-hr::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.3));}
+    .fancy-hr::after{background:linear-gradient(90deg,rgba(212,175,55,.3),transparent);}
+  </style>
 </head>
+<body class="bg-ink text-white font-sans overflow-x-hidden antialiased">
 
-<body class="bg-[#0A0A0A] text-white font-sans overflow-x-hidden antialiased">
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════════════════ -->
+<header class="fixed w-full top-0 z-50 glass gborder-b" style="background:rgba(8,7,3,.85);backdrop-filter:blur(20px);">
+  <div class="max-w-[1400px] mx-auto px-8 h-[72px] flex items-center justify-between">
 
-    <!-- Fixed Top Navigation Bar -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b border-[rgba(212,175,55,0.15)]">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <!-- Logo Area (클릭 시 첫 페이지로 이동) -->
-            <a href="/" class="flex items-center gap-3 hover:opacity-90 transition">
-                <div class="flex items-center justify-center">
-                    <i class="fa-solid fa-crown text-[#D4AF37] text-3xl drop-shadow-md"></i>
-                </div>
-                <div class="flex flex-col justify-center">
-                    <div class="flex items-end gap-2 mb-1">
-                        <span class="text-3xl font-black tracking-tighter leading-none gold-text">LUXX</span>
-                        <span
-                            class="text-[10px] font-mono bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-0.5 rounded border border-[rgba(212,175,55,0.3)] tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
-                    </div>
-                    <span
-                        class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Luxury Auction Exchange</span>
-                </div>
-            </a>
-
-            <!-- Central Menu -->
-            <nav class="hidden md:flex bg-[rgba(212,175,55,0.05)] rounded-full p-1 border border-[rgba(212,175,55,0.15)] text-sm font-medium">
-                <a href="/" class="px-5 py-2 rounded-full bg-[rgba(212,175,55,0.15)] text-[#D4AF37] transition">HOME</a>
-                <a href="/auction.html" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition">GLOBAL
-                    AUCTION</a>
-                <a href="/"
-                    class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition flex items-center gap-1">
-                    <i class="fa-solid fa-lock text-xs"></i> LUXX VAULT
-                </a>
-                <a id="auth-nav-link" href="login.html" class="px-5 py-2 rounded-full hover:bg-[rgba(212,175,55,0.1)] text-white/80 transition">MY
-                    LUXX</a>
-            </nav>
-
-            <!-- Right Action Buttons -->
-            <div class="flex items-center gap-4 text-sm font-semibold">
-                <!-- Language Selector (10 Countries) -->
-                <div class="relative group hidden sm:block">
-                    <button
-                        class="flex items-center gap-1 cursor-pointer text-white/80 hover:text-[#D4AF37] py-2 uppercase transition">
-                        EN <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                    </button>
-                    <!-- Dropdown Menu -->
-                    <div
-                        class="absolute right-0 top-full mt-1 w-32 bg-[#111111]/95 backdrop-blur-md border border-[rgba(212,175,55,0.2)] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                        <ul class="py-2 text-white/80">
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇺🇸
-                                    English</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇰🇷
-                                    한국어</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇯🇵
-                                    日本語</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇨🇳
-                                    中文</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇫🇷
-                                    Français</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇩🇪
-                                    Deutsch</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇪🇸
-                                    Español</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇮🇹
-                                    Italiano</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇦🇪
-                                    العربية</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition">🇷🇺
-                                    Русский</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Login / Logout (로그인 시 로그아웃으로 전환) -->
-                <button id="auth-btn" onclick="window.location.href='login.html'"
-                    class="flex items-center gap-2 gold-gradient text-[#0A0A0A] px-4 py-2 rounded-lg hover:brightness-110 transition shadow-lg text-sm font-bold">
-                    <span>Login</span>
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                </button>
-            </div>
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-3 group">
+      <!-- Diamond mark -->
+      <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="20,3 37,14 31,37 9,37 3,14" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
+        <polygon points="20,3 10,14 20,21 30,14" fill="#D4AF37" opacity=".95"/>
+        <polygon points="10,14 9,37 20,21" fill="#F5D57B" opacity=".75"/>
+        <polygon points="30,14 31,37 20,21" fill="#C9A22A" opacity=".75"/>
+        <polygon points="9,37 31,37 20,21" fill="#E8C84A" opacity=".85"/>
+      </svg>
+      <div class="leading-none">
+        <div class="flex items-baseline gap-2">
+          <span class="font-serif font-bold text-[28px] tracking-[.12em] gtext" style="-webkit-text-fill-color:unset;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
+          <span class="text-[10px] font-sans font-medium tracking-[.2em] text-[rgba(212,175,55,.55)] uppercase border-l border-[rgba(212,175,55,.2)] pl-2">Global Auction</span>
         </div>
-    </header>
-    <script>
-      (function(){
-        fetch('/api/auth/status', { credentials: 'same-origin' }).then(function(r){ return r.json(); }).then(function(d){
-          if (d && d.logged_in) {
-            var nav = document.getElementById('auth-nav-link');
-            var btn = document.getElementById('auth-btn');
-            if (nav) { nav.href = '/logout'; nav.textContent = '로그아웃'; }
-            if (btn) {
-              btn.onclick = function(){ window.location.href = '/logout'; };
-              var s = btn.querySelector('span'); if (s) s.textContent = '로그아웃';
-              var i = btn.querySelector('i'); if (i) i.className = 'fa-solid fa-arrow-right-from-bracket';
-            }
-          }
-        }).catch(function(){});
-      })();
-    </script>
+        <div class="text-[9px] tracking-[.3em] text-[rgba(255,255,255,.3)] uppercase mt-[2px]">luxxbid.com</div>
+      </div>
+    </a>
 
-    <!-- Main Content Wrapper -->
-    <main class="pt-20">
-        <!-- Vault Ticker (Seamless Marquee) -->
-        <div class="w-full overflow-hidden bg-[#111111] h-10 flex items-center border-b border-[rgba(212,175,55,0.15)]">
-            <div class="flex animate-marquee w-max">
-                <!-- First Text Set -->
-                <div class="flex items-center whitespace-nowrap text-sm text-white/80 font-mono tracking-wide shrink-0">
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-1049</span> (Rolex Submariner) $10,800 ➔
-                        Purchased by Anonymous Dealer</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-8821</span> (Hermès Birkin 30) $21,000 ➔
-                        Awaiting Final Bid</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0012</span> (Patek Philippe Nautilus) $85,000
-                        ➔ Arrived at LUXX VAULT</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Christie's London High-End Watch
-                        Auction is Live</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-2934</span> (Chanel Classic Medium) $9,500 ➔
-                        LUXX Authentication Complete</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-7710</span> (Audemars Piguet Royal Oak) $48,000
-                        ➔ VIP Private Trade Concluded</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Sotheby's New York Contemporary Art
-                        Auction Started</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0922</span> (Van Cleef & Arpels Alhambra)
-                        $6,100 ➔ Bidding on Yahoo! Japan</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#D4AF37]">🔒 LUXX VAULT</span> Global Deposited Assets Exceed
-                        $110M</span>
-                    <span class="mx-4 text-white/30">|</span>
-                </div>
-                <!-- Second Text Set (Duplicate for Marquee) -->
-                <div class="flex items-center whitespace-nowrap text-sm text-white/80 font-mono tracking-wide shrink-0"
-                    aria-hidden="true">
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-1049</span> (Rolex Submariner) $10,800 ➔
-                        Purchased by Anonymous Dealer</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-8821</span> (Hermès Birkin 30) $21,000 ➔
-                        Awaiting Final Bid</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0012</span> (Patek Philippe Nautilus) $85,000
-                        ➔ Arrived at LUXX VAULT</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Christie's London High-End Watch
-                        Auction is Live</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-2934</span> (Chanel Classic Medium) $9,500 ➔
-                        LUXX Authentication Complete</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#D4AF37]"><img src="tool/main.avif" alt="LUXX Diamond" style="height:18px;width:auto;vertical-align:-3px;display:inline-block;margin-right:2px;">SV-7710</span> (Audemars Piguet Royal Oak) $48,000
-                        ➔ VIP Private Trade Concluded</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#F5D57B]">⚡ LIVE</span> Sotheby's New York Contemporary Art
-                        Auction Started</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#4CAF50]">🔔 SV-0922</span> (Van Cleef & Arpels Alhambra)
-                        $6,100 ➔ Bidding on Yahoo! Japan</span>
-                    <span class="mx-4 text-white/30">|</span>
-                    <span class="mx-4"><span class="text-[#D4AF37]">🔒 LUXX VAULT</span> Global Deposited Assets Exceed
-                        $110M</span>
-                    <span class="mx-4 text-white/30">|</span>
-                </div>
-            </div>
+    <!-- Nav -->
+    <nav class="hidden lg:flex items-center gap-1 text-[13px] font-medium">
+      <a href="/" class="px-4 py-2 rounded-full text-[#D4AF37] bg-[rgba(212,175,55,.08)] border border-[rgba(212,175,55,.15)]">Home</a>
+      <a href="/auction.html" class="px-4 py-2 rounded-full text-white/70 hover:text-white hover:bg-white/5 transition">Live Auctions</a>
+      <a href="/auction.html" class="px-4 py-2 rounded-full text-white/70 hover:text-[#D4AF37] hover:bg-[rgba(212,175,55,.06)] transition flex items-center gap-1.5">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" class="text-[#D4AF37]"><path d="M6 1L7.5 4H11L8.5 6.5L9.5 10L6 8L2.5 10L3.5 6.5L1 4H4.5Z"/></svg>
+        LUXX Vault
+      </a>
+      <a id="auth-nav-link" href="/login.html" class="px-4 py-2 rounded-full text-white/70 hover:text-white hover:bg-white/5 transition">My LUXX</a>
+    </nav>
+
+    <!-- Right -->
+    <div class="flex items-center gap-3">
+      <div class="relative group hidden md:block">
+        <button class="flex items-center gap-1.5 text-[13px] text-white/60 hover:text-white transition py-1.5 px-2 rounded-lg hover:bg-white/5">
+          <span>🇰🇷</span><span class="text-[11px]">KR</span><i class="fa-solid fa-chevron-down text-[9px]"></i>
+        </button>
+        <div class="absolute right-0 top-full mt-1 w-36 bg-ink-2 border border-[rgba(212,175,55,.15)] rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-1 text-[13px]">
+          <a href="#" class="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-[#D4AF37] hover:bg-[rgba(212,175,55,.06)] transition">🇰🇷 한국어</a>
+          <a href="#" class="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-[#D4AF37] hover:bg-[rgba(212,175,55,.06)] transition">🇺🇸 English</a>
+          <a href="#" class="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-[#D4AF37] hover:bg-[rgba(212,175,55,.06)] transition">🇯🇵 日本語</a>
+          <a href="#" class="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-[#D4AF37] hover:bg-[rgba(212,175,55,.06)] transition">🇨🇳 中文</a>
+        </div>
+      </div>
+      <a href="/agency-register.html" class="hidden md:block text-[13px] text-white/60 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition">파트너 등록</a>
+      <button id="auth-btn" onclick="window.location.href='/login.html'"
+        class="gbg text-ink font-semibold text-[13px] px-5 py-2 rounded-full hover:brightness-110 transition shadow-lg shadow-[rgba(212,175,55,.15)]">
+        로그인
+      </button>
+    </div>
+  </div>
+</header>
+<script>
+  (function(){
+    fetch('/api/auth/status',{credentials:'same-origin'}).then(r=>r.json()).then(d=>{
+      if(d&&d.logged_in){
+        var n=document.getElementById('auth-nav-link');
+        var b=document.getElementById('auth-btn');
+        if(n){n.href='/logout';n.textContent='로그아웃';}
+        if(b){b.onclick=()=>{window.location.href='/logout';};b.textContent='로그아웃';}
+      }
+    }).catch(()=>{});
+  })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     LIVE TICKER
+═══════════════════════════════════════════════════════ -->
+<div class="fixed top-[72px] w-full z-40 bg-ink-2 gborder-b overflow-hidden h-9 flex items-center">
+  <div class="flex-shrink-0 flex items-center gap-2 px-4 border-r border-[rgba(212,175,55,.15)] h-full bg-[rgba(212,175,55,.05)]">
+    <div class="live-dot"></div>
+    <span class="text-[11px] font-semibold tracking-widest text-[#D4AF37] uppercase">Live</span>
+  </div>
+  <div class="overflow-hidden flex-1">
+    <div class="flex animate-marquee w-max gap-0" style="animation-duration:60s;">
+      <!-- Set 1 -->
+      <div class="flex items-center whitespace-nowrap text-[12px] text-white/70 font-mono shrink-0">
+        <span class="mx-6"><span class="text-[#D4AF37] font-medium">◆ SV-8821</span> &nbsp;Hermès Birkin 30 Crocodile — $62,000 → <span class="text-green-400">낙찰 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#F5D57B] font-medium">● LIVE</span> &nbsp;Patek Philippe Nautilus 5711 — 현재가 $89,500 <span class="text-[#D4AF37] animate-pulse">입찰 진행중</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-white/40">○ SV-0041</span> &nbsp;Rolex Daytona 116500 — $34,200 → <span class="text-green-400">낙찰 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#D4AF37] font-medium">◆ SV-2934</span> &nbsp;Chanel Classic Flap M — $10,800 → <span class="text-green-400">인증 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#F5D57B] font-medium">● LIVE</span> &nbsp;Christie's London — Audemars Piguet Royal Oak — 입찰가 $48,000</span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-white/40">○ SV-5510</span> &nbsp;Van Cleef & Arpels Alhambra 18K — $6,900 → <span class="text-green-400">낙찰 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#D4AF37] font-medium">◆ LUXX VAULT</span> &nbsp;전 세계 보관 자산 총액 $112M 돌파</span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#F5D57B] font-medium">● LIVE</span> &nbsp;Sotheby's NY — Hermès Kelly 28 — 현재가 $28,400</span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+      </div>
+      <!-- Set 2 (duplicate for seamless) -->
+      <div class="flex items-center whitespace-nowrap text-[12px] text-white/70 font-mono shrink-0" aria-hidden="true">
+        <span class="mx-6"><span class="text-[#D4AF37] font-medium">◆ SV-8821</span> &nbsp;Hermès Birkin 30 Crocodile — $62,000 → <span class="text-green-400">낙찰 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#F5D57B] font-medium">● LIVE</span> &nbsp;Patek Philippe Nautilus 5711 — 현재가 $89,500 <span class="text-[#D4AF37] animate-pulse">입찰 진행중</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-white/40">○ SV-0041</span> &nbsp;Rolex Daytona 116500 — $34,200 → <span class="text-green-400">낙찰 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#D4AF37] font-medium">◆ SV-2934</span> &nbsp;Chanel Classic Flap M — $10,800 → <span class="text-green-400">인증 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#F5D57B] font-medium">● LIVE</span> &nbsp;Christie's London — Audemars Piguet Royal Oak — 입찰가 $48,000</span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-white/40">○ SV-5510</span> &nbsp;Van Cleef & Arpels Alhambra 18K — $6,900 → <span class="text-green-400">낙찰 완료</span></span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#D4AF37] font-medium">◆ LUXX VAULT</span> &nbsp;전 세계 보관 자산 총액 $112M 돌파</span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+        <span class="mx-6"><span class="text-[#F5D57B] font-medium">● LIVE</span> &nbsp;Sotheby's NY — Hermès Kelly 28 — 현재가 $28,400</span>
+        <span class="text-[rgba(212,175,55,.2)]">|</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO SECTION
+═══════════════════════════════════════════════════════ -->
+<section class="relative min-h-screen flex items-center pt-[108px] overflow-hidden">
+
+  <!-- Background image + overlay -->
+  <div class="absolute inset-0 z-0">
+    <img src="https://images.unsplash.com/photo-1553742786-50f5de4f52c0?w=1800&q=80&auto=format&fit=crop"
+         alt="" class="w-full h-full object-cover object-center opacity-20">
+    <div class="absolute inset-0" style="background:radial-gradient(ellipse 80% 80% at 50% 40%,rgba(212,175,55,.07) 0%,rgba(10,10,10,.7) 60%,#0A0A0A 100%);"></div>
+    <div class="absolute inset-0" style="background:linear-gradient(180deg,transparent 55%,#0A0A0A 100%);"></div>
+  </div>
+
+  <!-- Gold orbs -->
+  <div class="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full pointer-events-none" style="background:radial-gradient(circle,rgba(212,175,55,.06) 0%,transparent 70%);"></div>
+  <div class="absolute bottom-1/3 left-1/5 w-[400px] h-[400px] rounded-full pointer-events-none" style="background:radial-gradient(circle,rgba(212,175,55,.04) 0%,transparent 70%);"></div>
+
+  <div class="relative z-10 max-w-[1400px] mx-auto px-8 w-full">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Left: Hero text -->
+      <div>
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 bg-[rgba(212,175,55,.08)] border border-[rgba(212,175,55,.2)] rounded-full px-4 py-1.5 mb-8 animate-fade-up" style="animation-delay:.1s">
+          <div class="live-dot"></div>
+          <span class="text-[12px] font-medium tracking-widest text-[#D4AF37] uppercase">Live Auction · Bid Now</span>
         </div>
 
-        <!-- Hero Section -->
-        <section
-            class="relative max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col items-center justify-center min-h-[70vh]">
+        <!-- Heading -->
+        <h1 class="font-serif font-light leading-[1.05] mb-6 animate-fade-up" style="animation-delay:.2s;font-size:clamp(2.8rem,5vw,5rem);">
+          세계 최고의<br>
+          <em class="not-italic gtext">명품 경매</em>를<br>
+          <span class="text-white/90">지금 시작하세요</span>
+        </h1>
 
-            <!-- Gold Glow Orb Background -->
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[rgba(212,175,55,0.04)] rounded-full blur-[120px] pointer-events-none"></div>
+        <p class="text-[17px] text-white/55 leading-relaxed mb-10 max-w-lg font-sans font-light animate-fade-up" style="animation-delay:.3s;">
+          Sotheby's · Christie's · 야후옥션 · 이베이 — 전 세계 프리미엄 경매장의 에르메스, 롤렉스, 샤넬, 파텍필립을 LUXX가 직접 입찰 대행합니다.
+        </p>
 
-            <!-- Floating Cards Background -->
-            <div class="relative w-full max-w-4xl h-[400px] mb-16 flex justify-center items-center">
+        <!-- CTA buttons -->
+        <div class="flex flex-wrap gap-4 mb-12 animate-fade-up" style="animation-delay:.4s;">
+          <button onclick="window.location.href='/auction.html'"
+            class="gbg text-ink font-semibold px-8 py-3.5 rounded-full text-[15px] hover:brightness-110 transition shadow-xl shadow-[rgba(212,175,55,.2)] flex items-center gap-2">
+            <i class="fa-solid fa-gavel text-sm"></i> 경매 참여하기
+          </button>
+          <button onclick="window.location.href='/agency-register.html'"
+            class="px-8 py-3.5 rounded-full text-[15px] font-medium border border-[rgba(212,175,55,.25)] text-white/80 hover:bg-[rgba(212,175,55,.07)] hover:text-[#D4AF37] hover:border-[rgba(212,175,55,.4)] transition flex items-center gap-2">
+            파트너 등록 <i class="fa-solid fa-arrow-right text-sm"></i>
+          </button>
+        </div>
 
-                <!-- Central Main App UI Mockup -->
-                <div
-                    class="absolute z-20 w-72 h-[420px] bg-white text-gray-800 rounded-[2rem] shadow-2xl overflow-hidden p-6 flex flex-col items-center">
-                    <div class="w-full flex justify-between items-center mb-6">
-                        <i class="fa-regular fa-user text-gray-400"></i>
-                        <div class="flex gap-2 text-gray-400">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                            <i class="fa-regular fa-bell"></i>
-                        </div>
-                    </div>
-                    <div
-                        class="w-32 h-32 rounded-full bg-gradient-to-tr from-[#e7c7a5] to-[#f5e3ce] mb-6 shadow-inner relative flex items-center justify-center">
-                        <i class="fa-regular fa-gem text-4xl text-white/70 shadow-sm"></i>
-                    </div>
-                    <p class="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-wider">Current Highest Bid</p>
-                    <h2 class="text-3xl font-bold mb-6">$12,000</h2>
-                    <div class="flex w-full gap-3">
-                        <button
-                            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition text-sm flex flex-col items-center justify-center gap-1">
-                            <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i> Auto Bid
-                        </button>
-                        <button
-                            class="flex-1 bg-[#D4AF37] hover:bg-[#9B7A1C] text-[#0A0A0A] py-3 rounded-xl font-medium transition text-sm flex flex-col items-center justify-center gap-1 shadow-md">
-                            <i class="fa-solid fa-arrow-up text-xs"></i> Bid Now
-                        </button>
-                    </div>
-                </div>
+        <!-- Mini stats row -->
+        <div class="flex flex-wrap gap-8 animate-fade-up" style="animation-delay:.5s;">
+          <div>
+            <div class="font-serif text-[2rem] font-semibold gtext">$2.5B</div>
+            <div class="text-[12px] text-white/40 tracking-wide mt-0.5">누적 거래액</div>
+          </div>
+          <div class="w-px h-10 bg-[rgba(212,175,55,.15)] my-auto"></div>
+          <div>
+            <div class="font-serif text-[2rem] font-semibold text-white"><span class="counter" data-target="247">0</span></div>
+            <div class="text-[12px] text-white/40 tracking-wide mt-0.5">인증 파트너</div>
+          </div>
+          <div class="w-px h-10 bg-[rgba(212,175,55,.15)] my-auto"></div>
+          <div>
+            <div class="font-serif text-[2rem] font-semibold text-white"><span class="counter" data-target="52341" data-comma="true">0</span></div>
+            <div class="text-[12px] text-white/40 tracking-wide mt-0.5">회원 수</div>
+          </div>
+          <div class="w-px h-10 bg-[rgba(212,175,55,.15)] my-auto"></div>
+          <div>
+            <div class="font-serif text-[2rem] font-semibold text-[#D4AF37]">98.7%</div>
+            <div class="text-[12px] text-white/40 tracking-wide mt-0.5">고객 만족도</div>
+          </div>
+        </div>
+      </div>
 
-                <!-- Bottom Left Floating Card -->
-                <div
-                    class="absolute z-10 -left-4 md:left-12 bottom-0 glass-card-gold p-4 rounded-2xl w-64 shadow-2xl animate-float-delayed flex items-center gap-4 border-l-4 border-l-[#D4AF37]">
-                    <div class="w-16 h-16 rounded-xl bg-cover bg-center"
-                        style="background-image: url('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80');">
-                    </div>
-                    <div>
-                        <p class="text-xs text-white/60 mb-1">LUXX Auth Guarantee</p>
-                        <p class="font-bold text-lg text-white">Verified <i
-                                class="fa-solid fa-circle-check text-[#D4AF37] text-sm"></i></p>
-                    </div>
-                </div>
+      <!-- Right: Featured lot card -->
+      <div class="flex justify-center lg:justify-end animate-fade-up" style="animation-delay:.35s;">
+        <div class="relative w-full max-w-[420px]">
 
-                <!-- Top Right Floating Card -->
-                <div
-                    class="absolute z-10 -right-4 md:right-12 top-10 glass-card-gold p-5 rounded-2xl w-56 shadow-2xl animate-float">
-                    <div class="flex justify-between items-center mb-3 text-sm">
-                        <span class="text-white/70">Conversion</span>
-                        <i class="fa-solid fa-ellipsis text-white/50"></i>
-                    </div>
-                    <div class="flex justify-between items-end mb-2 border-b border-[rgba(212,175,55,0.2)] pb-2">
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-[#D4AF37]"></div> USD
-                        </div>
-                        <div class="font-bold">$ 12,000</div>
-                    </div>
-                    <div class="flex justify-between items-end pt-2">
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-red-500"></div> EUR
-                        </div>
-                        <div class="font-bold">€ 11,200</div>
-                    </div>
-                </div>
-
-                <!-- Bottom Right Mini Card (QR Concept) -->
-                <div
-                    class="absolute z-0 right-10 md:right-24 bottom-10 glass-card-gold p-3 rounded-xl shadow-2xl animate-float">
-                    <p class="text-[10px] text-[#D4AF37] mb-2">Item Vault Code</p>
-                    <i class="fa-solid fa-qrcode text-5xl text-white/90"></i>
-                </div>
+          <!-- Main card -->
+          <div class="glass-gold rounded-3xl overflow-hidden hover-glow transition-all duration-500">
+            <!-- Image -->
+            <div class="relative h-[280px] overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&auto=format&fit=crop"
+                   alt="Hermès Birkin" class="lot-img w-full h-full object-cover">
+              <div class="absolute inset-0" style="background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.8) 100%);"></div>
+              <!-- Live badge -->
+              <div class="absolute top-4 left-4 flex items-center gap-2 bg-[rgba(10,10,10,.75)] border border-[rgba(212,175,55,.3)] rounded-full px-3 py-1.5 backdrop-blur-sm">
+                <div class="live-dot"></div>
+                <span class="text-[11px] font-semibold text-[#D4AF37] tracking-widest">LIVE BIDDING</span>
+              </div>
+              <!-- Timer -->
+              <div class="absolute top-4 right-4 bg-[rgba(10,10,10,.75)] border border-[rgba(255,255,255,.1)] rounded-full px-3 py-1.5 backdrop-blur-sm">
+                <span class="text-[12px] font-mono text-white/80" id="hero-timer">02:14:38</span>
+              </div>
+              <!-- Bottom overlay text -->
+              <div class="absolute bottom-4 left-5 right-5">
+                <div class="text-[11px] text-[rgba(212,175,55,.7)] tracking-widest uppercase mb-1">Sotheby's London · Handbags</div>
+                <div class="font-serif text-[22px] font-semibold text-white leading-tight">Hermès Birkin 30<br><span class="text-[17px] text-white/70 font-light">Niloticus Crocodile, Gold HW</span></div>
+              </div>
             </div>
 
-            <!-- Bottom Hero Text -->
-            <div class="text-center z-30 mt-8">
-                <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 leading-tight text-white">
-                    The World's Finest Luxury<br>Auctions, Right in Your Hands
-                </h1>
-                <p class="text-lg md:text-xl text-white/70 max-w-2xl mx-auto font-light mb-8">
-                    Safe and transparent global luxury trading with LUXX-certified auctioneers.
-                </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <button onclick="window.location.href='/'"
-                        class="px-8 py-4 gold-gradient text-[#0A0A0A] font-bold rounded-xl hover:brightness-110 transition shadow-lg">Start
-                        Bidding Now</button>
-                    <button onclick="window.location.href='/agency-register.html'"
-                        class="px-8 py-4 border border-[rgba(212,175,55,0.3)] text-white font-bold rounded-xl hover:bg-[rgba(212,175,55,0.1)] transition">Find
-                        Auctioneers</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Trust Indicators -->
-        <section class="max-w-7xl mx-auto px-6 -mt-10 relative z-40">
-            <div class="glass-card-gold rounded-2xl p-6 shadow-2xl">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x divide-[rgba(212,175,55,0.15)] text-center">
-                    <div>
-                        <p class="text-white/60 text-sm mb-1">Total Traded Volume</p>
-                        <p class="text-3xl font-bold text-white counter" data-target="2.5" data-prefix="$"
-                            data-suffix="B" data-decimals="1">0</p>
-                    </div>
-                    <div>
-                        <p class="text-white/60 text-sm mb-1">Certified Auctioneers</p>
-                        <p class="text-3xl font-bold gold-text"><span class="counter" data-target="247">0</span></p>
-                    </div>
-                    <div>
-                        <p class="text-white/60 text-sm mb-1">Total Members</p>
-                        <p class="text-3xl font-bold text-white counter" data-target="52341" data-comma="true">0</p>
-                    </div>
-                    <div>
-                        <p class="text-white/60 text-sm mb-1">Satisfaction Rate</p>
-                        <p class="text-3xl font-bold text-green-400"><span class="counter" data-target="98.7"
-                                data-decimals="1">0</span>%</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Live Popular Auctions & Filters -->
-        <section class="bg-[#0A0A0A] max-w-7xl mx-auto px-6 py-24">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+            <!-- Card body -->
+            <div class="p-5">
+              <div class="flex justify-between items-end mb-4">
                 <div>
-                    <h2 class="text-3xl font-bold mb-2 flex items-center gap-3"><i
-                            class="fa-solid fa-fire text-[#D4AF37]"></i> Live Popular Auctions</h2>
-                    <p class="text-white/60">Check out the hottest global items sorted by ending soon, popularity, and
-                        price.</p>
+                  <div class="text-[11px] text-white/40 uppercase tracking-widest mb-1">현재 최고 입찰가</div>
+                  <div class="font-serif text-[2rem] font-bold gtext">$ 62,000</div>
                 </div>
-                <div class="flex gap-2">
-                    <button
-                        class="text-xs bg-[rgba(212,175,55,0.08)] hover:bg-[rgba(212,175,55,0.15)] px-4 py-2 rounded-lg transition border border-[rgba(212,175,55,0.2)] text-white/80"><i
-                            class="fa-solid fa-arrow-down-short-wide"></i> Sort By</button>
-                    <button
-                        class="text-xs bg-[rgba(212,175,55,0.08)] hover:bg-[rgba(212,175,55,0.15)] px-4 py-2 rounded-lg transition border border-[rgba(212,175,55,0.2)] text-white/80"><i
-                            class="fa-solid fa-sliders"></i> Advanced Filter</button>
+                <div class="text-right">
+                  <div class="text-[11px] text-white/40 uppercase tracking-widest mb-1">입찰 수</div>
+                  <div class="text-[22px] font-semibold text-white">23<span class="text-[14px] text-white/50 ml-1">bids</span></div>
                 </div>
+              </div>
+
+              <!-- Bid progress bar -->
+              <div class="h-1 bg-white/10 rounded-full mb-4 overflow-hidden">
+                <div class="h-full gbg rounded-full" style="width:73%;"></div>
+              </div>
+              <div class="flex justify-between text-[11px] text-white/35 mb-5">
+                <span>시작가 $45,000</span><span>추정가 $70,000–$85,000</span>
+              </div>
+
+              <button onclick="window.location.href='/auction.html'"
+                class="w-full gbg text-ink font-semibold py-3 rounded-xl text-[14px] hover:brightness-110 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-gavel"></i> 입찰 참여 →
+              </button>
             </div>
+          </div>
 
-            <!-- Brand & Category Filter -->
-            <div class="flex gap-2 overflow-x-auto pb-4 mb-4" style="scrollbar-width: none;">
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-[rgba(212,175,55,0.2)] text-[#D4AF37] text-sm font-medium shadow-lg border border-[rgba(212,175,55,0.4)]">Ending
-                    Soon</button>
-                <div class="w-px h-6 bg-[rgba(212,175,55,0.2)] my-auto mx-2"></div>
-                <!-- Brand Pavilion -->
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">👜
-                    Hermès</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">⌚
-                    Rolex</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">👜
-                    Chanel</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">🧳
-                    Louis Vuitton</button>
-                <div class="w-px h-6 bg-[rgba(212,175,55,0.2)] my-auto mx-2"></div>
-                <!-- Categories -->
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Handbags</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Watches</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Jewelry</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Art
-                    & Vintage</button>
-                <button
-                    class="whitespace-nowrap px-4 py-2 rounded-full bg-white/5 hover:bg-[rgba(212,175,55,0.1)] text-white text-sm transition border border-white/5 hover:border-[rgba(212,175,55,0.3)]">Apparel
-                    & Shoes</button>
+          <!-- Floating mini cards -->
+          <div class="absolute -left-10 top-16 glass-gold rounded-2xl p-3.5 w-44 shadow-2xl animate-float border border-[rgba(212,175,55,.2)]">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] uppercase tracking-widest mb-1.5">LUXX 인증 완료</div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+                <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=100&q=80" class="w-full h-full object-cover">
+              </div>
+              <div>
+                <div class="text-[12px] font-semibold text-white">Rolex GMT</div>
+                <div class="text-[11px] text-[#D4AF37]">$18,500 ✓</div>
+              </div>
             </div>
+          </div>
 
-            <!-- Horizontal Scroll Cards -->
-            <div class="flex gap-6 overflow-x-auto pb-8 snap-x" style="scrollbar-width: none;">
-                <!-- Card 1 -->
-                <div
-                    class="min-w-[280px] w-[280px] glass-card-gold rounded-2xl overflow-hidden snap-start group cursor-pointer border border-[rgba(212,175,55,0.15)]">
-                    <div class="h-48 bg-cover bg-center relative p-4 flex items-start justify-between"
-                        style="background-image: url('https://images.unsplash.com/photo-1584916201218-f4242ceb4809?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
-                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500"></div>
-                        <span
-                            class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg animate-pulse relative z-10">02:14:59
-                            Left</span>
-                        <div
-                            class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition relative z-10">
-                            <i class="fa-regular fa-heart"></i></div>
-                    </div>
-                    <div class="p-5">
-                        <p class="text-xs text-white/50 mb-1">Sotheby's NY · Handbags</p>
-                        <h3 class="font-bold text-lg mb-3 truncate">Hermès Birkin 30 Crocodile</h3>
-                        <p class="text-sm text-white/60 mb-1">Current Highest Bid</p>
-                        <div class="flex justify-between items-end mb-4">
-                            <span class="text-2xl font-bold text-white">$ 63,500</span>
-                            <span class="text-xs text-green-400 font-medium">14 Bids</span>
-                        </div>
-                        <button
-                            class="w-full gold-gradient text-[#0A0A0A] font-bold py-2.5 rounded-lg hover:brightness-110 transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-crosshairs"></i> Sniper Bid
-                        </button>
-                    </div>
-                </div>
+          <div class="absolute -right-8 bottom-24 glass-gold rounded-2xl p-3.5 w-40 shadow-2xl animate-float2 border border-[rgba(212,175,55,.2)]">
+            <div class="text-[10px] text-white/40 mb-1">실시간 낙찰</div>
+            <div class="text-[13px] font-semibold text-white">Chanel 2.55</div>
+            <div class="text-[11px] text-[#D4AF37] font-mono mt-0.5">$9,200</div>
+            <div class="text-[10px] text-green-400 mt-1">낙찰 완료 🎉</div>
+          </div>
+        </div>
+      </div>
 
-                <!-- Card 2 -->
-                <div
-                    class="min-w-[280px] w-[280px] glass-card-gold rounded-2xl overflow-hidden snap-start group cursor-pointer border border-[rgba(212,175,55,0.15)]">
-                    <div class="h-48 bg-cover bg-center relative p-4 flex items-start justify-between"
-                        style="background-image: url('https://images.unsplash.com/photo-1523170335258-f5ed11844a49?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
-                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500"></div>
-                        <span
-                            class="bg-[#F5D57B] text-[#0A0A0A] text-xs font-bold px-2 py-1 rounded shadow-lg relative z-10">LIVE
-                            Auction</span>
-                        <div
-                            class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition relative z-10">
-                            <i class="fa-regular fa-heart text-red-400"></i></div>
-                    </div>
-                    <div class="p-5">
-                        <p class="text-xs text-white/50 mb-1">Christie's Geneva · Watches</p>
-                        <h3 class="font-bold text-lg mb-3 truncate">Rolex Daytona Paul Newman</h3>
-                        <p class="text-sm text-white/60 mb-1">Current Highest Bid</p>
-                        <div class="flex justify-between items-end mb-4">
-                            <span class="text-2xl font-bold text-white">$ 125,000</span>
-                            <span class="text-xs text-green-400 font-medium">32 Bids</span>
-                        </div>
-                        <button
-                            class="w-full gold-gradient text-[#0A0A0A] font-bold py-2.5 rounded-lg hover:brightness-110 transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-gavel"></i> Join Live Bidding
-                        </button>
-                    </div>
-                </div>
+    </div>
+  </div>
+</section>
 
-                <!-- Card 3 -->
-                <div
-                    class="min-w-[280px] w-[280px] glass-card-gold rounded-2xl overflow-hidden snap-start group cursor-pointer border border-[rgba(212,175,55,0.15)]">
-                    <div class="h-48 bg-cover bg-center relative p-4 flex items-start justify-between"
-                        style="background-image: url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
-                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition duration-500"></div>
-                        <span
-                            class="bg-[rgba(212,175,55,0.2)] backdrop-blur-md text-[#D4AF37] border border-[rgba(212,175,55,0.4)] text-xs font-bold px-2 py-1 rounded relative z-10">Ends
-                            in 24h</span>
-                        <div
-                            class="bg-black/50 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white/80 hover:text-red-400 transition relative z-10">
-                            <i class="fa-regular fa-heart"></i></div>
-                    </div>
-                    <div class="p-5">
-                        <p class="text-xs text-white/50 mb-1">Phillips HK · Jewelry</p>
-                        <h3 class="font-bold text-lg mb-3 truncate">Van Cleef & Arpels Vintage Alhambra</h3>
-                        <p class="text-sm text-white/60 mb-1">Current Highest Bid</p>
-                        <div class="flex justify-between items-end mb-4">
-                            <span class="text-2xl font-bold text-white">$ 4,800</span>
-                            <span class="text-xs text-green-400 font-medium">5 Bids</span>
-                        </div>
-                        <button
-                            class="w-full gold-gradient text-[#0A0A0A] font-bold py-2.5 rounded-lg hover:brightness-110 transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-crosshairs"></i> Sniper Bid
-                        </button>
-                    </div>
-                </div>
+<!-- ═══════════════════════════════════════════════════════
+     BRAND STRIP
+═══════════════════════════════════════════════════════ -->
+<section class="py-10 border-y border-[rgba(212,175,55,.08)]" style="background:rgba(255,255,255,.015);">
+  <div class="max-w-[1400px] mx-auto px-8">
+    <div class="text-[11px] text-white/25 uppercase tracking-[.3em] text-center mb-6">글로벌 파트너 경매장</div>
+    <div class="flex flex-wrap justify-center gap-x-12 gap-y-4">
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">SOTHEBY'S</span>
+      <span class="text-[rgba(212,175,55,.2)] my-auto text-lg">·</span>
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">CHRISTIE'S</span>
+      <span class="text-[rgba(212,175,55,.2)] my-auto text-lg">·</span>
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">PHILLIPS</span>
+      <span class="text-[rgba(212,175,55,.2)] my-auto text-lg">·</span>
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">BONHAMS</span>
+      <span class="text-[rgba(212,175,55,.2)] my-auto text-lg">·</span>
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">YAHOO AUCTION</span>
+      <span class="text-[rgba(212,175,55,.2)] my-auto text-lg">·</span>
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">EBAY LUXURY</span>
+      <span class="text-[rgba(212,175,55,.2)] my-auto text-lg">·</span>
+      <span class="text-[15px] font-serif text-white/30 hover:text-[#D4AF37] transition tracking-wider cursor-default">DOROTHEUM</span>
+    </div>
+  </div>
+</section>
 
-                <!-- Card 4 (View All) -->
-                <a href="/auction.html"
-                    class="min-w-[280px] w-[280px] glass-card rounded-2xl overflow-hidden snap-start flex items-center justify-center group cursor-pointer border-dashed border-2 border-[rgba(212,175,55,0.2)] hover:bg-[rgba(212,175,55,0.05)] transition">
-                    <div class="text-center">
-                        <div
-                            class="w-14 h-14 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[rgba(212,175,55,0.2)] group-hover:scale-110 transition duration-300">
-                            <i class="fa-solid fa-arrow-right text-2xl text-[#D4AF37]"></i>
-                        </div>
-                        <p class="font-bold text-lg">View All Auctions</p>
-                        <p class="text-sm text-white/50 mt-1">12,450+ items in progress</p>
-                    </div>
-                </a>
+<!-- ═══════════════════════════════════════════════════════
+     LIVE AUCTIONS GRID
+═══════════════════════════════════════════════════════ -->
+<section class="py-24 reveal" id="auctions">
+  <div class="max-w-[1400px] mx-auto px-8">
+
+    <!-- Section header -->
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="live-dot"></div>
+          <span class="text-[12px] tracking-[.3em] uppercase text-[#D4AF37] font-medium">Live Auctions</span>
+        </div>
+        <h2 class="font-serif font-light text-[2.6rem] leading-tight">지금 진행 중인<br><span class="gtext">명품 경매</span></h2>
+      </div>
+      <div class="flex items-center gap-3 pb-2">
+        <!-- Filter chips -->
+        <button class="text-[13px] px-4 py-1.5 rounded-full bg-[rgba(212,175,55,.12)] border border-[rgba(212,175,55,.25)] text-[#D4AF37]">전체</button>
+        <button class="text-[13px] px-4 py-1.5 rounded-full border border-[rgba(255,255,255,.08)] text-white/50 hover:border-[rgba(212,175,55,.2)] hover:text-[#D4AF37] transition">가방</button>
+        <button class="text-[13px] px-4 py-1.5 rounded-full border border-[rgba(255,255,255,.08)] text-white/50 hover:border-[rgba(212,175,55,.2)] hover:text-[#D4AF37] transition">시계</button>
+        <button class="text-[13px] px-4 py-1.5 rounded-full border border-[rgba(255,255,255,.08)] text-white/50 hover:border-[rgba(212,175,55,.2)] hover:text-[#D4AF37] transition">주얼리</button>
+        <a href="/auction.html" class="text-[13px] text-[rgba(212,175,55,.7)] hover:text-[#D4AF37] transition flex items-center gap-1 ml-2">
+          전체보기 <i class="fa-solid fa-arrow-right text-[11px]"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Auction cards grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Card 1: Hermès Kelly -->
+      <div class="lot-card glass-gold rounded-2xl overflow-hidden hover-glow transition-all duration-400 group cursor-pointer" onclick="window.location.href='/auction.html'">
+        <div class="h-[220px] overflow-hidden relative">
+          <img class="lot-img w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1590739293931-a4b84d09de0a?w=600&q=80&auto=format&fit=crop" alt="Hermès Kelly">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute top-3 left-3 flex items-center gap-1.5 bg-[rgba(10,10,10,.75)] border border-[rgba(212,175,55,.3)] rounded-full px-2.5 py-1 backdrop-blur-sm">
+            <div class="live-dot" style="width:5px;height:5px;"></div>
+            <span class="text-[10px] text-[#D4AF37] font-semibold tracking-wider">LIVE</span>
+          </div>
+          <div class="absolute top-3 right-3 bg-[rgba(10,10,10,.7)] rounded-full px-2.5 py-1 text-[10px] font-mono text-white/70">01:22:47</div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest mb-0.5">Sotheby's New York</div>
+            <div class="font-serif text-[16px] font-medium text-white">Hermès Kelly 28 · Gold</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-[10px] text-white/35 uppercase tracking-widest">현재 최고가</div>
+              <div class="font-serif text-[1.5rem] font-bold text-[#D4AF37]">$28,400</div>
             </div>
-        </section>
-
-        <!-- LUXX CERTIFIED System -->
-        <section class="border-y border-[rgba(212,175,55,0.1)] bg-[#111111] py-24 relative overflow-hidden">
-            <div
-                class="absolute top-0 right-0 w-[500px] h-[500px] bg-[rgba(212,175,55,0.06)] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none">
+            <div class="text-right">
+              <div class="text-[10px] text-white/35 mb-0.5">입찰</div>
+              <div class="text-[16px] font-semibold text-white">17<span class="text-[11px] text-white/40 ml-1">bids</span></div>
             </div>
+          </div>
+          <div class="h-[2px] bg-white/5 rounded-full overflow-hidden mb-4">
+            <div class="h-full gbg rounded-full" style="width:58%;"></div>
+          </div>
+          <button class="w-full py-2.5 rounded-xl text-[13px] font-semibold gbg text-ink hover:brightness-110 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gavel text-xs"></i> 입찰 참여
+          </button>
+        </div>
+      </div>
 
-            <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12 relative z-10">
-                <!-- Badge Area -->
-                <div class="w-full md:w-1/3 flex justify-center">
-                    <div class="relative w-56 h-56 flex items-center justify-center">
-                        <div class="absolute inset-0 bg-[#D4AF37] blur-3xl opacity-20 animate-pulse rounded-full"></div>
-                        <div
-                            class="relative z-10 w-48 h-48 glass-card-gold rounded-full border-4 border-[rgba(212,175,55,0.4)] flex flex-col items-center justify-center shadow-[0_0_40px_rgba(212,175,55,0.25)]">
-                            <i class="fa-solid fa-shield-halved text-6xl text-[#D4AF37] mb-2 drop-shadow-lg"></i>
-                            <span class="font-extrabold text-2xl tracking-widest text-white drop-shadow-md">LUXX</span>
-                            <span class="text-[11px] tracking-[0.2em] text-[#F5D57B] uppercase mt-1">Certified</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Text & Checklist -->
-                <div class="w-full md:w-2/3">
-                    <div
-                        class="mb-4 inline-block px-3 py-1 bg-[rgba(212,175,55,0.15)] border border-[rgba(212,175,55,0.3)] rounded-full text-[#D4AF37] text-xs font-bold tracking-wider">
-                        CERTIFICATION STANDARDS</div>
-                    <h2 class="text-3xl md:text-4xl font-bold mb-4">LUXX CERTIFIED <span
-                            class="font-light text-white/60">Mark?</span></h2>
-                    <p class="text-lg text-white/70 mb-10 max-w-2xl leading-relaxed">
-                        A key indicator showing LUXX's authority and reliability. The LUXX Certified mark is granted
-                        only to international standard partners guaranteeing the safest and most transparent
-                        transactions in the global auction market.
-                    </p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6 mb-10">
-                        <div class="flex items-start gap-4">
-                            <div
-                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
-                                <i class="fa-solid fa-check text-sm"></i></div>
-                            <div>
-                                <h4 class="font-bold text-white text-lg">Strict Screening Criteria</h4>
-                                <p class="text-sm text-white/60 mt-1 leading-relaxed">Granted only to partner
-                                    auctioneers who passed in-depth verification of 40 items including capital,
-                                    transaction history, and security systems.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div
-                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
-                                <i class="fa-solid fa-check text-sm"></i></div>
-                            <div>
-                                <h4 class="font-bold text-white text-lg">100% Authenticity Guarantee</h4>
-                                <p class="text-sm text-white/60 mt-1 leading-relaxed">3-step cross-check by LUXX
-                                    professional appraisers, with a 200% purchase price compensation policy if
-                                    determined fake.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div
-                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
-                                <i class="fa-solid fa-check text-sm"></i></div>
-                            <div>
-                                <h4 class="font-bold text-white text-lg">Transparent Transaction History</h4>
-                                <p class="text-sm text-white/60 mt-1 leading-relaxed">Transparently records and shares
-                                    bidding history, final hammer price, and fee details utilizing a blockchain network.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div
-                                class="mt-1 bg-[rgba(212,175,55,0.15)] w-8 h-8 flex items-center justify-center rounded-full text-[#D4AF37] shrink-0 border border-[rgba(212,175,55,0.3)]">
-                                <i class="fa-solid fa-check text-sm"></i></div>
-                            <div>
-                                <h4 class="font-bold text-white text-lg">Secure Escrow Payment</h4>
-                                <p class="text-sm text-white/60 mt-1 leading-relaxed">Funds are held in a global bank
-                                    escrow until the member safely receives and completes inspection of the item.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button
-                        class="px-7 py-3.5 bg-transparent border border-[rgba(212,175,55,0.3)] text-white font-bold rounded-xl hover:bg-[rgba(212,175,55,0.1)] hover:text-[#D4AF37] transition flex items-center gap-2 group">
-                        View Certification Criteria <i
-                            class="fa-solid fa-arrow-right text-sm group-hover:translate-x-1 transition"></i>
-                    </button>
-                </div>
+      <!-- Card 2: Rolex Submariner -->
+      <div class="lot-card glass-gold rounded-2xl overflow-hidden hover-glow transition-all duration-400 group cursor-pointer" onclick="window.location.href='/auction.html'">
+        <div class="h-[220px] overflow-hidden relative">
+          <img class="lot-img w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&q=80&auto=format&fit=crop" alt="Rolex">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute top-3 left-3 bg-red-900/80 border border-red-500/40 rounded-full px-2.5 py-1 text-[10px] font-bold text-red-300">00:48:12 남음</div>
+          <div class="absolute top-3 right-3 bg-[rgba(212,175,55,.15)] border border-[rgba(212,175,55,.3)] rounded-full px-2.5 py-1 text-[10px] text-[#D4AF37] font-semibold">인기</div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest mb-0.5">Phillips Geneva</div>
+            <div class="font-serif text-[16px] font-medium text-white">Rolex Submariner 116610LN</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-[10px] text-white/35 uppercase tracking-widest">현재 최고가</div>
+              <div class="font-serif text-[1.5rem] font-bold text-[#D4AF37]">$18,900</div>
             </div>
-        </section>
-
-        <!-- PRIVATE HALL -->
-        <section class="max-w-7xl mx-auto px-6 py-24">
-            <div class="text-center mb-16">
-                <span
-                    class="bg-[rgba(212,175,55,0.15)] text-[#D4AF37] border border-[rgba(212,175,55,0.3)] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4 inline-block">B2B
-                    Exclusive</span>
-                <h2 class="text-3xl md:text-5xl font-bold mb-4 flex items-center justify-center gap-4">
-                    <i class="fa-solid fa-lock text-[rgba(212,175,55,0.4)] text-4xl"></i> PRIVATE HALL
-                </h2>
-                <p class="text-lg text-white/60 max-w-2xl mx-auto">A B2B closed market and premium storage service
-                    accessible only to LUXX-certified global partner members.</p>
+            <div class="text-right">
+              <div class="text-[10px] text-white/35 mb-0.5">입찰</div>
+              <div class="text-[16px] font-semibold text-white">31<span class="text-[11px] text-white/40 ml-1">bids</span></div>
             </div>
+          </div>
+          <div class="h-[2px] bg-white/5 rounded-full overflow-hidden mb-4">
+            <div class="h-full gbg rounded-full" style="width:85%;"></div>
+          </div>
+          <button class="w-full py-2.5 rounded-xl text-[13px] font-semibold gbg text-ink hover:brightness-110 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gavel text-xs"></i> 입찰 참여
+          </button>
+        </div>
+      </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Wholesale Market -->
-                <div class="glass-card p-8 rounded-2xl hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group border border-[rgba(212,175,55,0.1)]">
-                    <div
-                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.2)] group-hover:bg-[#D4AF37] transition duration-300">
-                        <i
-                            class="fa-solid fa-boxes-stacked text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4 text-white">Wholesale Market</h3>
-                    <ul class="text-white/70 space-y-3 text-sm">
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Exclusive access to bulk
-                            listed items from European and Japanese members</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Support for Lot-based bundle
-                            sales for efficient inventory securing</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Auctions based on reasonable
-                            wholesale prices compared to general consumer prices</li>
-                    </ul>
-                </div>
-
-                <!-- Dealer's Choice -->
-                <div class="glass-card p-8 rounded-2xl hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group border border-[rgba(212,175,55,0.1)]">
-                    <div
-                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.2)] group-hover:bg-[#D4AF37] transition duration-300">
-                        <i class="fa-solid fa-star text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4 text-white">Dealer's Choice <span
-                            class="text-lg font-light text-white/50 ml-1">(Curator Picks)</span></h3>
-                    <ul class="text-white/70 space-y-3 text-sm">
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#F5D57B] mt-1 mr-3"></i>High-yield expected luxury
-                            items carefully selected by LUXX chief curators</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#F5D57B] mt-1 mr-3"></i>Detailed investment value
-                            analysis reports including scarcity and market trends</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#F5D57B] mt-1 mr-3"></i>Objective expected return
-                            guidance based on past winning bid big data</li>
-                    </ul>
-                </div>
-
-                <!-- Direct Trade -->
-                <div class="glass-card p-8 rounded-2xl hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group border border-[rgba(212,175,55,0.1)]">
-                    <div
-                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.2)] group-hover:bg-[#D4AF37] transition duration-300">
-                        <i class="fa-solid fa-handshake text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4 text-white">Direct Trade <span
-                            class="text-lg font-light text-white/50 ml-1">(Member to Member)</span></h3>
-                    <ul class="text-white/70 space-y-3 text-sm">
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-green-400 mt-1 mr-3"></i>Safe inventory exchange
-                            between members under LUXX's strong guarantee</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-green-400 mt-1 mr-3"></i>Credit transactions and
-                            long-term payment options to revitalize B2B transactions</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-green-400 mt-1 mr-3"></i>Full exemption from
-                            brokerage fees for Platinum members</li>
-                    </ul>
-                </div>
-
-                <!-- LUXX VAULT -->
-                <div
-                    class="glass-card p-8 rounded-2xl border border-[rgba(212,175,55,0.25)] hover:bg-[rgba(212,175,55,0.05)] transition duration-300 group relative overflow-hidden">
-                    <div class="absolute -right-10 -bottom-10 opacity-5 transform -rotate-12 text-[#D4AF37]"><i
-                            class="fa-solid fa-vault text-[150px]"></i></div>
-                    <div
-                        class="w-14 h-14 bg-[rgba(212,175,55,0.12)] rounded-2xl flex items-center justify-center mb-6 border border-[rgba(212,175,55,0.3)] group-hover:bg-[#D4AF37] transition duration-300 relative z-10">
-                        <i
-                            class="fa-solid fa-shield-halved text-2xl text-[#D4AF37] group-hover:text-[#0A0A0A] transition"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4 text-white relative z-10">LUXX VAULT <span
-                            class="text-lg font-light text-white/50 ml-1">(Premium Storage)</span></h3>
-                    <ul class="text-white/70 space-y-3 text-sm relative z-10">
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Physical storage of
-                            high-value goods in major global hubs like Geneva and Hong Kong</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Perfect constant
-                            temperature/humidity for artworks and 24-hour military-grade security</li>
-                        <li class="flex items-start"><i
-                                class="fa-solid fa-caret-right text-[#D4AF37] mt-1 mr-3"></i>Immediate trading system
-                            solely through ownership (NFT receipt) without physical delivery</li>
-                    </ul>
-                </div>
+      <!-- Card 3: Patek Philippe -->
+      <div class="lot-card glass-gold rounded-2xl overflow-hidden hover-glow transition-all duration-400 group cursor-pointer" onclick="window.location.href='/auction.html'">
+        <div class="h-[220px] overflow-hidden relative">
+          <img class="lot-img w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1548169874-53e85f753f1e?w=600&q=80&auto=format&fit=crop" alt="Patek Philippe">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute top-3 left-3 flex items-center gap-1.5 bg-[rgba(10,10,10,.75)] border border-[rgba(212,175,55,.3)] rounded-full px-2.5 py-1 backdrop-blur-sm">
+            <div class="live-dot" style="width:5px;height:5px;"></div>
+            <span class="text-[10px] text-[#D4AF37] font-semibold tracking-wider">LIVE</span>
+          </div>
+          <div class="absolute top-3 right-3 bg-[rgba(10,10,10,.7)] rounded-full px-2.5 py-1 text-[10px] font-mono text-white/70">03:55:00</div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest mb-0.5">Christie's London</div>
+            <div class="font-serif text-[16px] font-medium text-white">Patek Philippe Nautilus 5711/1A</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-[10px] text-white/35 uppercase tracking-widest">현재 최고가</div>
+              <div class="font-serif text-[1.5rem] font-bold text-[#D4AF37]">$89,500</div>
             </div>
-        </section>
-
-        <!-- LUXX LAB -->
-        <section class="max-w-7xl mx-auto px-6 py-20 mb-10">
-            <div class="mb-12 border-b border-[rgba(212,175,55,0.1)] pb-8">
-                <h2 class="text-3xl font-bold mb-3 flex items-center gap-3">
-                    <i class="fa-solid fa-flask text-[#D4AF37]"></i> LUXX LAB <span
-                        class="text-xl font-light text-white/60 ml-2">Data & Academy</span>
-                </h2>
-                <p class="text-white/70 text-lg">LUXX's exclusive knowledge content hub providing expertise and added
-                    value in the luxury auction market.</p>
+            <div class="text-right">
+              <div class="text-[10px] text-white/35 mb-0.5">입찰</div>
+              <div class="text-[16px] font-semibold text-white">42<span class="text-[11px] text-white/40 ml-1">bids</span></div>
             </div>
+          </div>
+          <div class="h-[2px] bg-white/5 rounded-full overflow-hidden mb-4">
+            <div class="h-full gbg rounded-full" style="width:92%;"></div>
+          </div>
+          <button class="w-full py-2.5 rounded-xl text-[13px] font-semibold gbg text-ink hover:brightness-110 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gavel text-xs"></i> 입찰 참여
+          </button>
+        </div>
+      </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Market Intelligence -->
-                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
-                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
-                        <i class="fa-solid fa-chart-line text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3 text-white">Market Intelligence</h4>
-                    <p class="text-sm text-white/60 mb-6 leading-relaxed">AI-based global luxury market price analysis,
-                        return statistics by high-end brand, and regular investment value prediction reports.</p>
-                    <a href="#"
-                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">View
-                        Market Trends <i class="fa-solid fa-arrow-right text-xs"></i></a>
-                </div>
-
-                <!-- Authentication Guide -->
-                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
-                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
-                        <i
-                            class="fa-solid fa-magnifying-glass text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3 text-white">Authentication Guide</h4>
-                    <p class="text-sm text-white/60 mb-6 leading-relaxed">In-depth guide to authenticity detection
-                        methods by major brands, LUXX appraiser online authenticity judgment service, and counterfeit
-                        case DB.</p>
-                    <a href="#"
-                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">Read
-                        Guide <i class="fa-solid fa-arrow-right text-xs"></i></a>
-                </div>
-
-                <!-- Investment Academy -->
-                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
-                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
-                        <i
-                            class="fa-solid fa-graduation-cap text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3 text-white">Investment Academy</h4>
-                    <p class="text-sm text-white/60 mb-6 leading-relaxed">Successful luxury investment strategy
-                        education, top industry expert columns, online live seminars, and beginner's guide.</p>
-                    <a href="#"
-                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">Take
-                        Courses <i class="fa-solid fa-arrow-right text-xs"></i></a>
-                </div>
-
-                <!-- Auction Dictionary -->
-                <div class="bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(212,175,55,0.05)] p-8 rounded-2xl border border-[rgba(212,175,55,0.1)] transition group">
-                    <div class="w-12 h-12 rounded-full bg-[rgba(212,175,55,0.1)] flex items-center justify-center mb-6">
-                        <i class="fa-solid fa-book text-2xl text-[#D4AF37] group-hover:scale-110 transition"></i>
-                    </div>
-                    <h4 class="font-bold text-lg mb-3 text-white">Auction Dictionary</h4>
-                    <p class="text-sm text-white/60 mb-6 leading-relaxed">A comprehensive collection of easily confusing
-                        global auction terminologies like Buyer's Premium, Reserve Price, and Condition Report.</p>
-                    <a href="#"
-                        class="text-sm text-[#D4AF37] font-semibold hover:text-[#F5D57B] transition flex items-center gap-1">Search
-                        Dictionary <i class="fa-solid fa-arrow-right text-xs"></i></a>
-                </div>
+      <!-- Card 4: Chanel Classic -->
+      <div class="lot-card glass-gold rounded-2xl overflow-hidden hover-glow transition-all duration-400 group cursor-pointer" onclick="window.location.href='/auction.html'">
+        <div class="h-[220px] overflow-hidden relative">
+          <img class="lot-img w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80&auto=format&fit=crop" alt="Chanel">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute top-3 left-3 bg-[rgba(212,175,55,.12)] border border-[rgba(212,175,55,.25)] rounded-full px-2.5 py-1 text-[10px] text-[#D4AF37]">종료 예정</div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest mb-0.5">Bonhams Paris</div>
+            <div class="font-serif text-[16px] font-medium text-white">Chanel Classic Flap M · Black</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-[10px] text-white/35 uppercase tracking-widest">현재 최고가</div>
+              <div class="font-serif text-[1.5rem] font-bold text-[#D4AF37]">$10,800</div>
             </div>
-        </section>
-
-        <!-- Global Auction Network Table -->
-        <section class="max-w-7xl mx-auto px-6 py-20">
-            <div class="mb-10">
-                <h2 class="text-3xl font-bold mb-3 flex items-center gap-3">
-                    <i class="fa-solid fa-globe text-[#D4AF37]"></i> LUXX GLOBAL AUCTION Network
-                </h2>
-                <p class="text-white/70 text-lg">
-                    LUXX is linked with top-tier luxury auctioneers and marketplaces worldwide via real-time API.<br
-                        class="hidden md:block">
-                    You can safely bid on all auctions below through LUXX Authentication.
-                </p>
+            <div class="text-right">
+              <div class="text-[10px] text-white/35 mb-0.5">입찰</div>
+              <div class="text-[16px] font-semibold text-white">9<span class="text-[11px] text-white/40 ml-1">bids</span></div>
             </div>
+          </div>
+          <div class="h-[2px] bg-white/5 rounded-full overflow-hidden mb-4">
+            <div class="h-full gbg rounded-full" style="width:42%;"></div>
+          </div>
+          <button class="w-full py-2.5 rounded-xl text-[13px] font-semibold gbg text-ink hover:brightness-110 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gavel text-xs"></i> 입찰 참여
+          </button>
+        </div>
+      </div>
 
-            <!-- Glassmorphism Table Wrapper -->
-            <div class="glass-card rounded-2xl overflow-hidden shadow-2xl">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left whitespace-nowrap">
-                        <thead>
-                            <tr class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] text-sm uppercase tracking-wider">
-                                <th class="px-6 py-4 font-semibold">Region</th>
-                                <th class="px-6 py-4 font-semibold">Site (Auctioneer)</th>
-                                <th class="px-6 py-4 font-semibold">Core Category</th>
-                                <th class="px-6 py-4 font-semibold">Buyer's Premium</th>
-                                <th class="px-6 py-4 font-semibold">Trust / Guarantee System</th>
-                                <th class="px-6 py-4 font-semibold">Remarks (API/Features)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/10 text-sm text-white/90">
-                            <!-- US Group -->
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Sotheby's</td>
-                                <td class="px-6 py-4">High-end Handbags/Watches</td>
-                                <td class="px-6 py-4">Varies by Tier (15~28%)</td>
-                                <td class="px-6 py-4 text-green-300"><i class="fa-solid fa-shield-halved mr-1"></i>Auth
-                                    Guarantee, App Support</td>
-                                <td class="px-6 py-4 text-white/60">Top-tier Luxury Target</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">eBay</td>
-                                <td class="px-6 py-4">All Categories (Largest)</td>
-                                <td class="px-6 py-4">Seller Fee Focus</td>
-                                <td class="px-6 py-4"><i class="fa-solid fa-check mr-1"></i>Physical Inspection</td>
-                                <td class="px-6 py-4 text-white/60">Mixed with Buy it Now</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Heritage Auctions</td>
-                                <td class="px-6 py-4">Vintage, Couture</td>
-                                <td class="px-6 py-4">Varies by Dept</td>
-                                <td class="px-6 py-4">In-house Appraisal</td>
-                                <td class="px-6 py-4 text-white/60">App Support</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">LiveAuctioneers</td>
-                                <td class="px-6 py-4">Jewelry, Watch Platform</td>
-                                <td class="px-6 py-4">Per Auctioneer Settings</td>
-                                <td class="px-6 py-4 text-yellow-300">Platform Immunity</td>
-                                <td class="px-6 py-4 text-white/60">3rd Party Shipping</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.3)]">US</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Invaluable</td>
-                                <td class="px-6 py-4">Jewelry, Watch Platform</td>
-                                <td class="px-6 py-4">Per Auctioneer Settings</td>
-                                <td class="px-6 py-4">Marketplace Role</td>
-                                <td class="px-6 py-4 text-white/60">Needs Extra Fee Check</td>
-                            </tr>
-
-                            <!-- UK Group -->
-                            <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.08)] text-white/80 px-2 py-1 rounded text-xs font-bold border border-white/20">UK</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Christie's</td>
-                                <td class="px-6 py-4">Luxury Handbags (Hermès)</td>
-                                <td class="px-6 py-4">Varies by Sale/Region</td>
-                                <td class="px-6 py-4 text-green-300"><i class="fa-solid fa-shield-halved mr-1"></i>Auth
-                                    Certificate</td>
-                                <td class="px-6 py-4 text-white/60">London Global HQ</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.08)] text-white/80 px-2 py-1 rounded text-xs font-bold border border-white/20">UK</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Phillips</td>
-                                <td class="px-6 py-4">High-end Watches/Jewelry</td>
-                                <td class="px-6 py-4">15~29% (Discount available)</td>
-                                <td class="px-6 py-4"><i class="fa-solid fa-video mr-1"></i>App-based Live Stream</td>
-                                <td class="px-6 py-4 text-white/60">Early Bid Fee Discount</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.08)] text-white/80 px-2 py-1 rounded text-xs font-bold border border-white/20">UK</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Bonhams</td>
-                                <td class="px-6 py-4">Jewelry/Watches</td>
-                                <td class="px-6 py-4">Varies by Sale (Max 33%)</td>
-                                <td class="px-6 py-4">Credible Traditional House</td>
-                                <td class="px-6 py-4 text-white/60">-</td>
-                            </tr>
-
-                            <!-- EU Group -->
-                            <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Catawiki (NL)</td>
-                                <td class="px-6 py-4">Fashion, Watches</td>
-                                <td class="px-6 py-4">9% + €3 (Buyer)</td>
-                                <td class="px-6 py-4">Virtual Review, Notary</td>
-                                <td class="px-6 py-4 text-white/60">Check Local Shipping</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Drouot.com (FR)</td>
-                                <td class="px-6 py-4">Watches, Brand Jewelry</td>
-                                <td class="px-6 py-4">25% + VAT (Auctioneer Set)</td>
-                                <td class="px-6 py-4">Paris-based Platform</td>
-                                <td class="px-6 py-4 text-white/60">Possible Separate Fee</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Antiquorum (CH)</td>
-                                <td class="px-6 py-4">Watch-focused Auctions</td>
-                                <td class="px-6 py-4">15~26%</td>
-                                <td class="px-6 py-4 text-green-300"><i
-                                        class="fa-solid fa-file-contract mr-1"></i>Strict Payment (7 Days)</td>
-                                <td class="px-6 py-4 text-white/60">Geneva Based</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">the-saleroom.com</td>
-                                <td class="px-6 py-4">General (UK-focused)</td>
-                                <td class="px-6 py-4">4.95% + VAT (Platform Fee)</td>
-                                <td class="px-6 py-4 text-yellow-300">Auctioneer Liability</td>
-                                <td class="px-6 py-4 text-white/60">Mobile Web Supported</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(212,175,55,0.08)] text-[#F5D57B] px-2 py-1 rounded text-xs font-bold border border-[rgba(212,175,55,0.2)]">EU</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Lot-tissimo (DE)</td>
-                                <td class="px-6 py-4">Antiques, Select Luxury</td>
-                                <td class="px-6 py-4">Varies by Sale</td>
-                                <td class="px-6 py-4">Platform Type</td>
-                                <td class="px-6 py-4 text-white/60">Germany Based</td>
-                            </tr>
-
-                            <!-- Japan Group -->
-                            <tr class="hover:bg-white/5 transition duration-150 border-t-2 border-white/20 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">Yahoo! Auctions</td>
-                                <td class="px-6 py-4">General C2C Luxury</td>
-                                <td class="px-6 py-4">Seller Fee 10%</td>
-                                <td class="px-6 py-4 text-green-300"><i
-                                        class="fa-solid fa-magnifying-glass mr-1"></i>Authentication Service</td>
-                                <td class="px-6 py-4 text-white/60">Maximum Liquidity</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">JBA</td>
-                                <td class="px-6 py-4">B2B Luxury Auctions</td>
-                                <td class="px-6 py-4">Varies by Member</td>
-                                <td class="px-6 py-4"><i class="fa-solid fa-certificate mr-1"></i>AACD Member, Strict
-                                    Auth</td>
-                                <td class="px-6 py-4 text-white/60">Expert/Corporate Focus</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150 bg-black/10">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">KOMEHYO Auction</td>
-                                <td class="px-6 py-4">Corporate Auctions</td>
-                                <td class="px-6 py-4">Join Fee ¥30k/Mon ¥3k</td>
-                                <td class="px-6 py-4">In-house Inspection</td>
-                                <td class="px-6 py-4 text-white/60">Overseas Bid Support</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition duration-150">
-                                <td class="px-6 py-4"><span
-                                        class="bg-[rgba(255,255,255,0.06)] text-white/70 px-2 py-1 rounded text-xs font-bold border border-white/15">JP</span>
-                                </td>
-                                <td class="px-6 py-4 font-bold text-white">ALLU AUCTION</td>
-                                <td class="px-6 py-4">Rare Watches</td>
-                                <td class="px-6 py-4">Hammer Fee 16.5%</td>
-                                <td class="px-6 py-4">Event-style Operation</td>
-                                <td class="px-6 py-4 text-white/60">B2B Focused</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+      <!-- Card 5: AP Royal Oak -->
+      <div class="lot-card glass-gold rounded-2xl overflow-hidden hover-glow transition-all duration-400 group cursor-pointer" onclick="window.location.href='/auction.html'">
+        <div class="h-[220px] overflow-hidden relative">
+          <img class="lot-img w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1626784215021-2e39ccf971cd?w=600&q=80&auto=format&fit=crop" alt="Audemars Piguet">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute top-3 left-3 flex items-center gap-1.5 bg-[rgba(10,10,10,.75)] border border-[rgba(212,175,55,.3)] rounded-full px-2.5 py-1 backdrop-blur-sm">
+            <div class="live-dot" style="width:5px;height:5px;"></div>
+            <span class="text-[10px] text-[#D4AF37] font-semibold tracking-wider">LIVE</span>
+          </div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest mb-0.5">Christie's Geneva</div>
+            <div class="font-serif text-[16px] font-medium text-white">Audemars Piguet Royal Oak 15202ST</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-[10px] text-white/35 uppercase tracking-widest">현재 최고가</div>
+              <div class="font-serif text-[1.5rem] font-bold text-[#D4AF37]">$48,000</div>
             </div>
-        </section>
-
-        <!-- Auction Preview Slider (Footer 위) -->
-        <section class="max-w-7xl mx-auto px-6 pt-6 pb-10">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl md:text-2xl font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-gavel text-[#D4AF37]"></i>
-                    Featured Luxury Lots
-                </h2>
-                <p class="text-[11px] md:text-xs text-white/60">Tap any item to sign in and join bidding.</p>
+            <div class="text-right">
+              <div class="text-[10px] text-white/35 mb-0.5">입찰</div>
+              <div class="text-[16px] font-semibold text-white">28<span class="text-[11px] text-white/40 ml-1">bids</span></div>
             </div>
-            <div class="glass-card-gold rounded-2xl p-4 border border-[rgba(212,175,55,0.2)] shadow-2xl overflow-hidden">
-                <div id="footer-auction-slider" class="flex items-stretch justify-start gap-3 transition-transform duration-500 ease-out">
-                    <!-- JS에서 글로벌 옥션 상품을 순차적으로 렌더링 -->
-                </div>
+          </div>
+          <div class="h-[2px] bg-white/5 rounded-full overflow-hidden mb-4">
+            <div class="h-full gbg rounded-full" style="width:69%;"></div>
+          </div>
+          <button class="w-full py-2.5 rounded-xl text-[13px] font-semibold gbg text-ink hover:brightness-110 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gavel text-xs"></i> 입찰 참여
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 6: Van Cleef Jewelry -->
+      <div class="lot-card glass-gold rounded-2xl overflow-hidden hover-glow transition-all duration-400 group cursor-pointer" onclick="window.location.href='/auction.html'">
+        <div class="h-[220px] overflow-hidden relative">
+          <img class="lot-img w-full h-full object-cover"
+               src="https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=600&q=80&auto=format&fit=crop" alt="Jewelry">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+          <div class="absolute top-3 left-3 bg-[rgba(212,175,55,.12)] border border-[rgba(212,175,55,.25)] rounded-full px-2.5 py-1 text-[10px] text-[#D4AF37]">예정 경매</div>
+          <div class="absolute bottom-3 left-3 right-3">
+            <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest mb-0.5">Sotheby's Geneva</div>
+            <div class="font-serif text-[16px] font-medium text-white">Van Cleef & Arpels Alhambra 10 Motifs</div>
+          </div>
+        </div>
+        <div class="p-5">
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <div class="text-[10px] text-white/35 uppercase tracking-widest">추정가</div>
+              <div class="font-serif text-[1.5rem] font-bold text-white">$6,000–$8,000</div>
             </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="border-t border-[rgba(212,175,55,0.1)] mt-20 bg-[#0A0A0A] pt-16 pb-10 text-white/60 text-xs">
-            <div class="max-w-7xl mx-auto px-6">
-                <!-- Corporate Info -->
-                <div class="mb-10 pb-10 border-b border-[rgba(212,175,55,0.1)]">
-                    <h3 class="text-white font-bold text-lg mb-5 tracking-wide">Society of International Specialized
-                        Auctioneers (LUXX LLC.)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-[11px] leading-relaxed">
-                        <div>
-                            <p><span class="text-white/40">Headquarters:</span> 30 N Gould St Ste R, Sheridan, WY 82801,
-                                United States</p>
-                            <p><span class="text-white/40">Corporate Registration No:</span> US-WY LLC-2026-8839201</p>
-                        </div>
-                        <div>
-                            <p><span class="text-white/40">Global Compliance & Escrow License:</span> FinCEN MSB
-                                Registration No. 31000189XXXXXX</p>
-                            <p><span class="text-white/40">Contact:</span> contact@world-LUXX.com | +1 (307) 555-0199
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legal Disclaimer -->
-                <div class="space-y-4 mb-10 text-[11px] leading-loose break-keep max-w-5xl">
-                    <p>LUXX LLC. is a legally registered corporate entity in the State of Wyoming, USA. All auction
-                        proxy services, Vault storage operations, and payment gateways strictly comply with
-                        international trade laws and anti-money laundering (AML) regulations.</p>
-                    <p>All bidding systems and asset vaults on this website operate under the control of the US
-                        headquarters, and services within regions are lawfully provided through local corporations and
-                        partners officially certified by LUXX.</p>
-                </div>
-
-                <!-- Copyright & Links -->
-                <div class="flex flex-col md:flex-row items-center justify-between pt-6 flex-wrap gap-4">
-                    <p class="font-mono text-[10px]">Copyright &copy; 2026 LUXX LLC. All Rights Reserved.</p>
-                    <div class="flex gap-4 font-medium text-white/70">
-                        <a href="/terms" class="hover:text-[#D4AF37] transition">Terms of Service</a>
-                        <span class="text-white/20">|</span>
-                        <a href="#" class="hover:text-[#D4AF37] transition">Privacy Policy</a>
-                        <span class="text-white/20">|</span>
-                        <a href="#" class="hover:text-[#D4AF37] transition">Vault Agreement</a>
-                    </div>
-                </div>
+            <div class="text-right">
+              <div class="text-[10px] text-white/35 mb-0.5">시작</div>
+              <div class="text-[13px] font-semibold text-white/60">2026.05.10</div>
             </div>
-        </footer>
-    </main>
+          </div>
+          <div class="h-[2px] bg-white/5 rounded-full overflow-hidden mb-4">
+            <div class="h-full bg-white/20 rounded-full" style="width:20%;"></div>
+          </div>
+          <button class="w-full py-2.5 rounded-xl text-[13px] font-medium border border-[rgba(212,175,55,.2)] text-[rgba(212,175,55,.8)] hover:bg-[rgba(212,175,55,.07)] hover:text-[#D4AF37] transition flex items-center justify-center gap-2">
+            <i class="fa-regular fa-bell text-xs"></i> 알림 설정
+          </button>
+        </div>
+      </div>
 
-    <!-- Number Counter Animation + Footer Auction Slider -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            // 숫자 카운터 애니메이션
-            const counters = document.querySelectorAll('.counter');
-            if (counters.length) {
-                const speed = 150;
+    </div>
 
-                const animateCounters = (entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const counter = entry.target;
-                            const target = parseFloat(counter.getAttribute('data-target'));
-                            const prefix = counter.getAttribute('data-prefix') || '';
-                            const suffix = counter.getAttribute('data-suffix') || '';
-                            const decimals = parseInt(counter.getAttribute('data-decimals')) || 0;
-                            const useComma = counter.getAttribute('data-comma') === 'true';
+    <!-- View all button -->
+    <div class="text-center mt-10">
+      <a href="/auction.html" class="inline-flex items-center gap-3 border border-[rgba(212,175,55,.25)] text-[rgba(212,175,55,.8)] hover:bg-[rgba(212,175,55,.07)] hover:text-[#D4AF37] hover:border-[rgba(212,175,55,.4)] transition px-8 py-3 rounded-full text-[14px] font-medium">
+        모든 경매 보기 <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</section>
 
-                            let count = 0;
-                            const increment = target / speed;
+<!-- ═══════════════════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════════════════ -->
+<section class="py-24 reveal" style="background:linear-gradient(180deg,#0A0A0A 0%,#0E0B04 50%,#0A0A0A 100%);">
+  <div class="max-w-[1400px] mx-auto px-8">
+    <div class="text-center mb-16">
+      <div class="text-[11px] tracking-[.35em] uppercase text-[#D4AF37] mb-3">How It Works</div>
+      <h2 class="font-serif font-light text-[2.4rem]">3단계로 완성되는<br><span class="gtext">명품 경매 대행</span></h2>
+    </div>
 
-                            const updateCount = () => {
-                                count += increment;
-                                if (count < target) {
-                                    let displayValue = decimals > 0 ? count.toFixed(decimals) : Math.floor(count);
-                                    if (useComma) displayValue = Number(displayValue).toLocaleString();
-                                    counter.innerText = prefix + displayValue + suffix;
-                                    requestAnimationFrame(updateCount);
-                                } else {
-                                    let finalValue = decimals > 0 ? target.toFixed(decimals) : target;
-                                    if (useComma) finalValue = Number(finalValue).toLocaleString();
-                                    counter.innerText = prefix + finalValue + suffix;
-                                }
-                            };
-                            updateCount();
-                            observer.unobserve(counter);
-                        }
-                    });
-                };
+    <div class="grid md:grid-cols-3 gap-8 relative">
+      <!-- Connector line -->
+      <div class="hidden md:block absolute top-10 left-[calc(16.66%+2rem)] right-[calc(16.66%+2rem)] h-px" style="background:linear-gradient(90deg,transparent,rgba(212,175,55,.3),transparent);top:2.5rem;"></div>
 
-                const observer = new IntersectionObserver(animateCounters, {
-                    threshold: 0.5
-                });
+      <!-- Step 1 -->
+      <div class="glass-gold rounded-2xl p-8 text-center hover-glow transition">
+        <div class="w-16 h-16 mx-auto mb-6 rounded-full gbg flex items-center justify-center shadow-lg shadow-[rgba(212,175,55,.2)]">
+          <i class="fa-solid fa-search text-ink text-xl"></i>
+        </div>
+        <div class="text-[11px] tracking-[.3em] uppercase text-[rgba(212,175,55,.5)] mb-2">Step 01</div>
+        <h3 class="font-serif text-[1.3rem] font-semibold mb-3">상품 탐색 & 의뢰</h3>
+        <p class="text-[14px] text-white/50 leading-relaxed">전 세계 경매 사이트에서 원하는 명품을 찾아 LUXX에 입찰 의뢰를 보내세요. 전문가가 시장가 분석 후 전략적 입찰가를 제안합니다.</p>
+      </div>
 
-                counters.forEach(counter => observer.observe(counter));
-            }
+      <!-- Step 2 -->
+      <div class="glass-gold rounded-2xl p-8 text-center hover-glow transition">
+        <div class="w-16 h-16 mx-auto mb-6 rounded-full gbg flex items-center justify-center shadow-lg shadow-[rgba(212,175,55,.2)]">
+          <i class="fa-solid fa-gavel text-ink text-xl"></i>
+        </div>
+        <div class="text-[11px] tracking-[.3em] uppercase text-[rgba(212,175,55,.5)] mb-2">Step 02</div>
+        <h3 class="font-serif text-[1.3rem] font-semibold mb-3">실시간 자동 입찰</h3>
+        <p class="text-[14px] text-white/50 leading-relaxed">K-VAN 자동화 시스템이 최적 타이밍에 입찰을 진행합니다. 낙찰 즉시 카카오톡 · 문자로 결과를 알려드립니다.</p>
+      </div>
 
-            // Footer Auction Slider: 글로벌 옥션 페이지와 동일한 상품 데이터 일부 사용
-            const sliderEl = document.getElementById('footer-auction-slider');
-            if (sliderEl) {
-                // 옥션 페이지 csvData 와 동일한 구조 (상위 일부만 사용)
-                const csvData = `가격(KRW),브랜드,모델명,경매거래소
-100000,Gucci,GG 캔버스 카드지갑 (B급),야후옥션(Japan)
-200000,Louis Vuitton,다미에 에벤 키홀더,다이코쿠야(Japan)
-300000,Prada,사피아노 레더 장지갑,베스티에르 콜렉티브
-400000,Balenciaga,스피드러너 스니커즈 (B급),더리얼리얼
-500000,Chanel,까멜리아 레더 브로치,야후옥션(Japan)
-600000,Hermes,클리퍼 쿼츠 시계 (여성용, 콤비),다이코쿠야(Japan)
-700000,Goyard,생수피 카드지갑,더리얼리얼
-800000,Louis Vuitton,네버풀 MM (파우치 없음, 태닝 진행),세컨스트리트(Japan)
-900000,Gucci,재키 1961 호보백 (빈티지 복각),코메효(Japan)
-1000000,Rolex,오이스터 데이트 6694 (수동),야후옥션(Japan)`;
+      <!-- Step 3 -->
+      <div class="glass-gold rounded-2xl p-8 text-center hover-glow transition">
+        <div class="w-16 h-16 mx-auto mb-6 rounded-full gbg flex items-center justify-center shadow-lg shadow-[rgba(212,175,55,.2)]">
+          <i class="fa-solid fa-shield-halved text-ink text-xl"></i>
+        </div>
+        <div class="text-[11px] tracking-[.3em] uppercase text-[rgba(212,175,55,.5)] mb-2">Step 03</div>
+        <h3 class="font-serif text-[1.3rem] font-semibold mb-3">LUXX 인증 & 배송</h3>
+        <p class="text-[14px] text-white/50 leading-relaxed">낙찰 상품은 LUXX Vault에 안전 보관 후 진품 감정 · 포장 · 국제 배송까지 원스톱으로 처리합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-                const imgUrls = [
-                    'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=400&q=80',
-                    'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=400&q=80',
-                    'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=400&q=80',
-                    'https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?auto=format&fit=crop&w=400&q=400&q=80'
-                ];
+<!-- ═══════════════════════════════════════════════════════
+     WHY LUXX — TRUST SECTION
+═══════════════════════════════════════════════════════ -->
+<section class="py-24 reveal">
+  <div class="max-w-[1400px] mx-auto px-8">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
 
-                const rows = csvData.trim().split('\n').slice(1);
-                const items = rows.map((row) => {
-                    const cols = row.split(',');
-                    const price = parseInt(cols[0], 10) || 0;
-                    const brand = cols[1] || '';
-                    const model = cols[2] || '';
-                    const exchange = cols[3] || '';
+      <!-- Left: image collage -->
+      <div class="relative h-[480px]">
+        <div class="absolute top-0 left-0 w-[280px] h-[360px] rounded-2xl overflow-hidden gborder shadow-2xl">
+          <img src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=600&q=80&auto=format&fit=crop" class="w-full h-full object-cover opacity-80">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(212,175,55,.1),transparent);"></div>
+        </div>
+        <div class="absolute bottom-0 right-0 w-[260px] h-[300px] rounded-2xl overflow-hidden gborder shadow-2xl">
+          <img src="https://images.unsplash.com/photo-1580822184713-fc5400e7fe10?w=600&q=80&auto=format&fit=crop" class="w-full h-full object-cover opacity-80">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(212,175,55,.08),transparent);"></div>
+        </div>
+        <!-- Floating badge -->
+        <div class="absolute top-[180px] right-[220px] glass-gold rounded-2xl p-4 shadow-2xl border border-[rgba(212,175,55,.25)] z-10 min-w-[160px]">
+          <div class="text-[10px] text-[rgba(212,175,55,.6)] tracking-widest uppercase mb-1.5">LUXX 인증 완료</div>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 gbg rounded-lg flex items-center justify-center">
+              <i class="fa-solid fa-shield-check text-ink text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[13px] font-semibold">진품 확인됨</div>
+              <div class="text-[11px] text-[#D4AF37]">Hermès · 2023</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                    // 랜덤 뱃지/태그 생성
-                    const badges = [
-                        { badge: 'LIVE', color: 'bg-yellow-400', tag: 'Ends in 02:14' },
-                        { badge: 'BUY NOW', color: 'bg-emerald-400', tag: 'New York' },
-                        { badge: 'HOT', color: 'bg-red-400', tag: '12 Bids' },
-                        { badge: 'RESERVE', color: 'bg-[#9B7A1C]', tag: 'EU · Online' }
-                    ];
-                    const b = badges[Math.floor(Math.random() * badges.length)];
+      <!-- Right: content -->
+      <div>
+        <div class="text-[11px] tracking-[.35em] uppercase text-[#D4AF37] mb-4">Why LUXX</div>
+        <h2 class="font-serif font-light text-[2.4rem] leading-tight mb-6">신뢰할 수 있는<br><span class="gtext">명품 경매 파트너</span></h2>
+        <p class="text-[16px] text-white/50 leading-relaxed mb-10">2019년 설립 이후 전 세계 52,000여 명의 회원이 선택한 LUXX. 전문 감정사와 자동화 입찰 시스템으로 최적의 낙찰을 보장합니다.</p>
 
-                    const img = imgUrls[Math.floor(Math.random() * imgUrls.length)];
+        <!-- Trust items -->
+        <div class="space-y-5">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 gbg rounded-xl flex items-center justify-center shrink-0 shadow-md">
+              <i class="fa-solid fa-gem text-ink text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-1 text-[15px]">LUXX 감정 보증</h4>
+              <p class="text-[14px] text-white/45 leading-relaxed">글로벌 공인 감정사가 직접 검수한 상품만 취급. 가품 판정 시 전액 환불.</p>
+            </div>
+          </div>
+          <div class="h-px bg-[rgba(212,175,55,.08)]"></div>
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 gbg rounded-xl flex items-center justify-center shrink-0 shadow-md">
+              <i class="fa-solid fa-lock text-ink text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-1 text-[15px]">안전한 에스크로 결제</h4>
+              <p class="text-[14px] text-white/45 leading-relaxed">낙찰금은 LUXX Vault 에스크로에 보관. 실물 수령 확인 후 정산 처리.</p>
+            </div>
+          </div>
+          <div class="h-px bg-[rgba(212,175,55,.08)]"></div>
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 gbg rounded-xl flex items-center justify-center shrink-0 shadow-md">
+              <i class="fa-solid fa-clock-rotate-left text-ink text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-1 text-[15px]">24/7 실시간 입찰 대행</h4>
+              <p class="text-[14px] text-white/45 leading-relaxed">자동화 시스템으로 시간대 무관하게 최적 타이밍에 입찰. 낙찰 즉시 알림.</p>
+            </div>
+          </div>
+          <div class="h-px bg-[rgba(212,175,55,.08)]"></div>
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 gbg rounded-xl flex items-center justify-center shrink-0 shadow-md">
+              <i class="fa-solid fa-plane text-ink text-sm"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-1 text-[15px]">전 세계 배송 & 통관 대행</h4>
+              <p class="text-[14px] text-white/45 leading-relaxed">일본·미국·유럽 경매장에서 국내까지 보험 포함 안심 배송.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-                    return {
-                        img,
-                        badge: b.badge,
-                        badgeColor: b.color,
-                        tag: b.tag,
-                        title: `${brand} ${model}`,
-                        price: `₩${price.toLocaleString('ko-KR')}`,
-                        meta: exchange
-                    };
-                });
+<!-- ═══════════════════════════════════════════════════════
+     FEATURED BRANDS
+═══════════════════════════════════════════════════════ -->
+<section class="py-20 reveal" style="background:#0D0A03;">
+  <div class="max-w-[1400px] mx-auto px-8">
+    <div class="text-center mb-12">
+      <div class="text-[11px] tracking-[.35em] uppercase text-[#D4AF37] mb-3">Brand Pavilion</div>
+      <h2 class="font-serif font-light text-[2.2rem]">취급 <span class="gtext">명품 브랜드</span></h2>
+    </div>
 
-                let startIndex = 0;
-                const visibleCount = 4;
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">👜</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Hermès</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Birkin · Kelly · Constance</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">⌚</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Rolex</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Submariner · Daytona · GMT</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">🖤</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Chanel</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Classic · 2.55 · Boy</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">💎</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Patek Philippe</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Nautilus · Calatrava</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">🧳</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Louis Vuitton</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Neverfull · Capucines</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">⚙️</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Audemars Piguet</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Royal Oak · Offshore</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">🌸</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Van Cleef & Arpels</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Alhambra · Perlee</div>
+      </div>
+      <div class="glass-gold rounded-2xl p-6 text-center hover-glow transition group cursor-pointer">
+        <div class="text-4xl mb-3 group-hover:scale-110 transition">🎩</div>
+        <div class="font-serif text-[18px] font-medium text-white mb-1">Cartier</div>
+        <div class="text-[12px] text-[rgba(212,175,55,.6)]">Love · Tank · Panthere</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-                function renderSlider() {
-                    // 현재 startIndex 기준으로 4개 카드 생성
-                    let html = '';
-                    for (let i = 0; i < visibleCount; i++) {
-                        const item = items[(startIndex + i) % items.length];
-                        html += `
-                        <button onclick="window.location.href='login.html'"
-                            class="min-w-0 flex-1 bg-white/5 hover:bg-white/15 rounded-2xl overflow-hidden border border-white/15 text-left flex flex-col">
-                            <div class="h-28 md:h-32 bg-cover bg-center"
-                                style="background-image:url('${item.img}');">
-                                <div class="h-full w-full bg-black/40 flex items-start justify-between p-2 text-[9px] md:text-[10px]">
-                                    <span class="${item.badgeColor} text-black px-2 py-0.5 rounded-full font-bold">${item.badge}</span>
-                                    <span class="bg-black/50 text-white px-2 py-0.5 rounded-full font-mono">${item.tag}</span>
-                                </div>
-                            </div>
-                            <div class="p-2.5 md:p-3 space-y-0.5 md:space-y-1 flex-1">
-                                <p class="text-[10px] md:text-[11px] text-white/70 truncate">${item.title}</p>
-                                <p class="text-[11px] md:text-xs font-bold text-[#D4AF37]">${item.price}</p>
-                                <p class="text-[9px] md:text-[10px] text-white/50 truncate">${item.meta}</p>
-                            </div>
-                        </button>`;
-                    }
-                    sliderEl.innerHTML = html;
-                }
+<!-- ═══════════════════════════════════════════════════════
+     CTA BANNER
+═══════════════════════════════════════════════════════ -->
+<section class="py-24 reveal relative overflow-hidden">
+  <div class="absolute inset-0 z-0" style="background:linear-gradient(135deg,rgba(212,175,55,.06) 0%,rgba(0,0,0,0) 50%,rgba(212,175,55,.04) 100%);"></div>
+  <div class="absolute inset-0 z-0 gborder" style="margin:2rem;border-radius:2rem;"></div>
+  <div class="relative z-10 max-w-[1400px] mx-auto px-8 text-center">
+    <div class="text-5xl mb-6">
+      <svg width="60" height="60" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto">
+        <polygon points="20,3 37,14 31,37 9,37 3,14" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
+        <polygon points="20,3 10,14 20,21 30,14" fill="#D4AF37" opacity=".95"/>
+        <polygon points="10,14 9,37 20,21" fill="#F5D57B" opacity=".75"/>
+        <polygon points="30,14 31,37 20,21" fill="#C9A22A" opacity=".75"/>
+        <polygon points="9,37 31,37 20,21" fill="#E8C84A" opacity=".85"/>
+      </svg>
+    </div>
+    <h2 class="font-serif font-light text-[3rem] leading-tight mb-4">지금 LUXX에 합류하세요</h2>
+    <p class="text-[17px] text-white/45 mb-10 max-w-xl mx-auto leading-relaxed">52,000명의 회원이 이미 경험한 글로벌 명품 경매 대행 서비스. 첫 의뢰 수수료 10% 할인 혜택을 드립니다.</p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button onclick="window.location.href='/login.html'" class="gbg text-ink font-semibold px-10 py-4 rounded-full text-[16px] hover:brightness-110 transition shadow-xl shadow-[rgba(212,175,55,.2)]">
+        무료 회원가입
+      </button>
+      <button onclick="window.location.href='/agency-register.html'" class="px-10 py-4 rounded-full text-[16px] font-medium border border-[rgba(212,175,55,.25)] text-white/70 hover:bg-[rgba(212,175,55,.07)] hover:text-[#D4AF37] transition">
+        파트너 대행사 등록
+      </button>
+    </div>
+  </div>
+</section>
 
-                if (items.length) {
-                    renderSlider();
-                    setInterval(function () {
-                        startIndex = (startIndex + 1) % items.length; // 한 칸씩 오른쪽으로 이동
-                        renderSlider();
-                    }, 4000);
-                }
-            }
-        });
-    </script>
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════ -->
+<footer class="bg-ink-2 gborder-t pt-16 pb-8">
+  <div class="max-w-[1400px] mx-auto px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
+
+      <!-- Brand -->
+      <div class="col-span-2 md:col-span-1">
+        <div class="flex items-center gap-2.5 mb-5">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+            <polygon points="20,3 37,14 31,37 9,37 3,14" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
+            <polygon points="20,3 10,14 20,21 30,14" fill="#D4AF37" opacity=".9"/>
+            <polygon points="10,14 9,37 20,21" fill="#F5D57B" opacity=".7"/>
+            <polygon points="30,14 31,37 20,21" fill="#C9A22A" opacity=".7"/>
+            <polygon points="9,37 31,37 20,21" fill="#E8C84A" opacity=".8"/>
+          </svg>
+          <span class="font-serif font-bold text-[22px] tracking-[.1em]" style="background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
+        </div>
+        <p class="text-[13px] text-white/35 leading-relaxed mb-5">전 세계 프리미엄 명품 경매 대행 플랫폼. 신뢰, 인증, 그리고 완벽한 서비스.</p>
+        <div class="flex gap-3">
+          <a href="#" class="w-8 h-8 glass rounded-lg flex items-center justify-center text-[rgba(212,175,55,.5)] hover:text-[#D4AF37] hover:border-[rgba(212,175,55,.3)] transition"><i class="fab fa-instagram text-sm"></i></a>
+          <a href="#" class="w-8 h-8 glass rounded-lg flex items-center justify-center text-[rgba(212,175,55,.5)] hover:text-[#D4AF37] transition"><i class="fab fa-youtube text-sm"></i></a>
+          <a href="#" class="w-8 h-8 glass rounded-lg flex items-center justify-center text-[rgba(212,175,55,.5)] hover:text-[#D4AF37] transition"><i class="fab fa-twitter text-sm"></i></a>
+        </div>
+      </div>
+
+      <!-- Services -->
+      <div>
+        <h5 class="text-[12px] tracking-[.2em] uppercase text-[#D4AF37] mb-4">Services</h5>
+        <ul class="space-y-2.5 text-[13px] text-white/40">
+          <li><a href="/auction.html" class="hover:text-[#D4AF37] transition">글로벌 경매 입찰</a></li>
+          <li><a href="/" class="hover:text-[#D4AF37] transition">LUXX Vault 보관</a></li>
+          <li><a href="/agency-register.html" class="hover:text-[#D4AF37] transition">파트너 대행사</a></li>
+          <li><a href="/" class="hover:text-[#D4AF37] transition">진품 감정</a></li>
+          <li><a href="/" class="hover:text-[#D4AF37] transition">국제 배송</a></li>
+        </ul>
+      </div>
+
+      <!-- Support -->
+      <div>
+        <h5 class="text-[12px] tracking-[.2em] uppercase text-[#D4AF37] mb-4">Support</h5>
+        <ul class="space-y-2.5 text-[13px] text-white/40">
+          <li><a href="/terms.html" class="hover:text-[#D4AF37] transition">이용 약관</a></li>
+          <li><a href="/terms.html" class="hover:text-[#D4AF37] transition">개인정보 처리방침</a></li>
+          <li><a href="/" class="hover:text-[#D4AF37] transition">FAQ</a></li>
+          <li><a href="/" class="hover:text-[#D4AF37] transition">고객센터</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h5 class="text-[12px] tracking-[.2em] uppercase text-[#D4AF37] mb-4">Contact</h5>
+        <ul class="space-y-2.5 text-[13px] text-white/40">
+          <li class="flex items-center gap-2"><i class="fa-solid fa-envelope text-[rgba(212,175,55,.4)] text-xs w-4"></i>support@luxxbid.com</li>
+          <li class="flex items-center gap-2"><i class="fa-solid fa-clock text-[rgba(212,175,55,.4)] text-xs w-4"></i>24/7 운영</li>
+          <li class="flex items-center gap-2"><i class="fa-brands fa-kakao text-[rgba(212,175,55,.4)] text-xs w-4"></i>카카오톡 상담</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="gdivider mb-6"></div>
+
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-[12px] text-white/20">
+      <div>© 2026 LUXX Global Auction. All rights reserved.</div>
+      <div class="flex items-center gap-2">
+        <span class="text-[rgba(212,175,55,.3)]">◆</span>
+        <span>luxxbid.com</span>
+        <span class="text-[rgba(212,175,55,.3)]">◆</span>
+      </div>
+      <div>사업자등록번호: 000-00-00000</div>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════ -->
+<script>
+// ── Hero countdown timer ──────────────────────────────────
+(function(){
+  var t=2*3600+14*60+38;
+  var el=document.getElementById('hero-timer');
+  if(!el)return;
+  setInterval(function(){
+    if(t<=0)return;
+    t--;
+    var h=String(Math.floor(t/3600)).padStart(2,'0');
+    var m=String(Math.floor((t%3600)/60)).padStart(2,'0');
+    var s=String(t%60).padStart(2,'0');
+    el.textContent=h+':'+m+':'+s;
+  },1000);
+})();
+
+// ── Animated counters ─────────────────────────────────────
+(function(){
+  function animateCounter(el){
+    var target=parseFloat(el.dataset.target)||0;
+    var comma=el.dataset.comma==='true';
+    var prefix=el.dataset.prefix||'';
+    var suffix=el.dataset.suffix||'';
+    var decimals=parseInt(el.dataset.decimals)||0;
+    var duration=1800;
+    var start=performance.now();
+    function step(ts){
+      var p=Math.min((ts-start)/duration,1);
+      var ease=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      var val=target*ease;
+      var formatted=decimals>0?val.toFixed(decimals):Math.floor(val).toString();
+      if(comma)formatted=parseInt(formatted).toLocaleString();
+      el.textContent=prefix+formatted+suffix;
+      if(p<1)requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.querySelectorAll('.counter').forEach(animateCounter);
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:.3});
+  document.querySelectorAll('section').forEach(function(s){io.observe(s);});
+})();
+
+// ── Reveal on scroll ─────────────────────────────────────
+(function(){
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+    });
+  },{threshold:.08});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+})();
+</script>
+
 </body>
-
 </html>
