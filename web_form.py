@@ -2887,6 +2887,16 @@ def home():
     return "<h1>World LUXX</h1>", 200
 
 
+@app.route("/signup.html", methods=["GET"])
+@app.route("/signup", methods=["GET"])
+def signup_page():
+    """회원가입 페이지(signup.html) 제공."""
+    path = BASE_DIR / "signup.html"
+    if path.exists():
+        return send_file(path)
+    return "<p>signup.html 파일을 찾을 수 없습니다.</p>", 404
+
+
 @app.route("/auction.html", methods=["GET"])
 def auction_page():
     """GLOBAL AUCTION 버튼용 정적 옥션 페이지."""
