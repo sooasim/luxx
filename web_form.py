@@ -4390,8 +4390,8 @@ def admin():
       <meta charset="UTF-8" />
       <title>LUXX K-VAN 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
-      <!-- LUXX 브랜드 파비콘 -->
-      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
+      <!-- LUXX 다이아몬드 파비콘 -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
       <script>
         if (screen.width < 1280) {
           var vp = document.getElementById('viewport-meta');
@@ -4399,7 +4399,7 @@ def admin():
         }
       </script>
       <!-- 폰트 / 아이콘 / Tailwind -->
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
@@ -4407,13 +4407,14 @@ def admin():
           theme: {
             extend: {
               fontFamily: {
+                brand: ['"Cinzel"', 'serif'],
                 sans: ['Inter', 'sans-serif'],
               },
               colors: {
                 brand: {
-                  blue: '#2f4b9f',
-                  dark: '#1e326b',
-                  accent: '#e6edf7'
+                  blue: '#080705',
+                  dark: '#0D0A03',
+                  accent: 'rgba(212,175,55,0.1)'
                 }
               }
             }
@@ -4422,47 +4423,47 @@ def admin():
       </script>
       <style>
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
-        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        ::-webkit-scrollbar-track { background: #080705; }
+        ::-webkit-scrollbar-thumb { background: #9B7A1C; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
 
         .glass-card {
-          background: rgba(255, 255, 255, 0.06);
+          background: rgba(212,175,55,0.05);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
-          border: 1px solid rgba(255, 255, 255, 0.22);
+          border: 1px solid rgba(212,175,55,0.18);
         }
 
         .admin-card-inner {
-          background: rgba(15,23,42,0.92);
+          background: rgba(8,7,5,0.95);
           border-radius: 1.5rem;
           padding: 18px 18px 20px;
-          box-shadow: 0 22px 60px rgba(15,23,42,0.9);
-          border: 1px solid #1f2937;
+          box-shadow: 0 22px 60px rgba(0,0,0,0.9);
+          border: 1px solid rgba(212,175,55,0.15);
         }
 
-        label { display:block; font-size:13px; font-weight:600; color:#9ca3af; margin-bottom:4px; }
-        input, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #374151; background:#020617; color:#e5e7eb; box-sizing:border-box; font-size:14px; }
-        input:focus, select:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 1px #3b82f6; }
+        label { display:block; font-size:13px; font-weight:600; color:rgba(212,175,55,0.7); margin-bottom:4px; }
+        input, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(212,175,55,0.2); background:rgba(255,255,255,0.04); color:#e5e7eb; box-sizing:border-box; font-size:14px; }
+        input:focus, select:focus { outline:none; border-color:#D4AF37; box-shadow:0 0 0 1px rgba(212,175,55,0.4); }
         .grid { display:grid; grid-template-columns:2fr 1.5fr; gap:16px; margin-top:8px; }
         .actions { margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
         .btn-pill { border:none; border-radius:999px; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; }
-        .btn-primary { background:#3b82f6; color:white; }
-        .btn-primary:hover { background:#2563eb; }
-        .btn-secondary { background:transparent; color:#e5e7eb; border:1px solid #4b5563; }
-        .btn-secondary:hover { background:#111827; }
-        .hint { font-size:12px; color:#9ca3af; margin-top:4px; }
-        .status-card { margin-top:18px; padding:14px 12px; border-radius:16px; background:#020617; border:1px dashed #374151; font-size:13px; }
-        .box-schema { position:sticky; top:72px; z-index:4; margin:6px 0 10px; padding:6px 8px; border-radius:8px; border:1px solid #334155; background:#0b1220; color:#93c5fd; font-size:10px; line-height:1.35; }
-        .box-schema code { color:#bfdbfe; }
-        .table-sticky thead th { position: sticky; top: 0; background: #0b1220; z-index: 3; }
-        .status-title { font-size:13px; font-weight:600; color:#9ca3af; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+        .btn-primary { background:linear-gradient(135deg,#9B7A1C,#D4AF37,#F5D57B,#D4AF37,#9B7A1C); color:#080705; }
+        .btn-primary:hover { filter:brightness(1.1); }
+        .btn-secondary { background:rgba(212,175,55,0.08); color:#e5e7eb; border:1px solid rgba(212,175,55,0.25); }
+        .btn-secondary:hover { background:rgba(212,175,55,0.14); }
+        .hint { font-size:12px; color:rgba(255,255,255,0.4); margin-top:4px; }
+        .status-card { margin-top:18px; padding:14px 12px; border-radius:16px; background:rgba(0,0,0,0.4); border:1px dashed rgba(212,175,55,0.2); font-size:13px; }
+        .box-schema { position:sticky; top:72px; z-index:4; margin:6px 0 10px; padding:6px 8px; border-radius:8px; border:1px solid rgba(212,175,55,0.15); background:#0D0A03; color:#D4AF37; font-size:10px; line-height:1.35; }
+        .box-schema code { color:#F5D57B; }
+        .table-sticky thead th { position: sticky; top: 0; background: #0D0A03; z-index: 3; }
+        .status-title { font-size:13px; font-weight:600; color:rgba(212,175,55,0.7); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
         .status-row { display:flex; justify-content:space-between; margin-bottom:4px; gap:8px; }
-        .status-label { color:#9ca3af; font-size:12px; }
+        .status-label { color:rgba(255,255,255,0.45); font-size:12px; }
         .status-value { color:#e5e7eb; font-size:12px; text-align:right; }
-        .link-box { margin-top:8px; padding:8px 10px; border-radius:12px; background:#020617; border:1px solid #1f2937; display:flex; gap:8px; align-items:center; }
+        .link-box { margin-top:8px; padding:8px 10px; border-radius:12px; background:rgba(0,0,0,0.4); border:1px solid rgba(212,175,55,0.15); display:flex; gap:8px; align-items:center; }
         .link-text { flex:1; font-size:12px; color:#e5e7eb; word-break:break-all; }
-        .msg { margin-top:10px; font-size:12px; color:#a5b4fc; }
+        .msg { margin-top:10px; font-size:12px; color:#D4AF37; }
         .pill-btn { border-radius:999px; padding:6px 10px; font-size:11px; border:none; cursor:pointer; }
         .pill-danger { background:#b91c1c; color:#fef2f2; }
         .pill-muted { background:#111827; color:#e5e7eb; border:1px solid #4b5563; }
@@ -4563,17 +4564,31 @@ def admin():
         </div>
       </div>
       <!-- 헤더 -->
-      <header class="fixed top-0 left-0 right-0 z-30 glass-card border-b border-white/10">
+      <header class="fixed top-0 left-0 right-0 z-30 glass-card border-b border-[rgba(212,175,55,0.15)]" style="background:rgba(8,7,5,0.9);">
         <div class="max-w-[96vw] mx-auto px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-globe text-white text-xl drop-shadow-sm"></i>
+          <div class="flex items-center gap-3">
+            <svg width="28" height="32" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
+              <polygon points="12,8 0,20 10,20" fill="#4A3608"/>
+              <polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.9"/>
+              <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
+              <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
+              <polygon points="0,20 10,20 26,36" fill="#6A4E0E"/>
+              <polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.85"/>
+              <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
+              <polygon points="0,20 26,36 26,56" fill="#2E2203"/>
+              <polygon points="52,20 26,56 26,36" fill="#4A3608"/>
+              <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/>
+              <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/>
+              <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+              <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+            </svg>
             <div class="flex flex-col leading-tight">
-              <span class="text-xs font-semibold tracking-[0.18em] uppercase text-white/70">LUXX</span>
-              <span class="text-xs text-white/80">K-VAN Payment Admin</span>
+              <span style="font-family:'Cinzel',serif;font-weight:700;font-size:0.95rem;letter-spacing:0.22em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
+              <span class="text-[10px] text-[rgba(212,175,55,0.5)] tracking-widest">K-VAN Payment Admin</span>
             </div>
           </div>
-          <div class="hidden sm:flex items-center gap-2 text-[11px] text-white/70">
-            <span class="px-2 py-1 rounded-full bg-black/20 border border-white/20">실시간 결제 세션 관리</span>
+          <div class="hidden sm:flex items-center gap-2 text-[11px] text-[rgba(212,175,55,0.6)]">
+            <span class="px-2 py-1 rounded-full bg-[rgba(212,175,55,0.08)] border border-[rgba(212,175,55,0.2)]">실시간 결제 세션 관리</span>
           </div>
         </div>
       </header>
@@ -5021,10 +5036,11 @@ def hq_login():
           if (vp) vp.setAttribute('content', 'width=1280');
         }
       </script>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 60'><polygon points='12,8 0,20 10,20' fill='%235A440A'/><polygon points='12,8 10,20 26,20 26,8' fill='%23F5D57B' opacity='0.9'/><polygon points='40,8 26,8 26,20 42,20' fill='%23D4AF37'/><polygon points='40,8 42,20 52,20' fill='%239B7A1C'/><polygon points='0,20 10,20 26,36' fill='%237A5E10'/><polygon points='10,20 42,20 26,36' fill='%23FFF5C0' opacity='0.85'/><polygon points='42,20 52,20 26,36' fill='%239B7A1C'/><polygon points='0,20 26,36 26,56' fill='%233A2D05'/><polygon points='52,20 26,56 26,36' fill='%235A440A'/></svg>">
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
-        body { background-color: #2f4b9f; }
+        body { background-color: #080705; }
         /* 결제 폼의 결과 모달 오버레이가 남아 있어도 로그인 화면에서는 항상 숨긴다. */
         #result-modal,
         .result-backdrop {
@@ -5032,23 +5048,40 @@ def hq_login():
         }
       </style>
     </head>
-    <body class="bg-[#2f4b9f] text-white font-[Inter] min-h-screen flex items-center justify-center">
-      <div class="bg-white/10 border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
-        <h1 class="text-xl font-bold mb-2 text-center">LUXX HQ Admin</h1>
-        <p class="text-xs text-white/70 text-center mb-6">본사 전용 어드민 로그인</p>
+    <body class="bg-[#080705] text-white font-[Inter] min-h-screen flex items-center justify-center">
+      <div class="bg-[rgba(212,175,55,0.08)] border border-[rgba(212,175,55,0.2)] rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
+        <div class="flex justify-center mb-3">
+          <svg width="32" height="37" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <polygon points="12,8 0,20 10,20" fill="#5A440A"/>
+            <polygon points="12,8 10,20 26,20 26,8" fill="#F5D57B" opacity="0.9"/>
+            <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
+            <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
+            <polygon points="0,20 10,20 26,36" fill="#7A5E10"/>
+            <polygon points="10,20 42,20 26,36" fill="#FFF5C0" opacity="0.85"/>
+            <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
+            <polygon points="0,20 26,36 26,56" fill="#3A2D05"/>
+            <polygon points="52,20 26,56 26,36" fill="#5A440A"/>
+            <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/>
+            <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/>
+            <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+            <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold mb-2 text-center"><span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.25em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span> HQ Admin</h1>
+        <p class="text-xs text-[rgba(212,175,55,0.6)] text-center mb-6">본사 전용 어드민 로그인</p>
         <form method="post" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-white/70 mb-1">아이디</label>
-            <input name="username" type="text" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="admin" />
+            <label class="block text-xs font-semibold text-[rgba(212,175,55,0.7)] mb-1">아이디</label>
+            <input name="username" type="text" required class="w-full border border-[rgba(212,175,55,0.2)] bg-[rgba(255,255,255,0.05)] rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[rgba(212,175,55,0.5)]" placeholder="admin" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-white/70 mb-1">비밀번호</label>
-            <input name="password" type="password" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="********" />
+            <label class="block text-xs font-semibold text-[rgba(212,175,55,0.7)] mb-1">비밀번호</label>
+            <input name="password" type="password" required class="w-full border border-[rgba(212,175,55,0.2)] bg-[rgba(255,255,255,0.05)] rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[rgba(212,175,55,0.5)]" placeholder="********" />
           </div>
           {% if error %}
-          <p class="text-xs text-red-200">{{ error }}</p>
+          <p class="text-xs text-red-300">{{ error }}</p>
           {% endif %}
-          <button type="submit" class="w-full mt-2 bg-white text-brand-blue font-bold py-2.5 rounded-lg hover:bg-brand-accent transition">
+          <button type="submit" class="w-full mt-2 font-bold py-2.5 rounded-lg transition" style="background:linear-gradient(135deg,#9B7A1C,#D4AF37,#F5D57B,#D4AF37,#9B7A1C);color:#080705;font-weight:700;">
             로그인
           </button>
         </form>
@@ -5091,8 +5124,9 @@ def agency_login():
           if (vp) vp.setAttribute('content', 'width=1280');
         }
       </script>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 60'><polygon points='12,8 0,20 10,20' fill='%235A440A'/><polygon points='12,8 10,20 26,20 26,8' fill='%23F5D57B' opacity='0.9'/><polygon points='40,8 26,8 26,20 42,20' fill='%23D4AF37'/><polygon points='40,8 42,20 52,20' fill='%239B7A1C'/><polygon points='0,20 10,20 26,36' fill='%237A5E10'/><polygon points='10,20 42,20 26,36' fill='%23FFF5C0' opacity='0.85'/><polygon points='42,20 52,20 26,36' fill='%239B7A1C'/><polygon points='0,20 26,36 26,56' fill='%233A2D05'/><polygon points='52,20 26,56 26,36' fill='%235A440A'/></svg>">
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
         tailwind.config = {
@@ -5100,14 +5134,14 @@ def agency_login():
             extend: {
               fontFamily: { sans: ['Inter', 'sans-serif'] },
               colors: {
-                brand: { blue: '#2f4b9f', dark: '#1e326b', accent: '#e6edf7' }
+                brand: { gold: '#D4AF37', dark: '#080705', accent: 'rgba(212,175,55,0.1)' }
               }
             }
           }
         }
       </script>
       <style>
-        body { background-color: #2f4b9f; }
+        body { background-color: #080705; }
         /* 결제 폼의 결과 모달 오버레이가 남아 있어도 로그인 화면에서는 항상 숨긴다. */
         #result-modal,
         .result-backdrop {
@@ -5115,23 +5149,40 @@ def agency_login():
         }
       </style>
     </head>
-    <body class="bg-brand-blue text-white font-sans antialiased min-h-screen flex items-center justify-center">
-      <div class="bg-white/10 backdrop-blur border border-white/20 rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
-        <h1 class="text-xl font-bold mb-2 text-center text-white">LUXX Agency Admin</h1>
-        <p class="text-xs text-white/80 text-center mb-6">승인된 대행사 전용 어드민 로그인</p>
+    <body class="bg-[#080705] text-white font-sans antialiased min-h-screen flex items-center justify-center">
+      <div class="bg-[rgba(212,175,55,0.08)] backdrop-blur border border-[rgba(212,175,55,0.2)] rounded-2xl px-8 py-10 max-w-sm w-full shadow-2xl">
+        <div class="flex justify-center mb-3">
+          <svg width="32" height="37" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <polygon points="12,8 0,20 10,20" fill="#5A440A"/>
+            <polygon points="12,8 10,20 26,20 26,8" fill="#F5D57B" opacity="0.9"/>
+            <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
+            <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
+            <polygon points="0,20 10,20 26,36" fill="#7A5E10"/>
+            <polygon points="10,20 42,20 26,36" fill="#FFF5C0" opacity="0.85"/>
+            <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
+            <polygon points="0,20 26,36 26,56" fill="#3A2D05"/>
+            <polygon points="52,20 26,56 26,36" fill="#5A440A"/>
+            <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/>
+            <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/>
+            <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+            <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold mb-2 text-center text-white"><span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.25em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span> Agency Admin</h1>
+        <p class="text-xs text-[rgba(212,175,55,0.6)] text-center mb-6">승인된 대행사 전용 어드민 로그인</p>
         <form method="post" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-white/80 mb-1">대행사 아이디</label>
-            <input name="username" type="text" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="agency id" />
+            <label class="block text-xs font-semibold text-[rgba(212,175,55,0.7)] mb-1">대행사 아이디</label>
+            <input name="username" type="text" required class="w-full border border-[rgba(212,175,55,0.2)] bg-[rgba(255,255,255,0.05)] rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[rgba(212,175,55,0.5)]" placeholder="agency id" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-white/80 mb-1">비밀번호</label>
-            <input name="password" type="password" required class="w-full bg-black/20 border border-white/20 rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-300" placeholder="********" />
+            <label class="block text-xs font-semibold text-[rgba(212,175,55,0.7)] mb-1">비밀번호</label>
+            <input name="password" type="password" required class="w-full border border-[rgba(212,175,55,0.2)] bg-[rgba(255,255,255,0.05)] rounded-lg py-2.5 px-3 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[rgba(212,175,55,0.5)]" placeholder="********" />
           </div>
           {% if error %}
-          <p class="text-xs text-red-200">{{ error }}</p>
+          <p class="text-xs text-red-300">{{ error }}</p>
           {% endif %}
-          <button type="submit" class="w-full mt-2 bg-white text-brand-blue font-bold py-2.5 rounded-lg hover:opacity-90 transition" style="color: #2f4b9f;">
+          <button type="submit" class="w-full mt-2 font-bold py-2.5 rounded-lg hover:opacity-90 transition" style="background:linear-gradient(135deg,#9B7A1C,#D4AF37,#F5D57B,#D4AF37,#9B7A1C);color:#080705;font-weight:700;">
             로그인
           </button>
         </form>
@@ -5636,8 +5687,8 @@ def hq_admin():
       <meta charset="UTF-8" />
       <title>LUXX HQ Admin</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
-      <!-- LUXX 브랜드 파비콘 -->
-      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
+      <!-- LUXX 다이아몬드 파비콘 -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
       <script>
         if (screen.width < 1280) {
           var vp = document.getElementById('viewport-meta');
@@ -5729,29 +5780,29 @@ def hq_admin():
         .box-schema { position:sticky; top:72px; z-index:4; margin:6px 0 10px; padding:6px 8px; border-radius:8px; border:1px solid #334155; background:#0b1220; color:#93c5fd; font-size:10px; line-height:1.35; }
         .box-schema code { color:#bfdbfe; }
       </style>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
         tailwind.config = {
           theme: {
             extend: {
-              fontFamily: { sans: ['Inter', 'sans-serif'] },
+              fontFamily: { brand: ['"Cinzel"','serif'], sans: ['Inter', 'sans-serif'] },
               colors: {
-                brand: { blue: '#2f4b9f', dark: '#1e326b', accent: '#e6edf7' }
+                brand: { blue: '#080705', dark: '#0D0A03', accent: 'rgba(212,175,55,0.1)' }
               }
             }
           }
         }
       </script>
     </head>
-    <body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased min-h-screen flex flex-col">
-      <header class="fixed top-0 left-0 right-0 z-30 bg-brand-dark/80 backdrop-blur border-b border-white/10">
+    <body class="bg-[#080705] text-white font-sans overflow-x-hidden antialiased min-h-screen flex flex-col">
+      <header class="fixed top-0 left-0 right-0 z-30 backdrop-blur border-b border-[rgba(212,175,55,0.15)]" style="background:rgba(8,7,5,0.9);">
         <div class="max-w-[96vw] mx-auto px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+          <div class="flex items-center gap-3">
+            <svg width="26" height="30" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none"><polygon points="12,8 0,20 10,20" fill="#4A3608"/><polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.9"/><polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/><polygon points="40,8 42,20 52,20" fill="#9B7A1C"/><polygon points="0,20 10,20 26,36" fill="#6A4E0E"/><polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.85"/><polygon points="42,20 52,20 26,36" fill="#9B7A1C"/><polygon points="0,20 26,36 26,56" fill="#2E2203"/><polygon points="52,20 26,56 26,36" fill="#4A3608"/><polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/><line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/></svg>
             <div class="flex flex-col leading-tight">
-              <span class="text-sm font-semibold tracking-[0.16em] uppercase text-white/70">LUXX HQ</span>
-              <span class="text-xs text-white/80">Global Agency & Settlement Admin</span>
+              <span style="font-family:'Cinzel',serif;font-weight:700;font-size:0.9rem;letter-spacing:0.2em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX HQ</span>
+              <span class="text-[10px] text-[rgba(212,175,55,0.5)] tracking-widest">Global Agency & Settlement Admin</span>
             </div>
           </div>
           <div class="flex items-center gap-3 flex-wrap">
@@ -7171,8 +7222,8 @@ def agency_admin():
       <meta charset="UTF-8" />
       <title>LUXX 대행사 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
-      <!-- LUXX 브랜드 파비콘 -->
-      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
+      <!-- LUXX 다이아몬드 파비콘 -->
+      <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
       <script>
         if (screen.width < 1280) {
           var vp = document.getElementById('viewport-meta');
@@ -7336,7 +7387,7 @@ def agency_admin():
         }
       </style>
     </head>
-    <body class="bg-brand-blue text-white font-sans overflow-x-auto antialiased min-h-screen flex flex-col">
+    <body class="bg-[#080705] text-white font-sans overflow-x-auto antialiased min-h-screen flex flex-col">
       <div id="pending-create-banner" class="pending-top-banner" aria-hidden="true">
         <i class="fa-solid fa-spinner fa-spin"></i>
         <span>K-VAN 링크 생성 중 (1분정도 소요됩니다.)</span>
@@ -7362,13 +7413,13 @@ def agency_admin():
           <div style="margin-top:4px;font-size:11px;color:#94a3b8;">결과를 확인하면 자동으로 종료됩니다.</div>
         </div>
       </div>
-      <header class="fixed top-0 left-0 right-0 z-30 bg-brand-dark/80 backdrop-blur border-b border-white/10">
+      <header class="fixed top-0 left-0 right-0 z-30 backdrop-blur border-b border-[rgba(212,175,55,0.15)]" style="background:rgba(8,7,5,0.9);">
         <div class="max-w-[96vw] mx-auto px-4 py-3 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-store text-white text-xl"></i>
+          <div class="flex items-center gap-3">
+            <svg width="24" height="28" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none"><polygon points="12,8 0,20 10,20" fill="#4A3608"/><polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.9"/><polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/><polygon points="40,8 42,20 52,20" fill="#9B7A1C"/><polygon points="0,20 10,20 26,36" fill="#6A4E0E"/><polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.85"/><polygon points="42,20 52,20 26,36" fill="#9B7A1C"/><polygon points="0,20 26,36 26,56" fill="#2E2203"/><polygon points="52,20 26,56 26,36" fill="#4A3608"/><polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/><line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/></svg>
             <div class="flex flex-col leading-tight">
-              <span class="text-sm font-semibold text-white/80">{{ agency.company_name }}</span>
-              <span class="text-[11px] text-white/60">LUXX 대행사 결제 어드민</span>
+              <span class="text-sm font-semibold text-white">{{ agency.company_name }}</span>
+              <span class="text-[10px] text-[rgba(212,175,55,0.5)] tracking-widest">LUXX 대행사 결제 어드민</span>
             </div>
           </div>
           <div class="flex items-center gap-3 flex-wrap">

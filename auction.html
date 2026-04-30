@@ -13,10 +13,10 @@
     <title>Global Auctions | LUXX</title>
 
     <!-- LUXX 브랜드 파비콘 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23D4AF37'/><circle cx='50' cy='50' r='28' fill='none' stroke='%230A0A0A' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%230A0A0A' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%230A0A0A' stroke-width='4'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
 
     <!-- 폰트 및 아이콘 -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+KR:wght@300;400;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Tailwind CSS -->
@@ -25,7 +25,12 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        brand: ['"Cinzel"', 'serif'],
+                        display: ['"Playfair Display"', '"Noto Serif KR"', 'Georgia', 'serif'],
+                        serif: ['"Playfair Display"', '"Noto Serif KR"', 'Georgia', 'serif'],
+                        sans: ['Inter', '"Noto Sans KR"', 'system-ui', 'sans-serif'],
+                    },
                     colors: {
                         brand: {
                             gold: '#D4AF37',
@@ -113,11 +118,39 @@
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/'">
                 <div class="flex items-center justify-center">
-                    <i class="fa-solid fa-crown text-[#D4AF37] text-3xl drop-shadow-md"></i>
+                    <svg width="36" height="41" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <linearGradient id="da1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF0A0"/><stop offset="100%" stop-color="#B89020"/></linearGradient>
+    <linearGradient id="da2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
+    <linearGradient id="da3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9B7A1C"/><stop offset="100%" stop-color="#5A440A"/></linearGradient>
+    <linearGradient id="da4" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0%" stop-color="#FFF5C0"/><stop offset="100%" stop-color="#D4AF37"/></linearGradient>
+    <linearGradient id="da5" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#7A5E10"/></linearGradient>
+    <linearGradient id="da6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7A5E10"/><stop offset="100%" stop-color="#3A2D05"/></linearGradient>
+    <linearGradient id="da7" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5D57B"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
+  </defs>
+  <polygon points="12,8 0,20 10,20" fill="url(#da3)"/>
+  <polygon points="12,8 10,20 26,20 26,8" fill="url(#da1)"/>
+  <polygon points="40,8 26,8 26,20 42,20" fill="url(#da2)"/>
+  <polygon points="40,8 42,20 52,20" fill="url(#da5)"/>
+  <polygon points="0,20 10,20 26,36" fill="url(#da3)"/>
+  <polygon points="10,20 42,20 26,36" fill="url(#da4)"/>
+  <polygon points="42,20 52,20 26,36" fill="url(#da5)"/>
+  <polygon points="0,20 26,36 26,56" fill="url(#da6)"/>
+  <polygon points="52,20 26,56 26,36" fill="url(#da5)"/>
+  <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="url(#da7)" stroke-width="1.2" stroke-linejoin="round"/>
+  <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="1.5"/>
+  <line x1="12" y1="8" x2="10" y2="20" stroke="#F5D57B" stroke-width="0.7" opacity="0.7"/>
+  <line x1="26" y1="8" x2="26" y2="20" stroke="#F5D57B" stroke-width="0.8" opacity="0.6"/>
+  <line x1="40" y1="8" x2="42" y2="20" stroke="#D4AF37" stroke-width="0.7" opacity="0.7"/>
+  <line x1="0" y1="20" x2="52" y2="20" stroke="#D4AF37" stroke-width="0.5" opacity="0.5"/>
+  <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.6" opacity="0.6"/>
+  <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.6" opacity="0.6"/>
+  <line x1="26" y1="36" x2="26" y2="56" stroke="#D4AF37" stroke-width="0.5" opacity="0.4"/>
+</svg>
                 </div>
                 <div class="flex flex-col justify-center">
                     <div class="flex items-end gap-2 mb-1">
-                        <span class="text-3xl font-black tracking-tighter leading-none gold-text">LUXX</span>
+                        <span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.28em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;" class="text-3xl leading-none">LUXX</span>
                         <span class="text-[10px] font-mono bg-[rgba(212,175,55,0.1)] text-[#D4AF37] px-2 py-0.5 rounded border border-[rgba(212,175,55,0.2)] tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
                     </div>
                     <span class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Luxury Auction Exchange</span>

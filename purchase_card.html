@@ -9,7 +9,7 @@
         }
     </script>
     <title>LUXX 구매 상품 확인증</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -88,11 +88,24 @@
 
         <header class="relative z-10 flex justify-between items-start mb-10">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-[rgba(212,175,55,0.1)] rounded-xl flex items-center justify-center border border-[rgba(212,175,55,0.3)]">
-                    <i class="fa-solid fa-check-double text-2xl text-[#D4AF37]"></i>
-                </div>
+                <!-- 다이아몬드 로고 -->
+                <svg width="38" height="44" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none" style="filter:drop-shadow(0 0 6px rgba(212,175,55,0.3))">
+                    <polygon points="12,8 0,20 10,20" fill="#4A3608"/>
+                    <polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.9"/>
+                    <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
+                    <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
+                    <polygon points="0,20 10,20 26,36" fill="#6A4E0E"/>
+                    <polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.88"/>
+                    <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
+                    <polygon points="0,20 26,36 26,56" fill="#2E2203"/>
+                    <polygon points="52,20 26,56 26,36" fill="#4A3608"/>
+                    <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/>
+                    <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/>
+                    <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+                    <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
+                </svg>
                 <div>
-                    <h1 class="text-xl font-bold tracking-widest text-white uppercase">Purchase Confirmation</h1>
+                    <h1 style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;letter-spacing:0.18em;color:white;">Purchase Confirmation</h1>
                     <p class="text-[11px] text-[rgba(212,175,55,0.6)] uppercase tracking-[0.15em] mt-0.5">Luxury Auction Exchange</p>
                 </div>
             </div>

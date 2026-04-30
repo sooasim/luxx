@@ -4,23 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
   <meta name="google" content="notranslate">
-  <script>if(screen.width<1280){document.getElementById('viewport-meta').setAttribute('content','width=1280');}</script>
   <title>LUXX Global Auction — World's Finest Luxury Bidding Platform</title>
   <meta name="description" content="LUXX: 세계 최고 명품 경매 대행 플랫폼. 에르메스, 롤렉스, 샤넬, 파텍필립 등 글로벌 럭셔리 경매 입찰 대행.">
 
-  <!-- Favicon: 골드 다이아몬드 SVG -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%230A0A0A'/><polygon points='50,12 88,38 75,88 25,88 12,38' fill='none' stroke='%23D4AF37' stroke-width='4'/><polygon points='50,12 30,38 50,52 70,38' fill='%23D4AF37' opacity='.9'/><polygon points='30,38 25,88 50,52' fill='%23F5D57B' opacity='.7'/><polygon points='70,38 75,88 50,52' fill='%23C9A22A' opacity='.7'/><polygon points='25,88 75,88 50,52' fill='%23E8C84A' opacity='.8'/></svg>">
+  <!-- Favicon: 브릴리언트 컷 다이아몬드 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/><line x1='18' y1='40' x2='50' y2='68' stroke='%23D4AF37' stroke-width='1.5' opacity='.6'/><line x1='82' y1='40' x2='50' y2='68' stroke='%23D4AF37' stroke-width='1.5' opacity='.6'/></svg>">
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <!-- Fonts: Cinzel(로고) + Playfair Display(헤딩) + Noto Serif/Sans KR(한글) + Inter(본문) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+KR:wght@300;400;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: { extend: {
         fontFamily: {
-          serif: ['"Cormorant Garamond"', '"DM Serif Display"', 'Georgia', 'serif'],
-          sans: ['Inter', 'system-ui', 'sans-serif'],
+          brand: ['"Cinzel"', 'serif'],
+          display: ['"Playfair Display"', '"Noto Serif KR"', 'Georgia', 'serif'],
+          serif: ['"Playfair Display"', '"Noto Serif KR"', 'Georgia', 'serif'],
+          sans: ['Inter', '"Noto Sans KR"', 'system-ui', 'sans-serif'],
         },
         colors: {
           gold: { DEFAULT:'#D4AF37', light:'#F5D57B', dark:'#9B7A1C', muted:'rgba(212,175,55,0.6)', dim:'rgba(212,175,55,0.2)' },
@@ -102,20 +103,45 @@
 
     <!-- Logo -->
     <a href="/" class="flex items-center gap-3 group">
-      <!-- Diamond mark -->
-      <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="20,3 37,14 31,37 9,37 3,14" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
-        <polygon points="20,3 10,14 20,21 30,14" fill="#D4AF37" opacity=".95"/>
-        <polygon points="10,14 9,37 20,21" fill="#F5D57B" opacity=".75"/>
-        <polygon points="30,14 31,37 20,21" fill="#C9A22A" opacity=".75"/>
-        <polygon points="9,37 31,37 20,21" fill="#E8C84A" opacity=".85"/>
+      <!-- 브릴리언트 컷 다이아몬드 (측면 프로파일) -->
+      <svg width="34" height="39" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none" style="filter:drop-shadow(0 0 6px rgba(212,175,55,0.25))">
+        <defs>
+          <linearGradient id="lnA" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF0A0"/><stop offset="100%" stop-color="#C4960A"/></linearGradient>
+          <linearGradient id="lnB" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#E8C84A"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
+          <linearGradient id="lnC" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9B7A1C"/><stop offset="100%" stop-color="#4A3608"/></linearGradient>
+          <linearGradient id="lnD" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0%" stop-color="#FFFAD0"/><stop offset="100%" stop-color="#D4AF37"/></linearGradient>
+          <linearGradient id="lnE" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#6A4E0E"/></linearGradient>
+          <linearGradient id="lnF" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6A4E0E"/><stop offset="100%" stop-color="#2E2203"/></linearGradient>
+          <linearGradient id="lnG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5D57B"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
+        </defs>
+        <!-- 크라운 (상단 사다리꼴 영역) -->
+        <polygon points="12,8 0,20 10,20" fill="url(#lnC)"/>
+        <polygon points="12,8 10,20 26,20 26,8" fill="url(#lnA)"/>
+        <polygon points="40,8 26,8 26,20 42,20" fill="url(#lnB)"/>
+        <polygon points="40,8 42,20 52,20" fill="url(#lnE)"/>
+        <!-- 파빌리온 (하단 삼각 영역) -->
+        <polygon points="0,20 10,20 26,36" fill="url(#lnC)"/>
+        <polygon points="10,20 42,20 26,36" fill="url(#lnD)"/>
+        <polygon points="42,20 52,20 26,36" fill="url(#lnE)"/>
+        <polygon points="0,20 26,36 26,56" fill="url(#lnF)"/>
+        <polygon points="52,20 26,56 26,36" fill="url(#lnE)"/>
+        <!-- 외곽선 & 패싯 라인 -->
+        <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="url(#lnG)" stroke-width="1.3" stroke-linejoin="round"/>
+        <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="1.8"/>
+        <line x1="12" y1="8" x2="10" y2="20" stroke="#F5D57B" stroke-width="0.8" opacity="0.65"/>
+        <line x1="26" y1="8" x2="26" y2="20" stroke="#FFFAD0" stroke-width="0.9" opacity="0.7"/>
+        <line x1="40" y1="8" x2="42" y2="20" stroke="#D4AF37" stroke-width="0.8" opacity="0.65"/>
+        <line x1="0" y1="20" x2="52" y2="20" stroke="#D4AF37" stroke-width="0.6" opacity="0.45"/>
+        <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.7" opacity="0.55"/>
+        <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.7" opacity="0.55"/>
+        <line x1="26" y1="36" x2="26" y2="56" stroke="#D4AF37" stroke-width="0.5" opacity="0.35"/>
       </svg>
       <div class="leading-none">
         <div class="flex items-baseline gap-2">
-          <span class="font-serif font-bold text-[28px] tracking-[.12em] gtext" style="-webkit-text-fill-color:unset;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
-          <span class="text-[10px] font-sans font-medium tracking-[.2em] text-[rgba(212,175,55,.55)] uppercase border-l border-[rgba(212,175,55,.2)] pl-2">Global Auction</span>
+          <span style="font-family:'Cinzel',serif;font-weight:700;font-size:1.55rem;letter-spacing:0.28em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
+          <span class="text-[10px] font-sans font-medium tracking-[.2em] text-[rgba(212,175,55,.5)] uppercase border-l border-[rgba(212,175,55,.2)] pl-2">Global Auction</span>
         </div>
-        <div class="text-[9px] tracking-[.3em] text-[rgba(255,255,255,.3)] uppercase mt-[2px]">luxxbid.com</div>
+        <div class="text-[9px] tracking-[.3em] text-[rgba(255,255,255,.28)] uppercase mt-[2px]">luxxbid.com</div>
       </div>
     </a>
 
@@ -836,13 +862,26 @@
   <div class="absolute inset-0 z-0" style="background:linear-gradient(135deg,rgba(212,175,55,.06) 0%,rgba(0,0,0,0) 50%,rgba(212,175,55,.04) 100%);"></div>
   <div class="absolute inset-0 z-0 gborder" style="margin:2rem;border-radius:2rem;"></div>
   <div class="relative z-10 max-w-[1400px] mx-auto px-8 text-center">
-    <div class="text-5xl mb-6">
-      <svg width="60" height="60" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto">
-        <polygon points="20,3 37,14 31,37 9,37 3,14" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
-        <polygon points="20,3 10,14 20,21 30,14" fill="#D4AF37" opacity=".95"/>
-        <polygon points="10,14 9,37 20,21" fill="#F5D57B" opacity=".75"/>
-        <polygon points="30,14 31,37 20,21" fill="#C9A22A" opacity=".75"/>
-        <polygon points="9,37 31,37 20,21" fill="#E8C84A" opacity=".85"/>
+    <div class="mb-8 flex justify-center">
+      <svg width="64" height="74" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none" style="filter:drop-shadow(0 0 14px rgba(212,175,55,0.35))">
+        <polygon points="12,8 0,20 10,20" fill="#4A3608"/>
+        <polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.92"/>
+        <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
+        <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
+        <polygon points="0,20 10,20 26,36" fill="#6A4E0E"/>
+        <polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.88"/>
+        <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
+        <polygon points="0,20 26,36 26,56" fill="#2E2203"/>
+        <polygon points="52,20 26,56 26,36" fill="#4A3608"/>
+        <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.6" stroke-linejoin="round"/>
+        <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2.2"/>
+        <line x1="12" y1="8" x2="10" y2="20" stroke="#F5D57B" stroke-width="0.9" opacity="0.7"/>
+        <line x1="26" y1="8" x2="26" y2="20" stroke="#FFFAD0" stroke-width="1" opacity="0.65"/>
+        <line x1="40" y1="8" x2="42" y2="20" stroke="#D4AF37" stroke-width="0.9" opacity="0.7"/>
+        <line x1="0" y1="20" x2="52" y2="20" stroke="#D4AF37" stroke-width="0.7" opacity="0.5"/>
+        <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.9" opacity="0.6"/>
+        <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.9" opacity="0.6"/>
+        <line x1="26" y1="36" x2="26" y2="56" stroke="#D4AF37" stroke-width="0.7" opacity="0.4"/>
       </svg>
     </div>
     <h2 class="font-serif font-light text-[3rem] leading-tight mb-4">지금 LUXX에 합류하세요</h2>
@@ -868,14 +907,22 @@
       <!-- Brand -->
       <div class="col-span-2 md:col-span-1">
         <div class="flex items-center gap-2.5 mb-5">
-          <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
-            <polygon points="20,3 37,14 31,37 9,37 3,14" fill="none" stroke="#D4AF37" stroke-width="1.5"/>
-            <polygon points="20,3 10,14 20,21 30,14" fill="#D4AF37" opacity=".9"/>
-            <polygon points="10,14 9,37 20,21" fill="#F5D57B" opacity=".7"/>
-            <polygon points="30,14 31,37 20,21" fill="#C9A22A" opacity=".7"/>
-            <polygon points="9,37 31,37 20,21" fill="#E8C84A" opacity=".8"/>
+          <svg width="24" height="28" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <polygon points="12,8 0,20 10,20" fill="#4A3608"/>
+            <polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.88"/>
+            <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
+            <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
+            <polygon points="0,20 10,20 26,36" fill="#6A4E0E"/>
+            <polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.85"/>
+            <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
+            <polygon points="0,20 26,36 26,56" fill="#2E2203"/>
+            <polygon points="52,20 26,56 26,36" fill="#4A3608"/>
+            <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/>
+            <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/>
+            <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.55"/>
+            <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.55"/>
           </svg>
-          <span class="font-serif font-bold text-[22px] tracking-[.1em]" style="background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
+          <span style="font-family:'Cinzel',serif;font-weight:700;font-size:1.3rem;letter-spacing:0.22em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
         </div>
         <p class="text-[13px] text-white/35 leading-relaxed mb-5">전 세계 프리미엄 명품 경매 대행 플랫폼. 신뢰, 인증, 그리고 완벽한 서비스.</p>
         <div class="flex gap-3">
