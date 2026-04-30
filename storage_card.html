@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" translate="no">
 <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
     <script>
         // 모바일에서도 데스크탑 비율을 유지하여 카드 형태를 보존
@@ -12,7 +13,7 @@
     <title>LUXX 경매 상품 보관증</title>
 
     <!-- LUXX 폰트 및 아이콘 -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Tailwind CSS -->
@@ -37,6 +38,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Inter', 'Nanum Gothic', system-ui, sans-serif;
         }
 
         .glass-card {
@@ -85,6 +87,7 @@
             border-bottom: none;
             padding-bottom: 0;
         }
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
     </style>
 </head>
 <body class="p-6 text-white font-sans antialiased overflow-hidden">
@@ -115,7 +118,7 @@
                     <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
                 </svg>
                 <div>
-                    <h1 style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;letter-spacing:0.18em;color:white;">LUXX GLOBAL AUCTION</h1>
+                    <h1 style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;letter-spacing:0.22em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX GLOBAL AUCTION</h1>
                     <p class="text-[11px] text-[rgba(212,175,55,0.5)] uppercase tracking-[0.15em] mt-0.5">Luxury Auction Exchange</p>
                 </div>
             </div>

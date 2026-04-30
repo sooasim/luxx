@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" translate="no">
 <head>
     <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
     <script>
         // 모바일 스마트폰에서 데스크탑 화면 그대로 축소되어 보이도록 뷰포트 강제 조정
@@ -13,7 +14,7 @@
     <!-- LUXX 브랜드 파비콘 -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
     <!-- 폰트 및 아이콘 불러오기 -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Noto+Serif+KR:wght@300;400;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,9 +24,9 @@
                 extend: {
                     fontFamily: {
                         brand: ['"Cinzel"', 'serif'],
-                        display: ['"Playfair Display"', '"Noto Serif KR"', 'Georgia', 'serif'],
-                        serif: ['"Playfair Display"', '"Noto Serif KR"', 'Georgia', 'serif'],
-                        sans: ['Inter', '"Noto Sans KR"', 'system-ui', 'sans-serif'],
+                        display: ['"Playfair Display"', '"Nanum Myeongjo"', 'Georgia', 'serif'],
+                        serif: ['"Playfair Display"', '"Nanum Myeongjo"', 'Georgia', 'serif'],
+                        sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'],
                     },
                     colors: {
                         brand: {
@@ -93,6 +94,7 @@
         .prose ul { list-style-type: disc; padding-left: 1.5rem; color: rgba(255,255,255,0.7); margin-bottom: 1rem; font-size: 0.95rem; }
         .prose li { margin-bottom: 0.25rem; }
         .prose strong { color: white; font-weight: 600; }
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
     </style>
     <script>
         // iframe(이용약관 전문)으로 삽입될 때는 헤더/내비/배경 데코를 숨겨서 본문만 보이도록 처리
@@ -152,7 +154,7 @@
                 </div>
                 <div class="flex flex-col justify-center">
                     <div class="flex items-end gap-2 mb-1">
-                        <span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.28em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;" class="text-3xl leading-none">LUXX</span>
+                        <span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.32em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;" class="text-3xl leading-none">LUXX</span>
                         <span class="text-[10px] font-mono px-2 py-0.5 rounded tracking-[0.1em] leading-none mb-0.5" style="background:rgba(212,175,55,0.1);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);">luxxbid.com</span>
                     </div>
                     <span class="text-[9px] font-semibold tracking-[0.18em] uppercase leading-none" style="color:rgba(255,255,255,0.7);">Luxury Auction Exchange</span>

@@ -2243,12 +2243,12 @@ def portal_login():
         msg = "DB 연결 상태가 불안정합니다. 잠시 후 다시 시도해 주세요."
     return """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
       <title>로그인 실패</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@400;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-[#1e326b] text-white font-[Inter] min-h-screen flex items-center justify-center">
@@ -2298,7 +2298,7 @@ FORM_TEMPLATE = """
     }
   </script>
   <!-- 폰트 / 아이콘 / Tailwind -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700;900&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -2901,7 +2901,7 @@ def seo_overseas_luxury():
     """해외 중고 명품 경매 대행 전용 SEO 랜딩 페이지."""
     html = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
       <title>해외 중고 명품 경매 대행 사이트 | LUXX 글로벌 옥션</title>
@@ -3483,7 +3483,7 @@ def debug_paths():
 
     template = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
       <title>LUXX Debug Paths</title>
@@ -3894,7 +3894,7 @@ def agency_apply():
   <meta charset="UTF-8" />
   <title>대행사 등록 신청 완료</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@400;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#2f4b9f] text-white font-[Inter] flex items-center justify-center min-h-screen">
@@ -4385,9 +4385,10 @@ def admin():
 
     ADMIN_TEMPLATE = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
+      <meta name="google" content="notranslate">
       <title>LUXX K-VAN 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
       <!-- LUXX 다이아몬드 파비콘 -->
@@ -4399,7 +4400,7 @@ def admin():
         }
       </script>
       <!-- 폰트 / 아이콘 / Tailwind -->
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700;900&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
@@ -4408,7 +4409,8 @@ def admin():
             extend: {
               fontFamily: {
                 brand: ['"Cinzel"', 'serif'],
-                sans: ['Inter', 'sans-serif'],
+                display: ['"Nanum Myeongjo"', 'Georgia', 'serif'],
+                sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'],
               },
               colors: {
                 brand: {
@@ -4422,6 +4424,7 @@ def admin():
         }
       </script>
       <style>
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #080705; }
         ::-webkit-scrollbar-thumb { background: #9B7A1C; border-radius: 4px; }
@@ -4583,7 +4586,7 @@ def admin():
               <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
             </svg>
             <div class="flex flex-col leading-tight">
-              <span style="font-family:'Cinzel',serif;font-weight:700;font-size:0.95rem;letter-spacing:0.22em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span>
+              <span style="font-family:'Cinzel',serif;font-weight:700;font-size:0.95rem;letter-spacing:0.22em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX</span>
               <span class="text-[10px] text-[rgba(212,175,55,0.5)] tracking-widest">K-VAN Payment Admin</span>
             </div>
           </div>
@@ -5025,7 +5028,7 @@ def hq_login():
 
     template = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
       <title>LUXX HQ 어드민 로그인</title>
@@ -5036,7 +5039,7 @@ def hq_login():
           if (vp) vp.setAttribute('content', 'width=1280');
         }
       </script>
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
       <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 60'><polygon points='12,8 0,20 10,20' fill='%235A440A'/><polygon points='12,8 10,20 26,20 26,8' fill='%23F5D57B' opacity='0.9'/><polygon points='40,8 26,8 26,20 42,20' fill='%23D4AF37'/><polygon points='40,8 42,20 52,20' fill='%239B7A1C'/><polygon points='0,20 10,20 26,36' fill='%237A5E10'/><polygon points='10,20 42,20 26,36' fill='%23FFF5C0' opacity='0.85'/><polygon points='42,20 52,20 26,36' fill='%239B7A1C'/><polygon points='0,20 26,36 26,56' fill='%233A2D05'/><polygon points='52,20 26,56 26,36' fill='%235A440A'/></svg>">
       <script src="https://cdn.tailwindcss.com"></script>
       <style>
@@ -5067,7 +5070,7 @@ def hq_login():
             <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
           </svg>
         </div>
-        <h1 class="text-xl font-bold mb-2 text-center"><span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.25em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span> HQ Admin</h1>
+        <h1 class="text-xl font-bold mb-2 text-center"><span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.25em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX</span> HQ Admin</h1>
         <p class="text-xs text-[rgba(212,175,55,0.6)] text-center mb-6">본사 전용 어드민 로그인</p>
         <form method="post" class="space-y-4">
           <div>
@@ -5113,7 +5116,7 @@ def agency_login():
 
     template = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
       <title>LUXX 대행사 어드민 로그인</title>
@@ -5124,7 +5127,7 @@ def agency_login():
           if (vp) vp.setAttribute('content', 'width=1280');
         }
       </script>
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 60'><polygon points='12,8 0,20 10,20' fill='%235A440A'/><polygon points='12,8 10,20 26,20 26,8' fill='%23F5D57B' opacity='0.9'/><polygon points='40,8 26,8 26,20 42,20' fill='%23D4AF37'/><polygon points='40,8 42,20 52,20' fill='%239B7A1C'/><polygon points='0,20 10,20 26,36' fill='%237A5E10'/><polygon points='10,20 42,20 26,36' fill='%23FFF5C0' opacity='0.85'/><polygon points='42,20 52,20 26,36' fill='%239B7A1C'/><polygon points='0,20 26,36 26,56' fill='%233A2D05'/><polygon points='52,20 26,56 26,36' fill='%235A440A'/></svg>">
       <script src="https://cdn.tailwindcss.com"></script>
@@ -5132,7 +5135,7 @@ def agency_login():
         tailwind.config = {
           theme: {
             extend: {
-              fontFamily: { sans: ['Inter', 'sans-serif'] },
+              fontFamily: { brand: ['"Cinzel"', 'serif'], display: ['"Nanum Myeongjo"','Georgia','serif'], sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'] },
               colors: {
                 brand: { gold: '#D4AF37', dark: '#080705', accent: 'rgba(212,175,55,0.1)' }
               }
@@ -5168,7 +5171,7 @@ def agency_login():
             <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
           </svg>
         </div>
-        <h1 class="text-xl font-bold mb-2 text-center text-white"><span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.25em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX</span> Agency Admin</h1>
+        <h1 class="text-xl font-bold mb-2 text-center text-white"><span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.25em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX</span> Agency Admin</h1>
         <p class="text-xs text-[rgba(212,175,55,0.6)] text-center mb-6">승인된 대행사 전용 어드민 로그인</p>
         <form method="post" class="space-y-4">
           <div>
@@ -5682,9 +5685,10 @@ def hq_admin():
 
     template = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
+      <meta name="google" content="notranslate">
       <title>LUXX HQ Admin</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
       <!-- LUXX 다이아몬드 파비콘 -->
@@ -5762,6 +5766,7 @@ def hq_admin():
         });
       </script>
       <style>
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
         /* 결제 폼에서 사용하던 결과 모달 오버레이가 남아 있어도 HQ 어드민에서는 항상 숨긴다. */
         #result-modal,
         .result-backdrop,
@@ -5780,13 +5785,13 @@ def hq_admin():
         .box-schema { position:sticky; top:72px; z-index:4; margin:6px 0 10px; padding:6px 8px; border-radius:8px; border:1px solid #334155; background:#0b1220; color:#93c5fd; font-size:10px; line-height:1.35; }
         .box-schema code { color:#bfdbfe; }
       </style>
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
         tailwind.config = {
           theme: {
             extend: {
-              fontFamily: { brand: ['"Cinzel"','serif'], sans: ['Inter', 'sans-serif'] },
+              fontFamily: { brand: ['"Cinzel"','serif'], display: ['"Nanum Myeongjo"','Georgia','serif'], sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'] },
               colors: {
                 brand: { blue: '#080705', dark: '#0D0A03', accent: 'rgba(212,175,55,0.1)' }
               }
@@ -5801,7 +5806,7 @@ def hq_admin():
           <div class="flex items-center gap-3">
             <svg width="26" height="30" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none"><polygon points="12,8 0,20 10,20" fill="#4A3608"/><polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.9"/><polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/><polygon points="40,8 42,20 52,20" fill="#9B7A1C"/><polygon points="0,20 10,20 26,36" fill="#6A4E0E"/><polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.85"/><polygon points="42,20 52,20 26,36" fill="#9B7A1C"/><polygon points="0,20 26,36 26,56" fill="#2E2203"/><polygon points="52,20 26,56 26,36" fill="#4A3608"/><polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/><line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/></svg>
             <div class="flex flex-col leading-tight">
-              <span style="font-family:'Cinzel',serif;font-weight:700;font-size:0.9rem;letter-spacing:0.2em;background:linear-gradient(135deg,#C9A22A,#F5D57B 40%,#C9A22A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">LUXX HQ</span>
+              <span style="font-family:'Cinzel',serif;font-weight:700;font-size:0.9rem;letter-spacing:0.2em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX HQ</span>
               <span class="text-[10px] text-[rgba(212,175,55,0.5)] tracking-widest">Global Agency & Settlement Admin</span>
             </div>
           </div>
@@ -7217,9 +7222,10 @@ def agency_admin():
 
     template = """
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="ko" translate="no">
     <head>
       <meta charset="UTF-8" />
+      <meta name="google" content="notranslate">
       <title>LUXX 대행사 결제 어드민</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta" />
       <!-- LUXX 다이아몬드 파비콘 -->
@@ -7325,14 +7331,14 @@ def agency_admin():
         // 뒤로가기 캐시 복원 시에도 검은 오버레이를 즉시 정리한다.
         window.addEventListener('pageshow', runOverlayCleanupBurst);
       </script>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       <script src="https://cdn.tailwindcss.com"></script>
       <script>
         tailwind.config = {
           theme: {
             extend: {
-              fontFamily: { sans: ['Inter', 'sans-serif'] },
+              fontFamily: { brand: ['"Cinzel"','serif'], display: ['"Nanum Myeongjo"','Georgia','serif'], sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'] },
               colors: {
                 brand: { blue: '#2f4b9f', dark: '#1e326b', accent: '#e6edf7' }
               }
@@ -7341,6 +7347,7 @@ def agency_admin():
         }
       </script>
       <style>
+        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
         body { background-color: #2f4b9f; }
         .glass-card { background: rgba(30, 50, 107, 0.6); backdrop-filter: blur(12px); }
         .loading-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.78); display:none; align-items:center; justify-content:center; z-index:2000; }
