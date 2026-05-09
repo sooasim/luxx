@@ -1,6 +1,6 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
-K-VAN 통합 실행 파일
+U-PAY 통합 실행 파일
 - 로컬: JSON 저장소 사용
 - 서버: Railway MySQL 사용
 - 기본 실행 모드: crawl
@@ -15,7 +15,7 @@ K-VAN 통합 실행 파일
     K_VAN_STARTUP_SLEEP_SEC      초반 대기(기본 2)
     K_VAN_ACTIVE_SESSION_WINDOW_MINUTES  '최근 세션' 판정 창(기본 3, 예전 10분은 과도)
     K_VAN_POPUP_SESSION_WINDOW_MINUTES   팝업 허용용(기본 30)
-배포 환경 감지: RAILWAY_ENVIRONMENT, RUN_HEADLESS, LUXX_SERVER=1, K_VAN_SERVER=1
+배포 환경 감지: RAILWAY_ENVIRONMENT, RUN_HEADLESS, SISA_SERVER=1, K_VAN_SERVER=1
 
 실행:
     python kvan_crawler.py
@@ -71,7 +71,7 @@ FILE_DIR = Path(__file__).resolve().parent
 # (예전: wsisa/data 만 쓰면 로컬에서 crawler_wakeup.flag 가 웹과 달라 크롤이 안 깨어남)
 PROJECT_ROOT = FILE_DIR.parent
 
-_raw_data_dir = os.environ.get("LUXX_DATA_DIR", "").strip()
+_raw_data_dir = os.environ.get("SISA_DATA_DIR", "").strip()
 if _raw_data_dir:
     DATA_DIR = Path(_raw_data_dir)
 else:
@@ -130,7 +130,7 @@ DATABASE_URL = (
 
 def _is_server_env() -> bool:
     """Railway·Docker·헤드리스 등 배포 환경 감지 (미설정 시 로컬로 간주)."""
-    s = str(os.environ.get("LUXX_SERVER", "")).strip().lower()
+    s = str(os.environ.get("SISA_SERVER", "")).strip().lower()
     k = str(os.environ.get("K_VAN_SERVER", "")).strip().lower()
     truthy = ("1", "true", "yes", "y", "on")
     mysql_host = str(
@@ -150,7 +150,7 @@ def _is_server_env() -> bool:
     )
 
 
-_local_flag = os.environ.get("LUXX_LOCAL_TEST")
+_local_flag = os.environ.get("SISA_LOCAL_TEST")
 _json_flag = os.environ.get("K_VAN_USE_JSON")
 if _local_flag is not None:
     LOCAL_TEST = _local_flag.strip().lower() in ("1", "true", "yes", "y")
@@ -575,7 +575,7 @@ def _lookup_internal_session_id_for_kvan_key(kvan_key: str) -> str:
 
 def _normalize_session_id_for_admin_state(session_id: str) -> tuple[str, str]:
     """
-    admin_state 세션 id는 내부세션(숫자)일 수 있고, K-VAN 화면은 KEY 토큰만 줄 수 있다.
+    admin_state 세션 id는 내부세션(숫자)일 수 있고, U-PAY 화면은 KEY 토큰만 줄 수 있다.
     반환: (admin_state 조회용 session_id, kvan_key)
     """
     raw = (session_id or "").strip()
@@ -701,7 +701,7 @@ def _mark_session_deleted(session_id: str, title: str) -> None:
         removed_session["finished_at"] = removed_session.get("finished_at") or now_iso
 
         old_msg = str(removed_session.get("result_message") or "").strip()
-        mark_msg = "만료 감지로 K-VAN 링크가 삭제되었습니다."
+        mark_msg = "만료 감지로 U-PAY 링크가 삭제되었습니다."
         removed_session["result_message"] = f"{old_msg}\n{mark_msg}".strip() if old_msg else mark_msg
 
         history = _upsert_history_by_session_id(history, removed_session)
@@ -1569,7 +1569,7 @@ class KVStore:
                         "resident_front": "",
                         "card_prefix4": prefix4,
                         "status": "success",
-                        "message": f"K-VAN 결제 승인 (세션ID={session_id}, 승인번호={approval_no}, 카드={card_number})",
+                        "message": f"U-PAY 결제 승인 (세션ID={session_id}, 승인번호={approval_no}, 카드={card_number})",
                         "settlement_status": "미정산",
                         "settled_at": None,
                         "kvan_mid": "",
@@ -1635,7 +1635,7 @@ class KVStore:
                 )
             else:
                 new_tx_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-18:]
-                message = f"K-VAN 결제 승인 (세션ID={session_id}, 승인번호={approval_no}, 카드={card_number})"
+                message = f"U-PAY 결제 승인 (세션ID={session_id}, 승인번호={approval_no}, 카드={card_number})"
                 cur.execute(
                     """
                     INSERT INTO transactions (
@@ -1750,7 +1750,7 @@ class KVStore:
                                 "card_prefix4": prefix4,
                                 "status": tx_status,
                                 "message": (
-                                    f"K-VAN {tx_type or '거래'} 자동 연동 "
+                                    f"U-PAY {tx_type or '거래'} 자동 연동 "
                                     f"(승인번호={approval_raw or '없음'}"
                                     + (f", 세션ID={sid_hint_for_msg}" if sid_hint_for_msg else "")
                                     + ")"
@@ -2020,7 +2020,7 @@ class KVStore:
                         new_tx_id = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")[-18:]
                         sid_hint_for_msg = _extract_primary_kvan_key_from_tx_raw(raw_tx) or ""
                         message = (
-                            f"K-VAN {tx_type or '거래'} 자동 연동 "
+                            f"U-PAY {tx_type or '거래'} 자동 연동 "
                             f"(승인번호={approval_raw or '없음'}"
                             + (f", 세션ID={sid_hint_for_msg}" if sid_hint_for_msg else "")
                             + ")"
@@ -2068,7 +2068,7 @@ class KVStore:
 
             if updated or inserted:
                 print(
-                    f"[INFO] K-VAN → transactions 동기화 완료 (updated={updated}, inserted={inserted}, json={self.use_json})"
+                    f"[INFO] U-PAY → transactions 동기화 완료 (updated={updated}, inserted={inserted}, json={self.use_json})"
                 )
             _trace(
                 "sync_done",
@@ -2084,7 +2084,7 @@ class KVStore:
             return bool(inserted)
 
         except Exception as e:
-            print(f"[WARN] K-VAN ↔ transactions 동기화 오류: {e}")
+            print(f"[WARN] U-PAY ↔ transactions 동기화 오류: {e}")
             _trace("sync_error", error=str(e)[:300])
             return False
 
@@ -2716,7 +2716,7 @@ def load_order_from_json(path: str) -> PaymentRow:
         raise ValueError("JSON 데이터에 결제 금액(amount)이 없습니다.")
 
     if not str(raw.get("product_name") or "").strip():
-        raw["product_name"] = "LUXX 결제링크"
+        raw["product_name"] = "SISA 결제링크"
 
     if not str(raw.get("login_id") or "").strip():
         raw["login_id"] = os.environ.get("K_VAN_ID", "m3313")
@@ -2792,14 +2792,14 @@ def _load_order_with_session_fallback(session_id: str = "") -> PaymentRow:
             customer_name="",
             resident_front="",
             amount=amount_val,
-            product_name=f"LUXX 세션 {session_id}",
+            product_name=f"SISA 세션 {session_id}",
         )
 
     return load_order_from_json(str(ORDER_JSON_PATH))
 
 
 def _choose_product_name_for_amount(amount: int) -> str:
-    return f"LUXX 세션 결제 {amount:,}원"
+    return f"SISA 세션 결제 {amount:,}원"
 
 
 def _go_to_create_link_page(driver: webdriver.Chrome) -> bool:
@@ -3941,7 +3941,7 @@ def mark_expired_sessions_from_kvan_links(store: KVStore) -> None:
                 s["deleted_at"] = now_iso
                 s["finished_at"] = s.get("finished_at") or now_iso
                 old_msg = str(s.get("result_message") or "").strip()
-                mark_msg = "만료 감지로 K-VAN 링크가 삭제되었습니다."
+                mark_msg = "만료 감지로 U-PAY 링크가 삭제되었습니다."
                 s["result_message"] = f"{old_msg}\n{mark_msg}".strip() if old_msg else mark_msg
                 history = _upsert_history_by_session_id(history, dict(s))
                 _append_admin_log("AUTO", f"만료 링크 세션 정리 session_id={sid}")
@@ -3969,7 +3969,7 @@ def run_create(session_id: str = "") -> int:
 
     driver = create_driver()
     try:
-        _append_admin_log("AUTO", f"K-VAN 로그인 시작 session_id={session_id or '-'}")
+        _append_admin_log("AUTO", f"U-PAY 로그인 시작 session_id={session_id or '-'}")
         sign_in(driver, row)
 
         _append_admin_log("AUTO", "로그인 완료, /payment-link 즉시 진입")
@@ -4039,8 +4039,8 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
     )
 
     try:
-        print("[crawler] K-VAN 로그인 시작")
-        _alog("K-VAN 로그인 시작")
+        print("[crawler] U-PAY 로그인 시작")
+        _alog("U-PAY 로그인 시작")
 
         env_row = PaymentRow(
             login_id=os.environ.get("K_VAN_ID", "m3313"),
@@ -4131,7 +4131,7 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
                 # 4) 거래내역 스냅샷
                 _scrape_transactions_and_store(driver, store)
 
-                # 5) K-VAN -> transactions 동기화
+                # 5) U-PAY -> transactions 동기화
                 if store.sync_kvan_to_transactions():
                     had_new = True
 
@@ -4274,7 +4274,7 @@ def run_crawler_loop(max_cycles: int = 0, max_runtime_sec: int = 0) -> int:
 # =========================================================
 
 def _parse_args():
-    p = argparse.ArgumentParser(description="K-VAN 통합 실행 파일")
+    p = argparse.ArgumentParser(description="U-PAY 통합 실행 파일")
     p.add_argument("--mode", choices=["create", "crawl"], default="crawl", help="create=링크생성 / crawl=크롤러")
     p.add_argument("--session-id", default="", help="세션 주문 JSON용 session_id")
     p.add_argument("--max-cycles", type=int, default=int(os.environ.get("K_VAN_CRAWLER_MAX_CYCLES", "0")))

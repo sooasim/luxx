@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" translate="no">
+<html lang="ko">
 <head>
     <meta charset="UTF-8" />
-    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
     <script>
         // 모바일에서도 데스크탑 비율을 유지하여 카드 형태를 보존
@@ -10,10 +9,10 @@
             document.getElementById('viewport-meta').setAttribute('content', 'width=1024');
         }
     </script>
-    <title>LUXX 경매 상품 보관증</title>
+    <title>LUXX Storage Certificate (경매 상품 보관증)</title>
 
     <!-- LUXX 폰트 및 아이콘 -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Tailwind CSS -->
@@ -22,9 +21,19 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['"Cormorant Garamond"', 'serif']
+                    },
                     colors: {
-                        gold: { DEFAULT: '#D4AF37', light: '#F5D57B', dark: '#9B7A1C' }
+                        luxx: {
+                            ink: '#0a0d1a',
+                            ink2: '#141a2d',
+                            navy: '#1a2342',
+                            gold: '#d4af37',
+                            champ: '#f1d77a',
+                            cream: '#f8efd6'
+                        }
                     }
                 }
             }
@@ -32,45 +41,46 @@
     </script>
     <style>
         body {
-            background-color: #050505;
-            background-image: radial-gradient(circle at 50% 0%, rgba(212,175,55,0.1) 0%, #050505 75%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', 'Nanum Gothic', system-ui, sans-serif;
+            background-color: #04060e;
+            background-image:
+                radial-gradient(ellipse at 80% 0%, rgba(212, 175, 55, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse at 20% 100%, rgba(80, 60, 130, 0.30) 0%, transparent 60%),
+                linear-gradient(160deg, #04060e 0%, #0a0d1a 50%, #14172a 100%);
         }
 
         .glass-card {
-            background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(10,10,10,0.97) 50%, rgba(212,175,55,0.05) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(212,175,55,0.25);
-            border-top: 1px solid rgba(245,213,123,0.5);
-            border-left: 1px solid rgba(245,213,123,0.4);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 1px 0 rgba(212,175,55,0.15), 0 0 60px rgba(212,175,55,0.08);
+            background:
+                linear-gradient(135deg, rgba(255, 250, 230, 0.08) 0%, rgba(20, 22, 40, 0.85) 100%);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(212, 175, 55, 0.32);
+            border-top: 1px solid rgba(241, 215, 122, 0.6);
+            border-left: 1px solid rgba(241, 215, 122, 0.45);
+            box-shadow:
+                0 30px 70px rgba(0,0,0,0.7),
+                inset 0 1px 0 rgba(248, 239, 214, 0.12),
+                0 0 70px rgba(212, 175, 55, 0.12);
         }
-        .card-root { border-radius: 32px; overflow: hidden; }
+        .card-root { border-radius: 32px; overflow: hidden; position: relative; }
+        .card-root::before {
+            content: "";
+            position: absolute; inset: 0;
+            background-image:
+                repeating-linear-gradient(45deg, rgba(212,175,55,0.045) 0 1px, transparent 1px 14px);
+            pointer-events: none;
+        }
         .snapshot-box { border-radius: 16px; overflow: hidden; }
-
-        .gold-gradient {
-            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
-        }
-        .gold-text {
-            background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
 
         .watermark {
             position: absolute;
-            font-size: 200px;
-            font-weight: 900;
-            color: rgba(212,175,55,0.04);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 220px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: rgba(212, 175, 55, 0.06);
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-15deg);
+            transform: translate(-50%, -50%) rotate(-12deg);
             pointer-events: none;
             white-space: nowrap;
             user-select: none;
@@ -81,50 +91,49 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px dashed rgba(212,175,55,0.12);
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.18);
+            gap: 12px;
         }
         .data-row:last-child {
             border-bottom: none;
             padding-bottom: 0;
         }
-        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
+        .gold-divider {
+            background: linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.55) 50%, transparent 100%);
+        }
+        .luxx-mark {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            letter-spacing: 0.32em;
+        }
+        .ko-sub { font-size: 10px; opacity: 0.55; font-weight: 400; margin-left: 4px; }
+        .price-em { font-family: 'Cormorant Garamond', serif; font-weight: 700; }
     </style>
 </head>
-<body class="p-6 text-white font-sans antialiased overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-6 text-white font-sans antialiased overflow-hidden">
 
     <article class="glass-card card-root w-full max-w-[900px] rounded-[32px] p-10 relative overflow-hidden flex flex-col justify-between min-h-[480px]">
 
-        <div class="absolute -right-20 -top-20 w-80 h-80 bg-[rgba(212,175,55,0.1)] rounded-full blur-[80px] pointer-events-none"></div>
-        <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-[rgba(212,175,55,0.06)] rounded-full blur-[80px] pointer-events-none"></div>
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-luxx-gold/20 rounded-full blur-[80px] pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-amber-400/15 rounded-full blur-[80px] pointer-events-none"></div>
 
         <div class="watermark">LUXX VAULT</div>
 
         <header class="relative z-10 flex justify-between items-start mb-8">
             <div class="flex items-center gap-4">
-                <!-- 다이아몬드 로고 -->
-                <svg width="40" height="46" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none" style="filter:drop-shadow(0 0 6px rgba(212,175,55,0.3))">
-                    <polygon points="12,8 0,20 10,20" fill="#4A3608"/>
-                    <polygon points="12,8 10,20 26,20 26,8" fill="#FFF0A0" opacity="0.9"/>
-                    <polygon points="40,8 26,8 26,20 42,20" fill="#D4AF37"/>
-                    <polygon points="40,8 42,20 52,20" fill="#9B7A1C"/>
-                    <polygon points="0,20 10,20 26,36" fill="#6A4E0E"/>
-                    <polygon points="10,20 42,20 26,36" fill="#FFFAD0" opacity="0.88"/>
-                    <polygon points="42,20 52,20 26,36" fill="#9B7A1C"/>
-                    <polygon points="0,20 26,36 26,56" fill="#2E2203"/>
-                    <polygon points="52,20 26,56 26,36" fill="#4A3608"/>
-                    <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/>
-                    <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="2"/>
-                    <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
-                    <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.8" opacity="0.6"/>
-                </svg>
+                <div class="w-14 h-14 bg-gradient-to-br from-luxx-gold/30 to-luxx-gold/5 rounded-xl flex items-center justify-center border border-luxx-gold/40 shadow-inner">
+                    <i class="fa-solid fa-vault text-2xl text-luxx-champ drop-shadow-md"></i>
+                </div>
                 <div>
-                    <h1 style="font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;letter-spacing:0.22em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX GLOBAL AUCTION</h1>
-                    <p class="text-[11px] text-[rgba(212,175,55,0.5)] uppercase tracking-[0.15em] mt-0.5">Luxury Auction Exchange</p>
+                    <h1 class="luxx-mark text-2xl text-luxx-cream">L U X X</h1>
+                    <p class="text-[11px] text-luxx-champ/80 uppercase tracking-[0.18em] mt-0.5">
+                        Global Auction Vault <span class="ko-sub">(글로벌 경매 보관)</span>
+                    </p>
                 </div>
             </div>
-            <div class="text-right flex flex-col items-end opacity-70">
-                <i class="fa-solid fa-barcode text-4xl mb-1 text-[rgba(212,175,55,0.7)]"></i>
-                <span class="text-[10px] font-mono tracking-widest text-[rgba(255,255,255,0.5)]">VAULT-__STORAGE_NO__</span>
+            <div class="text-right flex flex-col items-end opacity-80">
+                <i class="fa-solid fa-barcode text-3xl mb-1 text-luxx-champ/85"></i>
+                <span class="text-[10px] font-mono tracking-widest text-luxx-cream/65">VAULT-__STORAGE_NO__</span>
             </div>
         </header>
 
@@ -132,58 +141,66 @@
 
             <div class="flex-1 flex flex-col justify-center">
                 <div class="flex flex-wrap gap-2 mb-6">
-                    <div class="px-3 py-1 bg-[rgba(212,175,55,0.1)] border border-[rgba(212,175,55,0.4)] rounded-full text-[11px] font-bold text-[#D4AF37] tracking-wide flex items-center gap-1.5 shadow-lg">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse"></span> LIVE | 실시간 경매
+                    <div class="px-3 py-1 bg-luxx-gold/15 border border-luxx-gold/45 rounded-full text-[11px] font-bold text-luxx-champ tracking-wide flex items-center gap-1.5 shadow-lg">
+                        <span class="w-1.5 h-1.5 rounded-full bg-luxx-champ animate-pulse"></span>
+                        LIVE <span class="ko-sub">(실시간 경매)</span>
                     </div>
-                    <div class="px-3 py-1 bg-[rgba(212,175,55,0.1)] border border-[rgba(212,175,55,0.4)] rounded-full text-[11px] font-bold text-[#D4AF37] tracking-wide flex items-center gap-1.5 shadow-lg">
-                        <i class="fa-solid fa-shield-check"></i> CERTIFIED | LUXX 인증
+                    <div class="px-3 py-1 bg-amber-500/15 border border-amber-300/45 rounded-full text-[11px] font-bold text-amber-200 tracking-wide flex items-center gap-1.5 shadow-lg">
+                        <i class="fa-solid fa-shield-check"></i>
+                        CERTIFIED <span class="ko-sub">(LUXX 인증)</span>
                     </div>
                 </div>
 
-                <h2 class="text-sm font-bold text-[rgba(212,175,55,0.8)] uppercase tracking-widest mb-2">__CARD_TITLE__</h2>
-                <h3 class="text-3xl md:text-4xl font-black text-white leading-tight mb-4 drop-shadow-lg">
+                <h2 class="text-sm font-bold text-luxx-champ/85 uppercase tracking-widest mb-2">__CARD_TITLE__</h2>
+                <h3 class="text-3xl md:text-4xl font-black text-luxx-cream leading-tight mb-4 drop-shadow-lg">
                     __PRODUCT_NAME_LINE1__<br>
-                    <span class="text-2xl text-[rgba(255,255,255,0.7)] font-bold">__PRODUCT_NAME_LINE2__</span>
+                    <span class="text-2xl text-luxx-cream/75 font-bold">__PRODUCT_NAME_LINE2__</span>
                 </h3>
 
-                <p class="text-sm text-[rgba(255,255,255,0.5)] leading-relaxed max-w-sm">
-                    Global Auction Linked Product Information.<br>
+                <p class="text-sm text-luxx-cream/55 leading-relaxed max-w-sm">
+                    Global Auction Linked Product Information.
+                    <span class="ko-sub">(글로벌 경매 연동 상품 정보)</span><br>
                     __PRODUCT_DETAIL__
                 </p>
             </div>
 
             <div class="w-full md:w-[340px] shrink-0">
-                <div class="bg-[rgba(0,0,0,0.5)] backdrop-blur-xl border border-[rgba(212,175,55,0.2)] rounded-2xl snapshot-box p-6 shadow-2xl relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-20 h-20 bg-[rgba(212,175,55,0.05)] rounded-bl-full pointer-events-none"></div>
+                <div class="bg-black/40 backdrop-blur-xl border border-luxx-gold/30 rounded-2xl snapshot-box p-6 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-luxx-gold/15 rounded-bl-full pointer-events-none"></div>
 
-                    <h4 class="text-sm font-bold text-[#D4AF37] mb-4 flex items-center gap-2 border-b border-[rgba(212,175,55,0.15)] pb-3">
-                        <i class="fa-solid fa-list-check text-[#D4AF37]"></i> Auction Snapshot
+                    <h4 class="text-sm font-bold text-luxx-champ mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-luxx-gold"></i>
+                        Auction Snapshot <span class="ko-sub">(경매 요약)</span>
                     </h4>
+                    <div class="h-px gold-divider mb-3"></div>
 
                     <div class="flex flex-col text-[13px]">
                         <div class="data-row">
-                            <span class="text-[rgba(255,255,255,0.5)]">Auction House</span>
-                            <span class="font-bold text-white">__AUCTION_HOUSE__</span>
+                            <span class="text-luxx-cream/55">Auction House <span class="ko-sub">(경매장)</span></span>
+                            <span class="font-bold text-luxx-cream">__AUCTION_HOUSE__</span>
                         </div>
                         <div class="data-row">
-                            <span class="text-[rgba(255,255,255,0.5)]">Hammer Price</span>
-                            <span class="font-bold text-white">₩ __HAMMER_PRICE__</span>
+                            <span class="text-luxx-cream/55">Hammer Price <span class="ko-sub">(낙찰가)</span></span>
+                            <span class="price-em text-luxx-cream text-base">₩ __HAMMER_PRICE__</span>
                         </div>
                         <div class="data-row">
-                            <span class="text-[rgba(255,255,255,0.5)]">Session ID</span>
-                            <span class="font-mono text-white">__SESSION_ID__</span>
+                            <span class="text-luxx-cream/55">Session ID <span class="ko-sub">(세션ID)</span></span>
+                            <span class="font-mono text-luxx-cream">__SESSION_ID__</span>
                         </div>
                         <div class="data-row">
-                            <span class="text-[rgba(255,255,255,0.5)]">Vault No.</span>
-                            <span class="font-mono text-white">__STORAGE_NO__</span>
+                            <span class="text-luxx-cream/55">Vault No. <span class="ko-sub">(보관번호)</span></span>
+                            <span class="font-mono text-luxx-cream">__STORAGE_NO__</span>
                         </div>
-                        <div class="data-row bg-[rgba(212,175,55,0.08)] -mx-6 px-6 border-y border-[rgba(212,175,55,0.25)] mt-2 py-3">
-                            <span class="text-[#D4AF37] font-bold"><i class="fa-solid fa-key mr-1"></i> Vault Code</span>
-                            <span class="font-mono font-black text-[#F5D57B] text-lg tracking-widest">__STORAGE_CODE__</span>
+                        <div class="data-row bg-gradient-to-r from-luxx-gold/20 to-luxx-gold/5 -mx-6 px-6 border-y border-luxx-gold/40 mt-2 py-3">
+                            <span class="text-luxx-champ font-bold">
+                                <i class="fa-solid fa-key mr-1"></i>
+                                Vault Code <span class="ko-sub">(보관코드)</span>
+                            </span>
+                            <span class="font-mono font-black text-luxx-champ text-lg tracking-widest">__STORAGE_CODE__</span>
                         </div>
                         <div class="data-row">
-                            <span class="text-[rgba(255,255,255,0.5)]">Storage Period</span>
-                            <span class="font-bold text-[#D4AF37]">~ __STORAGE_UNTIL__</span>
+                            <span class="text-luxx-champ/70">Storage Period <span class="ko-sub">(보관기간)</span></span>
+                            <span class="font-bold text-luxx-champ">~ __STORAGE_UNTIL__</span>
                         </div>
                     </div>
                 </div>
@@ -191,14 +208,14 @@
 
         </div>
 
-        <footer class="relative z-10 flex justify-between items-end mt-10 pt-6 border-t border-[rgba(212,175,55,0.15)]">
-            <div class="flex items-center gap-2 text-[rgba(212,175,55,0.4)] hover:text-[#D4AF37] transition cursor-pointer">
+        <footer class="relative z-10 flex justify-between items-end mt-10 pt-6 border-t border-luxx-gold/15">
+            <div class="flex items-center gap-2 text-luxx-cream/45 hover:text-luxx-champ transition cursor-pointer">
                 <i class="fa-solid fa-link text-sm"></i>
                 <span class="text-xs font-medium tracking-wide">luxxbid.com</span>
             </div>
-            <div class="flex items-center gap-2 text-[rgba(255,255,255,0.4)] text-xs font-mono">
+            <div class="flex items-center gap-2 text-luxx-cream/45 text-xs font-mono">
                 <i class="fa-regular fa-clock"></i>
-                <span>__GENERATED_AT__</span>
+                <span>Issued <span class="ko-sub">(발행)</span> __GENERATED_AT__</span>
             </div>
         </footer>
 

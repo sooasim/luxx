@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-K-VAN /transactions 테이블 → 스냅샷 행 추출 (kvan_crawler / auto_kvan 공통).
+U-PAY /transactions 테이블 → 스냅샷 행 추출 (kvan_crawler / auto_kvan 공통).
 
 구버전: tbody 우선 대기 + thead 첫 줄 단순 .text 헤더
 신버전: th innerHTML 기반 infer (placeholder 등)

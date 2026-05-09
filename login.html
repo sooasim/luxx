@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" translate="no">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
     <script>
         // 모바일 스마트폰에서 데스크탑 화면 그대로 축소되어 보이도록 뷰포트 강제 조정
@@ -10,11 +9,11 @@
             document.getElementById('viewport-meta').setAttribute('content', 'width=1280');
         }
     </script>
-    <title>Sign In | LUXX - Luxury Auction Exchange</title>
-    <!-- LUXX 브랜드 파비콘 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
+    <title>로그인 | SISA - Society of International Specialized Auctioneers</title>
+    <!-- SISA 브랜드 파비콘 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
     <!-- 폰트 및 아이콘 불러오기 -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,18 +22,13 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        brand: ['"Cinzel"', 'serif'],
-                        display: ['"Playfair Display"', '"Nanum Myeongjo"', 'Georgia', 'serif'],
-                        serif: ['"Playfair Display"', '"Nanum Myeongjo"', 'Georgia', 'serif'],
-                        sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
                     },
                     colors: {
                         brand: {
-                            gold: '#D4AF37',
-                            'gold-light': '#F5D57B',
-                            'gold-dark': '#9B7A1C',
-                            black: '#0A0A0A',
-                            dark: '#111111'
+                            blue: '#2f4b9f',
+                            dark: '#1e326b',
+                            accent: '#e6edf7'
                         }
                     }
                 }
@@ -42,137 +36,61 @@
         }
     </script>
     <style>
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0A0A0A; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
-
-        body { background: #0A0A0A; background-image: radial-gradient(ellipse at top, rgba(212,175,55,0.06) 0%, #0A0A0A 60%);
-               font-family: 'Inter', 'Nanum Gothic', system-ui, sans-serif; }
-
+        /* 커스텀 글래스모피즘 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        
         .glass-card {
-            background: rgba(255,255,255,0.04);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(212,175,55,0.15);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .glass-card-gold {
-            background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(15,15,15,0.95) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(212,175,55,0.25);
-            border-top-color: rgba(245,213,123,0.4);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(212,175,55,0.05);
-        }
-        .gold-text {
-            background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .input-gold {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(212,175,55,0.2);
-            color: white;
-            border-radius: 12px;
-            padding: 12px 16px;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        .input-gold:focus {
-            outline: none;
-            border-color: rgba(212,175,55,0.5);
-            background: rgba(212,175,55,0.05);
-            box-shadow: 0 0 0 3px rgba(212,175,55,0.1);
-        }
-        .input-gold::placeholder { color: rgba(255,255,255,0.3); }
-        .btn-gold {
-            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
-            color: #0A0A0A;
-            font-weight: 700;
-            border-radius: 12px;
-            padding: 14px;
-            width: 100%;
-            cursor: pointer;
-            border: none;
-            font-size: 15px;
-            letter-spacing: 0.05em;
-            transition: opacity 0.2s, transform 0.1s;
-        }
-        .btn-gold:hover { opacity: 0.9; transform: translateY(-1px); }
-        .divider-gold { border-color: rgba(212,175,55,0.15); }
-        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
     </style>
 </head>
-<body class="text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
+<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
 
     <!-- 상단 네비게이션 바 (공통) -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b-0">
+    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <!-- 로고 영역 -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='/'">
                 <div class="flex items-center justify-center">
-                    <svg width="36" height="41" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
-  <defs>
-    <linearGradient id="da1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF0A0"/><stop offset="100%" stop-color="#B89020"/></linearGradient>
-    <linearGradient id="da2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
-    <linearGradient id="da3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9B7A1C"/><stop offset="100%" stop-color="#5A440A"/></linearGradient>
-    <linearGradient id="da4" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0%" stop-color="#FFF5C0"/><stop offset="100%" stop-color="#D4AF37"/></linearGradient>
-    <linearGradient id="da5" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#7A5E10"/></linearGradient>
-    <linearGradient id="da6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7A5E10"/><stop offset="100%" stop-color="#3A2D05"/></linearGradient>
-    <linearGradient id="da7" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5D57B"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
-  </defs>
-  <polygon points="12,8 0,20 10,20" fill="url(#da3)"/>
-  <polygon points="12,8 10,20 26,20 26,8" fill="url(#da1)"/>
-  <polygon points="40,8 26,8 26,20 42,20" fill="url(#da2)"/>
-  <polygon points="40,8 42,20 52,20" fill="url(#da5)"/>
-  <polygon points="0,20 10,20 26,36" fill="url(#da3)"/>
-  <polygon points="10,20 42,20 26,36" fill="url(#da4)"/>
-  <polygon points="42,20 52,20 26,36" fill="url(#da5)"/>
-  <polygon points="0,20 26,36 26,56" fill="url(#da6)"/>
-  <polygon points="52,20 26,56 26,36" fill="url(#da5)"/>
-  <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="url(#da7)" stroke-width="1.2" stroke-linejoin="round"/>
-  <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="1.5"/>
-  <line x1="12" y1="8" x2="10" y2="20" stroke="#F5D57B" stroke-width="0.7" opacity="0.7"/>
-  <line x1="26" y1="8" x2="26" y2="20" stroke="#F5D57B" stroke-width="0.8" opacity="0.6"/>
-  <line x1="40" y1="8" x2="42" y2="20" stroke="#D4AF37" stroke-width="0.7" opacity="0.7"/>
-  <line x1="0" y1="20" x2="52" y2="20" stroke="#D4AF37" stroke-width="0.5" opacity="0.5"/>
-  <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.6" opacity="0.6"/>
-  <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.6" opacity="0.6"/>
-  <line x1="26" y1="36" x2="26" y2="56" stroke="#D4AF37" stroke-width="0.5" opacity="0.4"/>
-</svg>
+                    <i class="fa-solid fa-globe text-white text-3xl drop-shadow-md"></i>
                 </div>
                 <div class="flex flex-col justify-center">
                     <div class="flex items-end gap-2 mb-1">
-                        <span style="font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem;letter-spacing:0.32em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;">LUXX</span>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded tracking-[0.1em] leading-none mb-0.5" style="background:rgba(212,175,55,0.1);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);">luxxbid.com</span>
+                        <span class="text-3xl font-black tracking-tighter text-white leading-none">SISA</span>
+                        <span class="text-[10px] font-mono bg-white/10 text-blue-200 px-2 py-0.5 rounded border border-white/10 tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
                     </div>
-                    <span class="text-[9px] font-semibold tracking-[0.18em] uppercase leading-none" style="color:rgba(255,255,255,0.7);">Luxury Auction Exchange</span>
+                    <span class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Society of International Specialized Auctioneers</span>
                 </div>
             </div>
 
             <!-- 중앙 메뉴 -->
-            <nav class="hidden md:flex rounded-full p-1 text-sm font-medium" style="background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.15);">
-                <a href="/" class="px-5 py-2 rounded-full transition" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">HOME</a>
-                <a href="/auction.html" class="px-5 py-2 rounded-full transition" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">GLOBAL AUCTION</a>
-                <a href="/" class="px-5 py-2 rounded-full transition flex items-center gap-1" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">
-                    <i class="fa-solid fa-lock text-xs"></i> LUXX VAULT
+            <nav class="hidden md:flex bg-white/10 rounded-full p-1 border border-white/10 text-sm font-medium">
+                <a href="/" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">HOME</a>
+                <a href="/auction.html" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">GLOBAL AUCTION</a>
+                <a href="/" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
+                    <i class="fa-solid fa-lock text-xs"></i> SISA VAULT
                 </a>
-                <a href="/login.html" class="px-5 py-2 rounded-full transition" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">MY LUXX</a>
+                <a href="login.html" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY SISA</a>
             </nav>
 
             <!-- 우측 액션 버튼 (언어 선택) -->
             <div class="flex items-center gap-4 text-sm font-semibold">
                 <div class="relative group hidden sm:block">
-                    <button class="flex items-center gap-1 cursor-pointer py-2" style="color:rgba(255,255,255,0.8);">
+                    <button class="flex items-center gap-1 cursor-pointer text-white/80 hover:text-white py-2">
                         EN <i class="fa-solid fa-chevron-down text-[10px]"></i>
                     </button>
                     <!-- 드롭다운 메뉴 -->
-                    <div class="absolute right-0 top-full mt-1 w-32 backdrop-blur-md rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50" style="background:rgba(17,17,17,0.98);border:1px solid rgba(212,175,55,0.2);">
-                        <ul class="py-2" style="color:rgba(255,255,255,0.8);">
-                            <li><a href="#" class="block px-4 py-1.5 transition hover:text-white" style="" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">🇺🇸 English</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 transition hover:text-white" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">🇰🇷 한국어</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 transition hover:text-white" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">🇯🇵 日本語</a></li>
+                    <div class="absolute right-0 top-full mt-1 w-32 bg-[#1e326b]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <ul class="py-2 text-white/80">
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇺🇸 English</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇰🇷 한국어</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇯🇵 日本語</a></li>
                         </ul>
                     </div>
                 </div>
@@ -182,77 +100,77 @@
 
     <!-- 메인 컨텐츠 영역 (화면 중앙 정렬) -->
     <main class="flex-grow flex items-center justify-center pt-28 pb-20 px-6 relative z-10">
-
+        
         <!-- 배경 데코레이션 효과 -->
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[120px] pointer-events-none -z-10" style="background:rgba(212,175,55,0.06);"></div>
-        <div class="absolute top-1/4 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none -z-10" style="background:rgba(212,175,55,0.04);"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/20 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+        <div class="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
 
         <!-- 로그인 폼 메인 글래스 카드 -->
-        <div class="glass-card-gold max-w-5xl w-full rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-20">
-
+        <div class="glass-card max-w-5xl w-full rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/20 relative z-20">
+            
             <!-- 좌측: 브랜딩 및 안내 영역 -->
-            <div class="w-full md:w-5/12 relative bg-cover bg-center hidden md:flex flex-col justify-between p-12" style="background-image: url('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');border-right:1px solid rgba(212,175,55,0.15);">
-                <div class="absolute inset-0 backdrop-blur-sm" style="background:linear-gradient(to bottom, rgba(10,10,10,0.92) 0%, rgba(15,15,15,0.85) 50%, rgba(10,10,10,0.97) 100%);"></div>
-
+            <div class="w-full md:w-5/12 relative bg-cover bg-center hidden md:flex flex-col justify-between p-12 border-r border-white/10" style="background-image: url('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');">
+                <div class="absolute inset-0 bg-gradient-to-b from-brand-dark/90 via-brand-blue/80 to-brand-dark/95 backdrop-blur-sm"></div>
+                
                 <!-- 상단 장식 -->
                 <div class="relative z-10">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-6 backdrop-blur-md" style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);">
-                        <i class="fa-solid fa-shield-halved text-xl" style="color:#D4AF37;"></i>
+                    <div class="w-12 h-12 bg-white/10 border border-white/20 rounded-xl flex items-center justify-center mb-6 backdrop-blur-md">
+                        <i class="fa-solid fa-shield-halved text-xl text-blue-300"></i>
                     </div>
                     <h2 class="text-3xl font-bold tracking-tight mb-4">Secure Access to<br>Global Auctions</h2>
-                    <p class="text-sm leading-relaxed" style="color:rgba(255,255,255,0.7);">
-                        LUXX 인증을 통해 전 세계 최상위 럭셔리 경매와 폐쇄형 도매 마켓(Vault)에 안전하게 접속하세요.
+                    <p class="text-white/70 text-sm leading-relaxed">
+                        SISA 인증을 통해 전 세계 최상위 럭셔리 경매와 폐쇄형 도매 마켓(Vault)에 안전하게 접속하세요.
                     </p>
                 </div>
 
                 <!-- 하단 신뢰도 지표 -->
-                <div class="relative z-10 rounded-2xl p-5 backdrop-blur-md" style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,175,55,0.15);">
+                <div class="relative z-10 bg-black/20 border border-white/10 rounded-2xl p-5 backdrop-blur-md">
                     <div class="flex items-center gap-4 mb-3">
                         <div class="flex -space-x-2">
-                            <img class="w-8 h-8 rounded-full border-2" style="border-color:#D4AF37;" src="https://i.pravatar.cc/100?img=3" alt="User">
-                            <img class="w-8 h-8 rounded-full border-2" style="border-color:#D4AF37;" src="https://i.pravatar.cc/100?img=4" alt="User">
-                            <img class="w-8 h-8 rounded-full border-2" style="border-color:#D4AF37;" src="https://i.pravatar.cc/100?img=5" alt="User">
+                            <img class="w-8 h-8 rounded-full border-2 border-brand-blue" src="https://i.pravatar.cc/100?img=3" alt="User">
+                            <img class="w-8 h-8 rounded-full border-2 border-brand-blue" src="https://i.pravatar.cc/100?img=4" alt="User">
+                            <img class="w-8 h-8 rounded-full border-2 border-brand-blue" src="https://i.pravatar.cc/100?img=5" alt="User">
                         </div>
-                        <p class="text-xs font-medium" style="color:rgba(255,255,255,0.8);">52,000+ LUXX Members</p>
+                        <p class="text-xs text-white/80 font-medium">52,000+ SISA Members</p>
                     </div>
-                    <p class="text-[11px] pt-3 flex items-center gap-1.5" style="color:rgba(255,255,255,0.5);border-top:1px solid rgba(212,175,55,0.15);">
-                        <i class="fa-solid fa-lock" style="color:#D4AF37;"></i> Bank-grade 256-bit encryption applied.
+                    <p class="text-[11px] text-white/50 border-t border-white/10 pt-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock text-green-400"></i> Bank-grade 256-bit encryption applied.
                     </p>
                 </div>
             </div>
 
             <!-- 우측: 실제 로그인 폼 영역 -->
-            <div class="w-full md:w-7/12 p-8 md:p-14 lg:p-16 flex flex-col justify-center" style="background:rgba(255,255,255,0.02);">
+            <div class="w-full md:w-7/12 p-8 md:p-14 lg:p-16 flex flex-col justify-center bg-white/5">
                 <div class="mb-10 text-center md:text-left">
                     <h1 class="text-3xl md:text-4xl font-bold mb-2">Welcome Back</h1>
-                    <p style="color:rgba(255,255,255,0.6);">본사 및 대행사 어드민 로그인을 진행해 주세요.</p>
+                    <p class="text-white/60">본사 및 대행사 어드민 로그인을 진행해 주세요.</p>
                 </div>
 
                 <form action="/portal-login" method="POST" class="space-y-6">
                     <!-- 아이디(이메일) 입력 -->
                     <div>
-                        <label for="email" class="block mb-2 text-[11px] font-bold uppercase tracking-widest" style="color:rgba(212,175,55,0.8);">Email / LUXX ID</label>
+                        <label for="email" class="text-[11px] text-white/60 font-bold mb-2 block uppercase tracking-widest">Email / SISA ID</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i class="fa-regular fa-envelope" style="color:rgba(212,175,55,0.4);"></i>
+                                <i class="fa-regular fa-envelope text-white/40"></i>
                             </div>
-                            <input type="text" id="email" name="username" class="input-gold pl-11 pr-4" placeholder="아이디 또는 이메일" required>
+                            <input type="text" id="email" name="username" class="w-full bg-black/20 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-white/10 transition shadow-inner" placeholder="아이디 또는 이메일" required>
                         </div>
                     </div>
 
                     <!-- 비밀번호 입력 -->
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label for="password" class="text-[11px] font-bold block uppercase tracking-widest" style="color:rgba(212,175,55,0.8);">Password</label>
-                            <a href="#" class="text-xs font-medium transition" style="color:#D4AF37;" onmouseover="this.style.color='#F5D57B'" onmouseout="this.style.color='#D4AF37'">Forgot Password?</a>
+                            <label for="password" class="text-[11px] text-white/60 font-bold block uppercase tracking-widest">Password</label>
+                            <a href="#" class="text-xs text-blue-300 hover:text-white transition font-medium">Forgot Password?</a>
                         </div>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i class="fa-solid fa-lock" style="color:rgba(212,175,55,0.4);"></i>
+                                <i class="fa-solid fa-lock text-white/40"></i>
                             </div>
-                            <input type="password" id="password" name="password" class="input-gold pl-11 pr-12" placeholder="••••••••" required>
+                            <input type="password" id="password" name="password" class="w-full bg-black/20 border border-white/10 rounded-xl py-3.5 pl-11 pr-12 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-white/10 transition shadow-inner" placeholder="••••••••" required>
                             <!-- 비밀번호 보이기/숨기기 토글 -->
-                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer transition" style="color:rgba(212,175,55,0.5);" onmouseover="this.style.color='#D4AF37'" onmouseout="this.style.color='rgba(212,175,55,0.5)'">
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-white/40 hover:text-white transition">
                                 <i class="fa-regular fa-eye-slash"></i>
                             </div>
                         </div>
@@ -260,54 +178,54 @@
 
                     <!-- 로그인 유지 옵션 -->
                     <div class="flex items-center">
-                        <input id="remember_me" name="remember_me" type="checkbox" class="h-4 w-4 rounded cursor-pointer" style="accent-color:#D4AF37;border-color:rgba(212,175,55,0.3);">
-                        <label for="remember_me" class="ml-2 block text-sm cursor-pointer" style="color:rgba(255,255,255,0.7);">
+                        <input id="remember_me" name="remember_me" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 bg-white/10 border-white/20 accent-brand-blue cursor-pointer">
+                        <label for="remember_me" class="ml-2 block text-sm text-white/70 cursor-pointer">
                             Keep me logged in
                         </label>
                     </div>
 
                     <!-- 로그인 버튼 -->
-                    <button type="submit" class="btn-gold">
+                    <button type="submit" class="w-full bg-brand-accent text-brand-blue font-bold text-lg py-4 rounded-xl hover:bg-white transition shadow-[0_0_20px_rgba(230,237,247,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] transform hover:-translate-y-0.5 duration-200">
                         Sign In
                     </button>
                 </form>
 
                 <!-- 구분선 -->
                 <div class="flex items-center my-8">
-                    <hr class="flex-1 divider-gold">
-                    <span class="px-4 text-xs font-medium uppercase tracking-wider" style="color:rgba(255,255,255,0.4);">Or continue with</span>
-                    <hr class="flex-1 divider-gold">
+                    <hr class="flex-1 border-white/10">
+                    <span class="px-4 text-white/40 text-xs font-medium uppercase tracking-wider">Or continue with</span>
+                    <hr class="flex-1 border-white/10">
                 </div>
 
                 <!-- 파트너 및 B2B 로그인 옵션 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button class="flex items-center justify-center gap-2 py-3 rounded-xl transition text-sm font-medium" style="border:1px solid rgba(212,175,55,0.2);color:rgba(212,175,55,0.7);background:transparent;" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='transparent'">
-                        <i class="fa-solid fa-building" style="color:#D4AF37;"></i> LUXX Partner Auth
+                    <button class="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium text-white/90">
+                        <i class="fa-solid fa-building text-blue-300"></i> SISA Partner Auth
                     </button>
-                    <button class="flex items-center justify-center gap-2 py-3 rounded-xl transition text-sm font-medium" style="border:1px solid rgba(212,175,55,0.2);color:rgba(212,175,55,0.7);background:transparent;" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='transparent'">
-                        <i class="fa-solid fa-wallet" style="color:#D4AF37;"></i> Web3 Wallet
+                    <button class="flex items-center justify-center gap-2 bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition text-sm font-medium text-white/90">
+                        <i class="fa-solid fa-wallet text-purple-300"></i> Web3 Wallet
                     </button>
                 </div>
 
                 <!-- 회원가입 안내 -->
-                <p class="mt-10 text-center text-sm" style="color:rgba(255,255,255,0.6);">
-                    아직 회원이 아니신가요?
-                    <a href="/signup.html" class="font-bold transition underline underline-offset-4 ml-1" style="color:#D4AF37;" onmouseover="this.style.color='#F5D57B'" onmouseout="this.style.color='#D4AF37'">회원가입 신청하기</a>
+                <p class="mt-10 text-center text-sm text-white/60">
+                    아직 회원이 아니신가요? 
+                    <a href="#" class="font-bold text-white hover:text-blue-300 transition underline underline-offset-4 decoration-white/30 ml-1">회원가입 신청하기</a>
                 </p>
             </div>
         </div>
     </main>
 
-    <!-- 하단 푸터 -->
-    <footer class="py-6 text-xs relative z-10 mt-auto" style="border-top:1px solid rgba(212,175,55,0.1);background:rgba(10,10,10,0.6);color:rgba(255,255,255,0.5);">
+    <!-- 하단 푸터 (간략형 - 로그인 페이지용) -->
+    <footer class="border-t border-white/10 bg-brand-dark/40 py-6 text-white/50 text-xs relative z-10 mt-auto">
         <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p class="font-mono text-[10px]">Copyright &copy; 2026 LUXX LLC. All Rights Reserved.</p>
-            <div class="flex gap-4 font-medium" style="color:rgba(255,255,255,0.6);">
-                <a href="#" class="transition hover:text-white">Terms</a>
-                <span style="color:rgba(255,255,255,0.2);">|</span>
-                <a href="#" class="transition hover:text-white">Privacy</a>
-                <span style="color:rgba(255,255,255,0.2);">|</span>
-                <a href="#" class="transition hover:text-white">Help Center</a>
+            <p class="font-mono text-[10px]">Copyright &copy; 2026 SISA LLC. All Rights Reserved.</p>
+            <div class="flex gap-4 font-medium text-white/60">
+                <a href="#" class="hover:text-white transition">Terms</a>
+                <span class="text-white/20">|</span>
+                <a href="#" class="hover:text-white transition">Privacy</a>
+                <span class="text-white/20">|</span>
+                <a href="#" class="hover:text-white transition">Help Center</a>
             </div>
         </div>
     </footer>

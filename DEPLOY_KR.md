@@ -1,4 +1,4 @@
-﻿# 한국 호스팅 배포 가이드 (LUXX K-VAN 자동 결제)
+# 한국 호스팅 배포 가이드 (SISA U-PAY 자동 결제)
 
 한국 서버에 올리면 결제 요청이 **한국 IP**로 나가서 카드사에서 국내 결제로 인식됩니다.
 
@@ -25,7 +25,7 @@
 
 ```
 web_form.py          # Flask 웹 앱
-auto_kvan.py         # K-VAN 자동 결제 스크립트
+auto_kvan.py         # U-PAY 자동 결제 스크립트
 requirements.txt     # Python 패키지 목록
 Dockerfile           # Docker 사용 시
 .dockerignore        # Docker 빌드 시 제외 파일
@@ -39,7 +39,7 @@ install_chrome_ubuntu.sh  # Ubuntu/Debian에서 Chrome 설치 (Docker 미사용 
 
 **중요: 데이터(결제/대행사 정보) 파일은 따로 보관됩니다.**
 
-- 애플리케이션 데이터는 **`LUXX_DATA_DIR`** 환경변수로 지정한 폴더(없으면 `./data`)에 저장됩니다.
+- 애플리케이션 데이터는 **`SISA_DATA_DIR`** 환경변수로 지정한 폴더(없으면 `./data`)에 저장됩니다.
 - 이 폴더 안에 아래와 같은 파일/폴더가 생깁니다.
   - `admin_state.json`, `hq_state.json`, `current_order.json`, `last_result.json`
   - `kvan_results.xlsx`
@@ -62,8 +62,8 @@ install_chrome_ubuntu.sh  # Ubuntu/Debian에서 Chrome 설치 (Docker 미사용 
    ```
 3. Docker 이미지 빌드 및 실행:
    ```bash
-   docker build -t LUXX-kvan .
-   docker run -d -p 5000:5000 --name LUXX-app LUXX-kvan
+   docker build -t sisa-kvan .
+   docker run -d -p 5000:5000 --name sisa-app sisa-kvan
    ```
 4. 포트 5000으로 웹 접속 (호스팅에서 지정한 도메인 또는 IP:5000).
 

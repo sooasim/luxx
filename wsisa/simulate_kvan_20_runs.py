@@ -163,7 +163,7 @@ def run() -> int:
     md_path = out_dir / "kvan_simulation_20_results.md"
     json_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    lines = ["# K-VAN 시뮬레이션 20회 결과", ""]
+    lines = ["# U-PAY 시뮬레이션 20회 결과", ""]
     for r in results:
         lines.append(
             f"- {r['name']}: {'PASS' if r['ok'] else 'FAIL'} | "

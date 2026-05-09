@@ -1,7 +1,7 @@
-﻿"""
-auto_kvan_runner.py - K-VAN 링크 생성 직렬 큐 실행기
+"""
+auto_kvan_runner.py - U-PAY 링크 생성 직렬 큐 실행기
 
-K-VAN 은 동일 계정으로 동시 로그인이 불가하다.
+U-PAY 은 동일 계정으로 동시 로그인이 불가하다.
 web_form.py 의 trigger_auto_kvan_async() 가 이 스크립트를 단 한 번만 띄우고,
 이 스크립트가 큐를 소진할 때까지 순서대로 auto_kvan.main() 을 호출한다.
 
@@ -24,7 +24,7 @@ from datetime import datetime
 _SELF_DIR = Path(__file__).resolve().parent
 _AUTO_KVAN = _SELF_DIR / "auto_kvan.py"
 _BASE_DIR = _SELF_DIR.parent
-_DATA_DIR = Path(os.environ.get("LUXX_DATA_DIR", "").strip() or str(_BASE_DIR / "data"))
+_DATA_DIR = Path(os.environ.get("SISA_DATA_DIR", "").strip() or str(_BASE_DIR / "data"))
 _LOG_PATH = _DATA_DIR / "hq_logs.log"
 
 
@@ -178,7 +178,7 @@ def main() -> None:
             if not success and fail_reason:
                 _mark_session_failed(sid, fail_reason)
 
-            # 다음 세션 전 K-VAN 상태 안정화 대기
+            # 다음 세션 전 U-PAY 상태 안정화 대기
             time.sleep(3)
 
     finally:

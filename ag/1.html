@@ -1,0 +1,692 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>엔젤플러스(AngelPlus) 프리미엄 투자 제안서</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- 시니어 투자자를 위한 고가독성 명조(제목) 및 고딕(본문) 조합 -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #000000;
+            --bg-card: #0a0a0a;
+            --gold-primary: #d4af37;
+            --gold-metallic: linear-gradient(145deg, #b88a44 0%, #f9e29c 20%, #d4af37 40%, #ffffff 50%, #d4af37 60%, #f9e29c 80%, #b88a44 100%);
+            --text-main: #ffffff;
+            --text-dim: #f5f5f5;
+            --border-gold: rgba(212, 175, 55, 0.5);
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; padding: 0; 
+            background-color: var(--bg-dark); 
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--text-main);
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+
+        /* 60대 투자자를 위해 전체 글씨 크기를 대폭 상향 */
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        section {
+            padding: 120px 0;
+            border-bottom: 1px solid #222;
+            position: relative;
+        }
+
+        /* 황금빛 메탈 효과 텍스트 */
+        .metallic-gold {
+            background: var(--gold-metallic);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            font-weight: 900;
+            display: inline-block;
+            filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.5));
+            animation: shine 6s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
+
+        h1, h2, h3 { font-family: 'Nanum Myeongjo', serif; margin: 0; font-weight: 800; }
+        
+        h1 { font-size: 100px; }
+        h2.section-title { 
+            font-size: 75px; 
+            margin-bottom: 80px; 
+            color: var(--gold-primary);
+            border-left: 15px solid var(--gold-primary);
+            padding-left: 45px;
+            line-height: 1.2;
+        }
+        h3 { font-size: 56px; color: var(--gold-primary); margin-bottom: 35px; }
+
+        p, li { font-size: 36px; color: var(--text-dim); margin-bottom: 35px; word-break: keep-all; }
+        strong { color: #fff; font-weight: 900; box-shadow: inset 0 -18px 0 rgba(212, 175, 55, 0.25); }
+
+        .luxury-card {
+            background: var(--bg-card);
+            border: 3px solid var(--border-gold);
+            padding: 70px;
+            border-radius: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.7);
+        }
+
+        .gold-bullet { list-style: none; padding: 0; }
+        .gold-bullet li { 
+            position: relative; 
+            padding-left: 75px; 
+            margin-bottom: 50px; 
+            font-size: 38px;
+            font-weight: 500;
+        }
+        .gold-bullet li::before {
+            content: '◈';
+            position: absolute;
+            left: 0;
+            color: var(--gold-primary);
+            font-size: 36px;
+        }
+
+        /* 이미지 컨테이너 (구매확인증/보관증) */
+        .img-display-box {
+            width: 100%;
+            border-radius: 40px;
+            overflow: hidden;
+            border: 6px solid var(--gold-primary);
+            margin: 60px 0;
+            background: #000;
+            box-shadow: 0 0 70px rgba(212,175,55,0.3);
+        }
+        .img-display-box img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        /* 수익 모델 슬라이드 이미지 (최대한 크게) */
+        .revenue-img-box {
+            width: 100%;
+            background: #ffffff; /* 흰색 배경 이미지의 가독성을 위해 흰색 배경 처리 */
+            border-radius: 20px;
+            /* hover 시 확대된 이미지가 박스 밖으로 나오도록 overflow: visible 로 변경 */
+            overflow: visible;
+            margin: 40px 0;
+            border: 4px solid #333;
+            position: relative;
+            transition: z-index 0s 0.4s; /* hover 종료 시 z-index 리셋 지연 */
+        }
+        .revenue-img-box:hover {
+            z-index: 50;
+            transition: z-index 0s; /* hover 시작은 즉시 */
+        }
+        .revenue-img-box img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 16px;
+            transform-origin: center center;
+            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+                        box-shadow 0.35s ease;
+            cursor: zoom-in;
+            will-change: transform;
+        }
+        /* 페이지 하단의 01~35 번호 이미지에 롤오버 시 20% 확대 */
+        .revenue-img-box img:hover {
+            transform: scale(1.2);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7),
+                        0 0 0 3px rgba(212, 175, 55, 0.6);
+        }
+
+        .img-label {
+            text-align: center;
+            font-size: 34px;
+            color: var(--gold-primary);
+            margin-top: -30px;
+            margin-bottom: 100px;
+            font-weight: 900;
+        }
+
+        /* 로고 스타일 (배경 투명) */
+        .brand-logo-img {
+            display: block;
+            margin: 0 auto 40px;
+            width: 350px;
+            height: auto;
+            background: transparent;
+        }
+
+        /* 홈페이지 메인 섹션 */
+        .web-frame {
+            height: 950px;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.85)), url('https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&q=1500') center/cover no-repeat;
+            border-radius: 50px;
+            border: 8px solid var(--gold-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 40px;
+            position: relative;
+        }
+
+        .hero-title {
+            font-family: 'Nanum Myeongjo', serif;
+            font-size: 85px;
+            color: #fff;
+            font-weight: 800;
+            line-height: 1.3;
+            letter-spacing: -2px;
+            margin-bottom: 80px;
+            text-shadow: 0 10px 30px rgba(0,0,0,1);
+        }
+
+        .cta-link-button {
+            text-decoration: none;
+            background: var(--gold-metallic);
+            color: #000;
+            padding: 35px 120px;
+            border-radius: 100px;
+            font-weight: 900;
+            font-size: 38px;
+            box-shadow: 0 25px 60px rgba(212,175,55,0.5);
+            display: inline-block;
+            transition: transform 0.3s ease;
+            position: absolute;
+            bottom: 80px;
+        }
+        .cta-link-button:hover { transform: scale(1.05); }
+
+        .stat-flex {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 100px;
+            text-align: center;
+        }
+        .stat-flex h1 { font-size: 90px; margin-bottom: 20px; }
+        .stat-flex p { font-size: 34px; color: #ccc; }
+
+        .topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--gold-primary);
+            padding-bottom: 15px;
+        }
+        .topline .num { font-size: 60px; font-weight: 900; color: var(--gold-primary); }
+        .topline .source { font-size: 24px; color: #666; font-family: monospace; }
+
+        .badge-cat {
+            background: var(--gold-metallic);
+            color: #000;
+            padding: 12px 50px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 40px;
+            margin-bottom: 35px;
+            display: inline-block;
+        }
+
+        footer {
+            padding: 180px 0;
+            background: #000;
+            text-align: center;
+            border-top: 10px solid var(--gold-primary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <!-- [1] 홈페이지 메인 & 후킹 문구 (원본 복구) -->
+        <section id="hero">
+            <div class="web-frame">
+                <div style="margin-top: -100px;">
+                    <img src="img/logo.png" alt="AngelPlus Logo" class="brand-logo-img">
+                    <h1 class="metallic-gold" style="font-size: 140px; margin-bottom: 40px;">ANGEL PLUS</h1>
+                    <div class="hero-title">
+                        세계 최고 권위의 명품 경매를<br>
+                        <strong>내 집 안방에서</strong> 안전하게
+                    </div>
+                </div>
+                
+                <a href="https://luxxbid.com/" target="_blank" class="cta-link-button">
+                    공식 홈페이지 바로가기 <i class="fa-solid fa-arrow-up-right-from-square" style="margin-left: 20px;"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- [2] 브랜드 정체성 -->
+        <section id="branding">
+            <h2 class="section-title">브랜드 정체성</h2>
+            <div class="luxury-card">
+                <h1 class="metallic-gold" style="font-size: 75px; margin-bottom: 50px; text-align:center;">AngelPlus = Luxury Experience Exchange</h1>
+                <p>엔젤플러스는 단순한 쇼핑 플랫폼이 아닙니다. 전 세계 명품 경매의 <strong>전문적인 경험(Experience)을 교환(Exchange)</strong>하는 독보적인 프리미엄 서비스입니다.</p>
+                <div style="background: rgba(212, 175, 55, 0.15); border-left: 20px solid var(--gold-primary); padding: 70px; margin: 80px 0; border-radius: 0 40px 40px 0;">
+                    <p style="margin: 0; font-size: 48px; font-weight: 800; line-height: 1.5;">
+                        "샤넬, 에르메스, 루이비통을 해외 경매장에서 더 좋은 가격에 찾아, 전문가가 대신 입찰하고 검수하여 안전하게 전달합니다."
+                    </p>
+                </div>
+                <p style="font-size: 38px; color: #ccc;">엔젤플러스는 해외 명품 경매의 복잡한 절차(경매 탐색, 예상가 분석, 입찰 대행, 정품 검수, 국제 배송, 통관 안내)를 한 번에 연결하는 프리미엄 입찰 대행 플랫폼입니다.</p>
+            </div>
+        </section>
+
+        <!-- [3] 사업 개요 (PDF 내용 100% 동일) -->
+        <section id="overview">
+            <h2 class="section-title">사업 개요</h2>
+            <h3>전국 중고명품매장 네트워크 전략</h3>
+            <p><strong>비전(Vision):</strong> 전국의 중고명품매장을 회원으로 확보하여 해외 명품경매 구매대행을 가능하게 하고, 중개자(매장)와 최종 소비자 모두를 연결하는 <strong>국내 유일의 양면 플랫폼(Two-sided Platform)</strong>을 구축합니다.</p>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:50px; margin-top:60px;">
+                <div style="background:#151515; padding:60px; border-radius:40px; border:3px solid #333;">
+                    <div class="badge-cat">매장 파트너 전략</div>
+                    <p>전국 오프라인 중고명품매장을 파트너로 등록하여 거점을 확보하고, <strong>K-VAN 결제 자동화</strong> 시스템을 통해 매장의 운영 부담을 제로화하여 수익성을 극대화합니다.</p>
+                </div>
+                <div style="background:#151515; padding:60px; border-radius:40px; border:3px solid #333;">
+                    <div class="badge-cat">소비자 확장 전략</div>
+                    <p>언어, 결제, 배송 등 해외 경매의 높은 진입 장벽을 완전히 제거하고 <strong>디지털 보관증 거래</strong>를 통해 자산의 즉각적인 유동성을 제공합니다.</p>
+                </div>
+            </div>
+            
+            <div class="stat-flex">
+                <div class="stat-item"><h1 class="metallic-gold">29+</h1><p>API 엔드포인트</p></div>
+                <div class="stat-item"><h1 class="metallic-gold">8,190+</h1><p>코어 코드 라인</p></div>
+                <div class="stat-item"><h1 class="metallic-gold">24/7</h1><p>자동 모니터링</p></div>
+            </div>
+        </section>
+
+        <!-- [4] 시장 분석 및 유동성 -->
+        <section id="market">
+            <h2 class="section-title">시장 분석</h2>
+            <div class="luxury-card">
+                <h3>연간 6조 원 규모의 해외직구 시장</h3>
+                <p>MZ세대의 투자형 소비 트렌드와 지속적인 엔저 효과로 인해 해외 명품 경매 대행 수요가 <strong>폭발적으로 증가</strong>하고 있습니다.</p>
+                
+                <div style="background: rgba(212, 175, 55, 0.15); border-left: 20px solid var(--gold-primary); padding: 70px; margin: 80px 0; border-radius: 0 40px 40px 0;">
+                    <h1 class="metallic-gold" style="font-size: 85px; margin-bottom: 25px;">연간 20조 원+</h1>
+                    <p style="font-size: 46px; font-weight: 800;">신용카드 현금 유동화 시장의 합법적 대안</p>
+                    <p style="font-size: 34px; color: #ccc;">불법 카드깡이 아닌 '실물 상품 구매 + 보관증 발급 + 보관증 거래'를 통한 100% 투명하고 안전한 현금 유동화 솔루션을 제공합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- [5] 서비스 이용 흐름 (7단계) -->
+        <section id="flow">
+            <h2 class="section-title">7단계 서비스 이용 흐름</h2>
+            <div class="gold-bullet">
+                <li><span class="metallic-gold">단계 1:</span> 고객이 라이브 옥션에서 자신의 예산에 맞는 전 세계 경매장 상품을 선택하거나 국내 전문가의 제품 추천을 받음</li>
+                <li><span class="metallic-gold">단계 2:</span> 해당 제품을 즉시 구매할지, 경매 맥스 금액을 정하고 일반경매 대행을 맡길지 고객이 선택하여 의뢰 요청</li>
+                <li><span class="metallic-gold">단계 3:</span> 해당 제품의 상품 정보와 결제 정보를 포함하는 <strong>전용 결제 링크</strong>를 고객에게 전달</li>
+                <li><span class="metallic-gold">단계 4:</span> 고객 직접 결제 완료 시 <strong>구매확인증과 보관증</strong>을 휴대폰 카톡이나 문자로 즉시 전달</li>
+                <li><span class="metallic-gold">단계 5:</span> 일반 경매 신청일 경우 이베이 방식의 맥스 금액 한도로 <strong>전문가 자동 입찰</strong> 진행 및 결과 실시간 알림</li>
+                <li><span class="metallic-gold">단계 6:</span> 보관증 소지 시 사이트 내 <strong>"판매의뢰"</strong> 기능을 통해 재경매 또는 즉시 판매 실시간 거래</li>
+                <li><span class="metallic-gold">단계 7:</span> 판매 등록 시 대행사 알림을 통한 <strong>즉시 매입 및 소유권 이전</strong> 프로세스</li>
+            </div>
+        </section>
+
+        <!-- [6] 디지털 자산 증명서 (img/1.png, img/2.png) -->
+        <section id="certificates">
+            <h2 class="section-title">디지털 자산 증명서</h2>
+            <p style="text-align: center; font-size: 45px; font-weight: 900; color: var(--gold-primary);">"종이 서류보다 안전한 디지털 금고 시스템"</p>
+            
+            <div class="img-display-box">
+                <img src="img/1.png" alt="구매확인증 원본" onerror="this.src='https://placehold.co/1000x650/000/d4af37?text=Purchase+Certificate'">
+            </div>
+            <p class="img-label">[증명서 1] 구매 확인증 - 낙찰 사실 및 정품 내역 공식 보증</p>
+
+            <div class="img-display-box">
+                <img src="img/2.png" alt="보관증 원본" onerror="this.src='https://placehold.co/1000x650/000/d4af37?text=Storage+Certificate'">
+            </div>
+            <p class="img-label">[증명서 2] 디지털 보관증 - 명품 자산 소유권 및 가치 증빙</p>
+        </section>
+
+        <!-- [7] 명품 은행 시스템 - 2차 거래 프로세스 (A to B) -->
+        <section id="banking">
+            <h2 class="section-title">명품 은행 시스템</h2>
+            <h3>실물 이동 없는 2차 거래 (A → B)</h3>
+            <div class="gold-bullet">
+                <li><strong>1. 매매 체결:</strong> 판매자 A가 보관창고에 보관 중인 명품을 구매자 B에게 매도하는 계약 체결</li>
+                <li><strong>2. 권리 이전:</strong> 판매자 A는 엔젤플러스에 대한 보관물 반환청구권과 권리를 구매자 B에게 이전</li>
+                <li><strong>3. 명의 변경:</strong> 엔젤플러스 시스템 내 소유자 명의를 즉시 구매자 B로 변경 처리</li>
+                <li><strong>4. 증서 재발급:</strong> 구매자 B 명의의 <strong>신규 디지털 보관증</strong>을 즉시 발급</li>
+                <li><strong>5. 자유로운 출고:</strong> 구매자 B는 소유권 확보 후 원할 때 언제든 실물 명품 출고 가능</li>
+            </div>
+            <div style="background: rgba(212, 175, 55, 0.15); border-left: 20px solid var(--gold-primary); padding: 70px; margin: 80px 0; border-radius: 0 40px 40px 0; text-align: center;">
+                <p style="margin: 0; font-size: 45px; font-weight: 800;">
+                    "물건은 안전한 금고에 그대로 있고, 소유권만 빛의 속도로 거래됩니다.<br>
+                    <strong>물류비 제로, 파손 위험 제로</strong>의 혁신적 명품 거래입니다."
+                </p>
+            </div>
+        </section>
+
+        <!-- [8] 안전 장치 및 리스크 관리 -->
+        <section id="safety">
+            <h2 class="section-title">보안 및 법적 안전장치</h2>
+            <div class="luxury-card" style="border-color: #ff5f56; background: rgba(122, 26, 26, 0.05);">
+                <h3 style="color: #ff5f56; font-size: 55px;"><i class="fa-solid fa-shield-halved"></i> 카드깡 방지 정책 (Cool-time)</h3>
+                <p>비정상적인 현금화 시도를 차단하기 위해 <strong>카드 결제 후 최소 3일에서 7일간</strong>은 보관증의 매도를 제한합니다. 이는 금융 질서를 준수하고 플랫폼의 투명성을 높이기 위한 엔젤플러스만의 핵심 규정입니다.</p>
+            </div>
+            
+            <div class="luxury-card" style="background: #000; border-color: #444; padding: 50px;">
+                <h3 style="font-size: 40px; margin-bottom: 30px;">[안전을 위한 필수 약관 고지 문구]</h3>
+                <p style="font-size: 30px; color: #ccc;">• 본 보관확인증은 금융상품이 아니며 보관 중인 특정 실물 명품의 보관 사실과 소유자 정보를 확인하기 위한 문서입니다.</p>
+                <p style="font-size: 30px; color: #ccc;">• 회사는 인위적인 가격 상승, 원금 보전 및 수익률을 보장하지 않습니다.</p>
+                <p style="font-size: 30px; color: #ccc;">• 소유권 이전은 실물 계약과 회사 장부상 명의 변경이 완료된 시점에만 효력이 발생합니다.</p>
+            </div>
+        </section>
+
+        <!-- [9] 수익 모델 및 비즈니스 순환 (이미지 최대화 배치) -->
+        <section id="revenue-details">
+            <h2 class="section-title">비즈니스 순환 및 수익 모델 상세</h2>
+            
+            <!-- 01 ~ 35 순차적 텍스트 및 대형 이미지 -->
+            <div class="revenue-flow">
+                
+                <!-- 01 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">01</span><span class="source">01.png</span></div>
+                    <h3>전체 수익 모델 한눈에 보기</h3>
+                    <p>플랫폼, PG, 대행사, 고객이 어떻게 연결되어 수익 구조를 만드는지 먼저 큰 그림으로 확인합니다.</p>
+                    <div class="revenue-img-box"><img src="img/01.png" alt="01"></div>
+                </article>
+
+                <!-- 02 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">02</span><span class="source">02.png</span></div>
+                    <h3>초기 상품 공급이 거래 순환을 시작합니다</h3>
+                    <p>첫 상품이 등록되면 고객 구매, 재판매, 대행사 매입으로 이어지는 순환의 출발점이 만들어집니다.</p>
+                    <div class="revenue-img-box"><img src="img/02.png" alt="02"></div>
+                </article>
+
+                <!-- 03 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">03</span><span class="source">03.png</span></div>
+                    <h3>고객 구매 요청이 매출 흐름을 엽니다</h3>
+                    <p>고객의 구매 의사가 카드 결제와 대행사 상품 확보를 움직이는 첫 신호입니다.</p>
+                    <div class="revenue-img-box"><img src="img/03.png" alt="03"></div>
+                </article>
+
+                <!-- 04 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">04</span><span class="source">04.png</span></div>
+                    <h3>대행사는 상품을 확보해 판매 기회를 만듭니다</h3>
+                    <p>대행사가 공급자로부터 상품을 확보하면서 고객 판매가 가능한 재고 흐름이 생깁니다.</p>
+                    <div class="revenue-img-box"><img src="img/04.png" alt="04"></div>
+                </article>
+
+                <!-- 05 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">05</span><span class="source">05.png</span></div>
+                    <h3>상품 전달로 첫 거래가 완성됩니다</h3>
+                    <p>상품 또는 보관증이 고객에게 전달되며 구매 거래가 마무리되고 다음 재판매 가능성이 생깁니다.</p>
+                    <div class="revenue-img-box"><img src="img/05.png" alt="05"></div>
+                </article>
+
+                <!-- 06 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">06</span><span class="source">06.png</span></div>
+                    <h3>고객 재판매가 회전성을 만듭니다</h3>
+                    <p>고객이 다시 판매 등록을 하면 상품이 시장 안에서 반복적으로 회전할 수 있습니다.</p>
+                    <div class="revenue-img-box"><img src="img/06.png" alt="06"></div>
+                </article>
+
+                <!-- 07 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">07</span><span class="source">07.png</span></div>
+                    <h3>재판매 가격은 현금화 구조를 보여줍니다</h3>
+                    <p>투자자는 고객이 낮은 가격으로 재판매하는 구간에서 할인, 손실, 유동성 구조를 봐야 합니다.</p>
+                    <div class="revenue-img-box"><img src="img/07.png" alt="07"></div>
+                </article>
+
+                <!-- 08 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">08</span><span class="source">08.png</span></div>
+                    <h3>84만원 재판매는 빠른 회수 구간입니다</h3>
+                    <p>고객의 빠른 재판매가 대행사의 매입 기회와 다음 판매 재고로 연결됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/08.png" alt="08"></div>
+                </article>
+
+                <!-- 09 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">09</span><span class="source">09.png</span></div>
+                    <h3>대행사 매입으로 소유권이 이동합니다</h3>
+                    <p>대행사가 고객 재판매 상품을 매입하면서 소유자가 바뀌고 다음 거래 준비가 됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/09.png" alt="09"></div>
+                </article>
+
+                <!-- 10 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">10</span><span class="source">10.png</span></div>
+                    <h3>A·B 반복 거래가 기본 회전 루프입니다</h3>
+                    <p>대행사 간 상품 확보와 고객 판매가 반복되며 거래량과 수익 기회가 누적됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/10.png" alt="10"></div>
+                </article>
+
+                <!-- 11 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">11</span><span class="source">11.png</span></div>
+                    <h3>대행사 재등록 차익을 확인합니다</h3>
+                    <p>재판매 상품을 매입한 뒤 다시 등록하는 과정에서 단기 차익 구조가 나타납니다.</p>
+                    <div class="revenue-img-box"><img src="img/11.png" alt="11"></div>
+                </article>
+
+                <!-- 12 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">12</span><span class="source">12.png</span></div>
+                    <h3>고객 을 거래로 반복 모델이 검증됩니다</h3>
+                    <p>다른 고객이 같은 방식으로 구매하면 구조가 한 번성 거래가 아니라 반복 가능한 모델임을 보여줍니다.</p>
+                    <div class="revenue-img-box"><img src="img/12.png" alt="12"></div>
+                </article>
+
+                <!-- 13 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">13</span><span class="source">13.png</span></div>
+                    <h3>고객 을 재판매로 순환성이 강화됩니다</h3>
+                    <p>두 번째 고객의 재판매까지 이어지면 구매와 매입의 순환 구조가 더 명확해집니다.</p>
+                    <div class="revenue-img-box"><img src="img/13.png" alt="13"></div>
+                </article>
+
+                <!-- 14 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">14</span><span class="source">14.png</span></div>
+                    <h3>첫 순환 완성은 모델 검증 지점입니다</h3>
+                    <p>공급, 구매, 재판매, 매입이 한 바퀴 돌면 투자자는 실제 작동 구조를 확인할 수 있습니다.</p>
+                    <div class="revenue-img-box"><img src="img/14.png" alt="14"></div>
+                </article>
+
+                <!-- 15 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">15</span><span class="source">15.png</span></div>
+                    <h3>100만원 판매 구조의 수익 기준</h3>
+                    <p>판매가, 도매가, PG 정산액의 차이가 대행사 수익을 계산하는 핵심 기준입니다.</p>
+                    <div class="revenue-img-box"><img src="img/15.png" alt="15"></div>
+                </article>
+
+                <!-- 16 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">16</span><span class="source">16.png</span></div>
+                    <h3>대행사 네트워크 확장은 거래량을 키웁니다</h3>
+                    <p>A, B에서 C, D, K로 참여자가 늘어나면 판매 접점과 회전 가능성이 확대됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/16.png" alt="16"></div>
+                </article>
+
+                <!-- 17 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">17</span><span class="source">17.png</span></div>
+                    <h3>고객 결제와 업체 간 거래는 분리됩니다</h3>
+                    <p>고객 결제는 카드와 PG 정산으로, 업체 간 정산은 별도 방식으로 관리되는 점을 구분해야 합니다.</p>
+                    <div class="revenue-img-box"><img src="img/17.png" alt="17"></div>
+                </article>
+
+                <!-- 18 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">18</span><span class="source">18.png</span></div>
+                    <h3>업체 간 포인트 정산 구조</h3>
+                    <p>대행사 간 이동은 현금 흐름과 다르게 포인트로 정리되어 내부 정산 구조를 형성합니다.</p>
+                    <div class="revenue-img-box"><img src="img/18.png" alt="18"></div>
+                </article>
+
+                <!-- 19 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">19</span><span class="source">19.png</span></div>
+                    <h3>PG 승인으로 결제 안정성을 확보합니다</h3>
+                    <p>고객 결제는 PG 승인 과정을 거치며 거래의 결제 흐름이 정리됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/19.png" alt="19"></div>
+                </article>
+
+                <!-- 20 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">20</span><span class="source">20.png</span></div>
+                    <h3>PG 정산금이 실제 수익 계산의 출발점입니다</h3>
+                    <p>고객 결제액 전체가 아니라 PG 정산 후 금액을 기준으로 수익을 봐야 합니다.</p>
+                    <div class="revenue-img-box"><img src="img/20.png" alt="20"></div>
+                </article>
+
+                <!-- 21 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">21</span><span class="source">21.png</span></div>
+                    <h3>PG 8% 수수료의 분리 구조</h3>
+                    <p>플랫폼과 PG가 각각 가져가는 수수료 비중을 이해해야 순수익 구조를 정확히 볼 수 있습니다.</p>
+                    <div class="revenue-img-box"><img src="img/21.png" alt="21"></div>
+                </article>
+
+                <!-- 22 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">22</span><span class="source">22.png</span></div>
+                    <h3>상품별 가격과 소유자 관리가 핵심입니다</h3>
+                    <p>상품 가격, 현재 소유자, 등록 정보가 명확해야 거래 기록과 수익 계산이 흔들리지 않습니다.</p>
+                    <div class="revenue-img-box"><img src="img/22.png" alt="22"></div>
+                </article>
+
+                <!-- 23 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">23</span><span class="source">23.png</span></div>
+                    <h3>실물 보관 구조가 운영 리스크를 낮춥니다</h3>
+                    <p>실물 상품은 보관하고 거래는 보관증 중심으로 처리해 물류 부담을 줄입니다.</p>
+                    <div class="revenue-img-box"><img src="img/23.png" alt="23"></div>
+                </article>
+
+                <!-- 24 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">24</span><span class="source">24.png</span></div>
+                    <h3>보관증 이동은 소유권 이전을 뜻합니다</h3>
+                    <p>보관증이 이동하면 실물 지갑의 소유자 정보도 함께 갱신되는 구조입니다.</p>
+                    <div class="revenue-img-box"><img src="img/24.png" alt="24"></div>
+                </article>
+
+                <!-- 25 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">25</span><span class="source">25.png</span></div>
+                    <h3>소유자 갱신이 거래 신뢰를 만듭니다</h3>
+                    <p>누가 현재 소유자인지 플랫폼이 갱신해야 투자자가 거래 이력을 추적할 수 있습니다.</p>
+                    <div class="revenue-img-box"><img src="img/25.png" alt="25"></div>
+                </article>
+
+                <!-- 26 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">26</span><span class="source">26.png</span></div>
+                    <h3>플랫폼 기록 관리는 투명성의 기반입니다</h3>
+                    <p>상품, 결제, 보관증, 포인트 흐름을 기록으로 관리하는 능력이 핵심 경쟁력입니다.</p>
+                    <div class="revenue-img-box"><img src="img/26.png" alt="26"></div>
+                </article>
+
+                <!-- 27 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">27</span><span class="source">27.png</span></div>
+                    <h3>일반 고객 유입이 매출을 확대합니다</h3>
+                    <p>일반 고객 구매가 늘어날수록 카드 결제, 상품 회전, 대행사 수익 기회가 커집니다.</p>
+                    <div class="revenue-img-box"><img src="img/27.png" alt="27"></div>
+                </article>
+
+                <!-- 28 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">28</span><span class="source">28.png</span></div>
+                    <h3>판매 대행사 +15% 수익 구조</h3>
+                    <p>일반 고객 판매 구간에서 대행사가 얻는 마진 구조를 투자자가 확인해야 합니다.</p>
+                    <div class="revenue-img-box"><img src="img/28.png" alt="28"></div>
+                </article>
+
+                <!-- 29 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">29</span><span class="source">29.png</span></div>
+                    <h3>외부 매입은 새 공급을 만듭니다</h3>
+                    <p>경매장 등 외부 공급처에서 매입한 상품이 다시 플랫폼 순환으로 들어옵니다.</p>
+                    <div class="revenue-img-box"><img src="img/29.png" alt="29"></div>
+                </article>
+
+                <!-- 30 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">30</span><span class="source">30.png</span></div>
+                    <h3>마중물 공급은 새 수익 루프를 강화합니다</h3>
+                    <p>새 상품 공급이 반복되면 거래 가능한 재고와 회전 구조가 계속 보강됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/30.png" alt="30"></div>
+                </article>
+
+                <!-- 31 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">31</span><span class="source">31.png</span></div>
+                    <h3>색상 범례로 돈과 상품 흐름을 구분합니다</h3>
+                    <p>상품, 카드 결제, 정산금, 포인트, 손실 표시를 색상별로 이해하면 전체 구조가 명확해집니다.</p>
+                    <div class="revenue-img-box"><img src="img/31.png" alt="31"></div>
+                </article>
+
+                <!-- 32 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">32</span><span class="source">32.png</span></div>
+                    <h3>기본 역할 구조를 먼저 이해합니다</h3>
+                    <p>플랫폼, PG, 대행사, 고객의 역할과 위치를 구분하면 이후 수익 흐름이 쉽게 읽힙니다.</p>
+                    <div class="revenue-img-box"><img src="img/32.png" alt="32"></div>
+                </article>
+
+                <!-- 33 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">33</span><span class="source">33.png</span></div>
+                    <h3>전체 순환 구조 복습</h3>
+                    <p>상품 공급부터 고객 구매, 재판매, 대행사 매입, 정산까지 전체 흐름을 다시 점검합니다.</p>
+                    <div class="revenue-img-box"><img src="img/33.png" alt="33"></div>
+                </article>
+
+                <!-- 34 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">34</span><span class="source">34.png</span></div>
+                    <h3>투자자 관점 핵심 체크포인트</h3>
+                    <p>수익률, 회전 속도, 정산 방식, 소유권 관리, 일반 고객 유입이 투자 판단의 핵심입니다.</p>
+                    <div class="revenue-img-box"><img src="img/34.png" alt="34"></div>
+                </article>
+
+                <!-- 35 -->
+                <article class="luxury-card">
+                    <div class="topline"><span class="num">35</span><span class="source">35.png</span></div>
+                    <h3>최종 수익 구조 요약</h3>
+                    <p>플랫폼과 대행사 네트워크, PG 정산, 상품 회전이 결합될 때 전체 수익 모델이 완성됩니다.</p>
+                    <div class="revenue-img-box"><img src="img/35.png" alt="35"></div>
+                </article>
+            </div>
+        </section>
+    </div>
+
+    <!-- 푸터 -->
+    <footer>
+        <div class="wrapper">
+            <img src="img/logo.png" class="brand-logo-img" style="width:300px; margin-bottom:50px;" onerror="this.style.display='none'">
+            <h1 class="metallic-gold" style="font-size: 130px; margin-bottom: 50px;">AngelPlus</h1>
+            <p style="font-size: 52px; color: #fff; font-weight: 800; margin-bottom: 30px;">Luxury Experience Exchange</p>
+            <p style="font-size: 48px; letter-spacing: 20px; color: var(--gold-primary); font-weight: 900;">WWW.ANGELPLUS.COM</p>
+            <p style="margin-top: 120px; font-size: 26px; color: #444;">&copy; 2026 AngelPlus Global Platform. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

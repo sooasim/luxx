@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-K-VAN 결제링크 DB 공통: URL에서 KEY 추출, 금액 파싱, 링크 최초 생성 시 kvan_links 시드.
+U-PAY 결제링크 DB 공통: URL에서 KEY 추출, 금액 파싱, 링크 최초 생성 시 kvan_links 시드.
 auto_kvan.py / kvan_crawler.py / web_form.py 가 동일 규칙을 쓰도록 분리.
 """
 from __future__ import annotations
@@ -47,7 +47,7 @@ def kvan_db_connect():
 
 
 def extract_kvan_session_key_from_url(link: str) -> str:
-    """K-VAN 결제 URL에서 KEY… 세션 토큰 추출."""
+    """U-PAY 결제 URL에서 KEY… 세션 토큰 추출."""
     u = (link or "").strip()
     if not u:
         return ""
@@ -69,7 +69,7 @@ def extract_kvan_session_key_from_url(link: str) -> str:
 
 def parse_kvan_link_ui_created_at(text: str) -> datetime | None:
     """
-    K-VAN 결제링크 카드/목록에 표시되는 '생성·등록' 일시를 raw_text 에서 추출.
+    U-PAY 결제링크 카드/목록에 표시되는 '생성·등록' 일시를 raw_text 에서 추출.
     (DB 최초 INSERT 시각과 다를 수 있어, 화면에 나온 실제 생성 시각 표시용)
     """
     raw = (text or "").strip()
@@ -213,7 +213,7 @@ def _norm_kvan_header(h: str) -> str:
 
 def infer_kvan_transaction_header_cell_label(inner_html: str) -> str:
     """
-    K-VAN 결제/취소 내역 thead: 라벨이 <span>이 아니라 input placeholder / select 첫 옵션에만 있는 경우가 많음.
+    U-PAY 결제/취소 내역 thead: 라벨이 <span>이 아니라 input placeholder / select 첫 옵션에만 있는 경우가 많음.
     Selenium .text 는 이런 셀에서 빈 문자열이 되어 열 개수가 tbody 와 맞지 않는 원인이 된다.
     """
     raw = inner_html or ""
@@ -262,7 +262,7 @@ def infer_kvan_transaction_header_cell_label(inner_html: str) -> str:
 
 def kvan_transactions_header_indices(headers: list[str]) -> dict[str, int]:
     """
-    K-VAN '결제 및 취소내역' 테이블 헤더 → 컬럼 인덱스.
+    U-PAY '결제 및 취소내역' 테이블 헤더 → 컬럼 인덱스.
     UI 변경(거래 유형 / 거래일시 등)에 대응해 복수 별칭을 둔다.
     """
     hnorm = [_norm_kvan_header(x) for x in headers]

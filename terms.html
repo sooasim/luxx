@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="ko" translate="no">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
     <script>
         // 모바일 스마트폰에서 데스크탑 화면 그대로 축소되어 보이도록 뷰포트 강제 조정
@@ -10,11 +9,11 @@
             document.getElementById('viewport-meta').setAttribute('content', 'width=1280');
         }
     </script>
-    <title>이용약관 | LUXX - Luxury Auction Exchange</title>
-    <!-- LUXX 브랜드 파비콘 -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23080705'/><polygon points='23,18 0,40 18,40' fill='%233A2D05'/><polygon points='23,18 18,40 50,40 50,18' fill='%23F5D57B' opacity='.9'/><polygon points='77,18 50,18 50,40 82,40' fill='%23D4AF37'/><polygon points='77,18 82,40 100,40' fill='%239B7A1C'/><polygon points='0,40 18,40 50,68' fill='%237A5E10'/><polygon points='18,40 82,40 50,68' fill='%23FFF5C0' opacity='.9'/><polygon points='82,40 100,40 50,68' fill='%239B7A1C'/><polygon points='0,40 50,68 50,95' fill='%233A2D05'/><polygon points='100,40 50,95 50,68' fill='%235A440A'/><polyline points='23,18 0,40 50,95 100,40 77,18' fill='none' stroke='%23D4AF37' stroke-width='2.5' stroke-linejoin='round'/><line x1='23' y1='18' x2='77' y2='18' stroke='%23F5D57B' stroke-width='3'/></svg>">
+    <title>이용약관 | SISA - Society of International Specialized Auctioneers</title>
+    <!-- SISA 브랜드 파비콘 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f4b9f'/><circle cx='50' cy='50' r='28' fill='none' stroke='%23ffffff' stroke-width='6'/><ellipse cx='50' cy='50' rx='12' ry='28' fill='none' stroke='%23ffffff' stroke-width='4'/><line x1='22' y1='50' x2='78' y2='50' stroke='%23ffffff' stroke-width='4'/></svg>">
     <!-- 폰트 및 아이콘 불러오기 -->
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Nanum+Myeongjo:wght@400;700;800&family=Inter:wght@300;400;500;600;700&family=Nanum+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,18 +22,13 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        brand: ['"Cinzel"', 'serif'],
-                        display: ['"Playfair Display"', '"Nanum Myeongjo"', 'Georgia', 'serif'],
-                        serif: ['"Playfair Display"', '"Nanum Myeongjo"', 'Georgia', 'serif'],
-                        sans: ['Inter', '"Nanum Gothic"', 'system-ui', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
                     },
                     colors: {
                         brand: {
-                            gold: '#D4AF37',
-                            'gold-light': '#F5D57B',
-                            'gold-dark': '#9B7A1C',
-                            black: '#0A0A0A',
-                            dark: '#111111'
+                            blue: '#2f4b9f',
+                            dark: '#1e326b',
+                            accent: '#e6edf7'
                         }
                     }
                 }
@@ -42,51 +36,22 @@
         }
     </script>
     <style>
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0A0A0A; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 3px; }
-
-        body { background: #0A0A0A; background-image: radial-gradient(ellipse at top, rgba(212,175,55,0.06) 0%, #0A0A0A 60%); }
+        /* 커스텀 글래스모피즘 스크롤바 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
         /* 부드러운 스크롤 */
         html { scroll-behavior: smooth; }
-
-        .glass-card {
-            background: rgba(255,255,255,0.04);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(212,175,55,0.15);
-        }
-        .glass-card-gold {
-            background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, rgba(15,15,15,0.95) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(212,175,55,0.25);
-            border-top-color: rgba(245,213,123,0.4);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(212,175,55,0.05);
-        }
-        .gold-text {
-            background: linear-gradient(135deg, #D4AF37, #F5D57B, #D4AF37);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .btn-gold {
-            background: linear-gradient(135deg, #9B7A1C 0%, #D4AF37 30%, #F5D57B 50%, #D4AF37 70%, #9B7A1C 100%);
-            color: #0A0A0A;
-            font-weight: 700;
-            border-radius: 12px;
-            padding: 14px;
-            width: 100%;
-            cursor: pointer;
-            border: none;
-            font-size: 15px;
-            letter-spacing: 0.05em;
-            transition: opacity 0.2s, transform 0.1s;
-        }
-        .btn-gold:hover { opacity: 0.9; transform: translateY(-1px); }
-
+        
         /* 약관 본문 타이포그래피 스타일링 */
         .prose h3 { font-size: 1.25rem; font-weight: 700; color: white; margin-top: 2rem; margin-bottom: 1rem; }
         .prose h4 { font-size: 1.05rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-top: 1.5rem; margin-bottom: 0.5rem; }
@@ -94,7 +59,6 @@
         .prose ul { list-style-type: disc; padding-left: 1.5rem; color: rgba(255,255,255,0.7); margin-bottom: 1rem; font-size: 0.95rem; }
         .prose li { margin-bottom: 0.25rem; }
         .prose strong { color: white; font-weight: 600; }
-        @keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
     </style>
     <script>
         // iframe(이용약관 전문)으로 삽입될 때는 헤더/내비/배경 데코를 숨겨서 본문만 보이도록 처리
@@ -114,79 +78,51 @@
         });
     </script>
 </head>
-<body class="text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
+<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
 
-    <!-- 상단 네비게이션 바 - iframe에서 불러올 때는 JS로 숨김 -->
-    <header class="fixed w-full top-0 z-50 glass-card border-b-0" id="terms-header">
+    <!-- 상단 네비게이션 바 (공통) - 기본은 보이지만, iframe(이용약관 전문)에서 불러올 때는 JS로 숨김 -->
+    <header class="fixed w-full top-0 z-50 glass-card border-b-0 border-white/10" id="terms-header">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <!-- 로고 영역 -->
             <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='sisa_home.html'">
                 <div class="flex items-center justify-center">
-                    <svg width="36" height="41" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg" fill="none">
-  <defs>
-    <linearGradient id="tb1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF0A0"/><stop offset="100%" stop-color="#B89020"/></linearGradient>
-    <linearGradient id="tb2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
-    <linearGradient id="tb3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9B7A1C"/><stop offset="100%" stop-color="#5A440A"/></linearGradient>
-    <linearGradient id="tb4" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0%" stop-color="#FFF5C0"/><stop offset="100%" stop-color="#D4AF37"/></linearGradient>
-    <linearGradient id="tb5" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#7A5E10"/></linearGradient>
-    <linearGradient id="tb6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7A5E10"/><stop offset="100%" stop-color="#3A2D05"/></linearGradient>
-    <linearGradient id="tb7" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5D57B"/><stop offset="100%" stop-color="#9B7A1C"/></linearGradient>
-  </defs>
-  <polygon points="12,8 0,20 10,20" fill="url(#tb3)"/>
-  <polygon points="12,8 10,20 26,20 26,8" fill="url(#tb1)"/>
-  <polygon points="40,8 26,8 26,20 42,20" fill="url(#tb2)"/>
-  <polygon points="40,8 42,20 52,20" fill="url(#tb5)"/>
-  <polygon points="0,20 10,20 26,36" fill="url(#tb3)"/>
-  <polygon points="10,20 42,20 26,36" fill="url(#tb4)"/>
-  <polygon points="42,20 52,20 26,36" fill="url(#tb5)"/>
-  <polygon points="0,20 26,36 26,56" fill="url(#tb6)"/>
-  <polygon points="52,20 26,56 26,36" fill="url(#tb5)"/>
-  <polyline points="12,8 0,20 26,56 52,20 40,8" fill="none" stroke="url(#tb7)" stroke-width="1.2" stroke-linejoin="round"/>
-  <line x1="12" y1="8" x2="40" y2="8" stroke="#F5D57B" stroke-width="1.5"/>
-  <line x1="12" y1="8" x2="10" y2="20" stroke="#F5D57B" stroke-width="0.7" opacity="0.7"/>
-  <line x1="26" y1="8" x2="26" y2="20" stroke="#F5D57B" stroke-width="0.8" opacity="0.6"/>
-  <line x1="40" y1="8" x2="42" y2="20" stroke="#D4AF37" stroke-width="0.7" opacity="0.7"/>
-  <line x1="0" y1="20" x2="52" y2="20" stroke="#D4AF37" stroke-width="0.5" opacity="0.5"/>
-  <line x1="10" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.6" opacity="0.6"/>
-  <line x1="42" y1="20" x2="26" y2="36" stroke="#D4AF37" stroke-width="0.6" opacity="0.6"/>
-  <line x1="26" y1="36" x2="26" y2="56" stroke="#D4AF37" stroke-width="0.5" opacity="0.4"/>
-</svg>
+                    <i class="fa-solid fa-globe text-white text-3xl drop-shadow-md"></i>
                 </div>
                 <div class="flex flex-col justify-center">
                     <div class="flex items-end gap-2 mb-1">
-                        <span style="font-family:'Cinzel',serif;font-weight:700;letter-spacing:0.32em;background:linear-gradient(110deg,#7A5C0A 0%,#C9A22A 18%,#F5D57B 38%,#FFE999 50%,#F5D57B 62%,#C9A22A 82%,#7A5C0A 100%);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite;" class="text-3xl leading-none">LUXX</span>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded tracking-[0.1em] leading-none mb-0.5" style="background:rgba(212,175,55,0.1);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);">luxxbid.com</span>
+                        <span class="text-3xl font-black tracking-tighter text-white leading-none">SISA</span>
+                        <span class="text-[10px] font-mono bg-white/10 text-blue-200 px-2 py-0.5 rounded border border-white/10 tracking-[0.1em] leading-none mb-0.5">luxxbid.com</span>
                     </div>
-                    <span class="text-[9px] font-semibold tracking-[0.18em] uppercase leading-none" style="color:rgba(255,255,255,0.7);">Luxury Auction Exchange</span>
+                    <span class="text-[9px] text-white/70 font-semibold tracking-[0.18em] uppercase leading-none">Society of International Specialized Auctioneers</span>
                 </div>
             </div>
 
             <!-- 중앙 메뉴 -->
-            <nav class="hidden md:flex rounded-full p-1 text-sm font-medium" style="background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.15);">
-                <a href="#" class="px-5 py-2 rounded-full transition" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">HOME</a>
-                <a href="#" class="px-5 py-2 rounded-full transition" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">GLOBAL AUCTION</a>
-                <a href="#" class="px-5 py-2 rounded-full transition flex items-center gap-1" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">
-                    <i class="fa-solid fa-lock text-xs"></i> LUXX VAULT
+            <nav class="hidden md:flex bg-white/10 rounded-full p-1 border border-white/10 text-sm font-medium">
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">HOME</a>
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">GLOBAL AUCTION</a>
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition flex items-center gap-1">
+                    <i class="fa-solid fa-lock text-xs"></i> SISA VAULT
                 </a>
-                <a href="#" class="px-5 py-2 rounded-full transition" style="color:rgba(255,255,255,0.8);" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">MY LUXX</a>
+                <a href="#" class="px-5 py-2 rounded-full hover:bg-white/10 text-white/80 transition">MY SISA</a>
             </nav>
 
-            <!-- 우측 액션 버튼 -->
+            <!-- 우측 액션 버튼 (언어 선택) -->
             <div class="flex items-center gap-4 text-sm font-semibold">
                 <div class="relative group hidden sm:block">
-                    <button class="flex items-center gap-1 cursor-pointer py-2" style="color:rgba(255,255,255,0.8);">
+                    <button class="flex items-center gap-1 cursor-pointer text-white/80 hover:text-white py-2">
                         EN <i class="fa-solid fa-chevron-down text-[10px]"></i>
                     </button>
                     <!-- 드롭다운 메뉴 -->
-                    <div class="absolute right-0 top-full mt-1 w-32 backdrop-blur-md rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50" style="background:rgba(17,17,17,0.98);border:1px solid rgba(212,175,55,0.2);">
-                        <ul class="py-2" style="color:rgba(255,255,255,0.8);">
-                            <li><a href="#" class="block px-4 py-1.5 transition hover:text-white" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">🇺🇸 English</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 transition hover:text-white" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">🇰🇷 한국어</a></li>
-                            <li><a href="#" class="block px-4 py-1.5 transition hover:text-white" onmouseover="this.style.background='rgba(212,175,55,0.08)'" onmouseout="this.style.background=''">🇯🇵 日本語</a></li>
+                    <div class="absolute right-0 top-full mt-1 w-32 bg-[#1e326b]/95 backdrop-blur-md border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <ul class="py-2 text-white/80">
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇺🇸 English</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇰🇷 한국어</a></li>
+                            <li><a href="#" class="block px-4 py-1.5 hover:bg-white/10 hover:text-white transition">🇯🇵 日本語</a></li>
                         </ul>
                     </div>
                 </div>
-                <button class="flex items-center gap-2 px-6 py-2.5 rounded-lg transition shadow-lg font-semibold" style="background:linear-gradient(135deg,#9B7A1C,#D4AF37,#F5D57B,#D4AF37,#9B7A1C);color:#0A0A0A;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <button class="flex items-center gap-2 bg-white text-brand-blue px-6 py-2.5 rounded-lg hover:bg-brand-accent transition shadow-lg">
                     <span>로그인 / 가입</span>
                     <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 </button>
@@ -195,96 +131,96 @@
     </header>
 
     <!-- 배경 데코레이션 효과 -->
-    <div class="fixed top-1/4 left-1/4 transform -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none -z-10" style="background:rgba(212,175,55,0.05);"></div>
-    <div class="fixed bottom-0 right-0 w-[500px] h-[500px] rounded-full blur-[100px] pointer-events-none -z-10" style="background:rgba(212,175,55,0.04);"></div>
+    <div class="fixed top-1/4 left-1/4 transform -translate-x-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+    <div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
 
     <!-- 메인 컨텐츠 영역 -->
     <main class="flex-grow pt-32 pb-20 px-6 relative z-10 max-w-7xl mx-auto w-full" id="terms-main">
-
+        
         <!-- 페이지 타이틀 -->
         <div class="mb-10 text-center md:text-left">
-            <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">LUXX 플랫폼 서비스 이용약관</h1>
-            <p class="text-lg flex items-center justify-center md:justify-start gap-2" style="color:rgba(255,255,255,0.6);">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">SISA 플랫폼 서비스 이용약관</h1>
+            <p class="text-white/60 text-lg flex items-center justify-center md:justify-start gap-2">
                 <i class="fa-regular fa-calendar text-sm"></i> 시행일: 2024년 3월 10일
             </p>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-8 items-start">
-
+            
             <!-- 좌측 네비게이션 바 (Sticky) -->
             <aside class="w-full lg:w-1/4 lg:sticky top-28 hidden md:block">
-                <div class="glass-card rounded-2xl p-6 shadow-xl">
-                    <h3 class="text-sm font-bold uppercase tracking-widest mb-4" style="color:rgba(255,255,255,0.5);">목차 (Index)</h3>
+                <div class="glass-card rounded-2xl p-6 shadow-xl border border-white/10">
+                    <h3 class="text-sm font-bold text-white/50 uppercase tracking-widest mb-4">목차 (Index)</h3>
                     <ul class="space-y-3 text-sm font-medium">
-                        <li class="pb-3 mb-3" style="border-bottom:1px solid rgba(212,175,55,0.15);"><a href="#checklist" class="transition flex items-center gap-2" style="color:#D4AF37;" onmouseover="this.style.color='#F5D57B'" onmouseout="this.style.color='#D4AF37'"><i class="fa-solid fa-list-check"></i> 필수 동의 체크리스트</a></li>
-                        <li><a href="#chapter1" class="text-white transition flex items-center gap-2" onmouseover="this.style.color='#D4AF37'" onmouseout="this.style.color='white'"><div class="w-1.5 h-1.5 rounded-full" style="background:#D4AF37;"></div> 제1장 총칙</a></li>
-                        <li><a href="#chapter2" class="transition flex items-center gap-2" style="color:rgba(255,255,255,0.7);" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'"><div class="w-1.5 h-1.5 rounded-full" style="background:rgba(212,175,55,0.3);"></div> 제2장 회원 가입 및 서비스 제공</a></li>
-                        <li><a href="#chapter3" class="transition flex items-center gap-2" style="color:rgba(255,255,255,0.7);" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'"><div class="w-1.5 h-1.5 rounded-full" style="background:rgba(212,175,55,0.3);"></div> 제3장 경매 대행 서비스 이용</a></li>
-                        <li><a href="#chapter4" class="transition flex items-center gap-2" style="color:rgba(255,255,255,0.7);" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'"><div class="w-1.5 h-1.5 rounded-full" style="background:rgba(212,175,55,0.3);"></div> 제4장 결제 및 부정거래 금지</a></li>
-                        <li><a href="#chapter5" class="transition flex items-center gap-2" style="color:rgba(255,255,255,0.7);" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'"><div class="w-1.5 h-1.5 rounded-full" style="background:rgba(212,175,55,0.3);"></div> 제5장 LUXX 인증 시스템</a></li>
-                        <li><a href="#chapter6" class="transition flex items-center gap-2" style="color:rgba(255,255,255,0.7);" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.7)'"><div class="w-1.5 h-1.5 rounded-full" style="background:rgba(212,175,55,0.3);"></div> 제6장 분쟁 해결 및 기타</a></li>
+                        <li class="pb-3 mb-3 border-b border-white/10"><a href="#checklist" class="text-blue-300 hover:text-white transition flex items-center gap-2"><i class="fa-solid fa-list-check"></i> 필수 동의 체크리스트</a></li>
+                        <li><a href="#chapter1" class="text-white hover:text-blue-300 transition flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div> 제1장 총칙</a></li>
+                        <li><a href="#chapter2" class="text-white/70 hover:text-white transition flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white/20"></div> 제2장 회원 가입 및 서비스 제공</a></li>
+                        <li><a href="#chapter3" class="text-white/70 hover:text-white transition flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white/20"></div> 제3장 경매 대행 서비스 이용</a></li>
+                        <li><a href="#chapter4" class="text-white/70 hover:text-white transition flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white/20"></div> 제4장 결제 및 부정거래 금지</a></li>
+                        <li><a href="#chapter5" class="text-white/70 hover:text-white transition flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white/20"></div> 제5장 SISA 인증 시스템</a></li>
+                        <li><a href="#chapter6" class="text-white/70 hover:text-white transition flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-white/20"></div> 제6장 분쟁 해결 및 기타</a></li>
                     </ul>
                 </div>
             </aside>
 
             <!-- 우측 약관 본문 -->
-            <div class="w-full lg:w-3/4 glass-card-gold rounded-3xl p-8 md:p-12 shadow-2xl prose max-w-none">
-
-                <!-- 필수 동의 체크리스트 -->
-                <section id="checklist" class="mb-14 p-8 rounded-2xl relative overflow-hidden" style="background:rgba(10,10,10,0.6);border:1px solid rgba(212,175,55,0.3);box-shadow:0 0 30px rgba(212,175,55,0.08);">
-                    <div class="absolute top-0 right-0 w-32 h-32 rounded-bl-full pointer-events-none" style="background:rgba(212,175,55,0.08);"></div>
-
+            <div class="w-full lg:w-3/4 glass-card rounded-3xl p-8 md:p-12 shadow-2xl border border-white/10 prose max-w-none">
+                
+                <!-- 필수 동의 체크리스트 (폼 영역) - 상단으로 이동 -->
+                <section id="checklist" class="mb-14 bg-brand-dark/40 border border-blue-400/30 p-8 rounded-2xl relative overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.15)]">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-bl-full pointer-events-none"></div>
+                    
                     <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-3 mt-0">
-                        <i class="fa-solid fa-list-check" style="color:#D4AF37;"></i> 결제 전 필수 동의
+                        <i class="fa-solid fa-list-check text-blue-400"></i> 결제 전 필수 동의
                     </h3>
-                    <p class="text-sm mb-6" style="color:rgba(255,255,255,0.7);">고객님, 안전한 경매 대행 서비스를 위해 아래 사항에 모두 동의해 주셔야 입찰 및 결제가 진행됩니다.</p>
+                    <p class="text-sm text-white/70 mb-6">고객님, 안전한 경매 대행 서비스를 위해 아래 사항에 모두 동의해 주셔야 입찰 및 결제가 진행됩니다.</p>
 
                     <form action="#" class="space-y-3">
                         <!-- 약관 1 -->
-                        <label class="flex items-start gap-4 p-4 rounded-xl cursor-pointer transition" style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.1);" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">
-                            <input type="checkbox" class="mt-1 w-5 h-5 rounded cursor-pointer" style="accent-color:#D4AF37;" required>
-                            <span class="text-sm" style="color:rgba(255,255,255,0.9);">
-                                <strong style="color:#D4AF37;" class="mr-1">[필수]</strong> LUXX 서비스 이용약관 동의
+                        <label class="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-white/10 hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" class="mt-1 w-5 h-5 rounded border-white/20 text-blue-500 focus:ring-blue-500 bg-white/10 accent-brand-blue cursor-pointer" required>
+                            <span class="text-sm text-white/90">
+                                <strong class="text-blue-300 mr-1">[필수]</strong> SISA 서비스 이용약관 동의
                             </span>
                         </label>
                         <!-- 약관 2 -->
-                        <label class="flex items-start gap-4 p-4 rounded-xl cursor-pointer transition" style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.1);" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">
-                            <input type="checkbox" class="mt-1 w-5 h-5 rounded cursor-pointer" style="accent-color:#D4AF37;" required>
-                            <span class="text-sm" style="color:rgba(255,255,255,0.9);">
-                                <strong style="color:#D4AF37;" class="mr-1">[필수]</strong> 해외 경매 입찰의 법적 구속력(민법 제527조) 및 원칙적 취소 불가 원칙에 대해 이해하였습니다.
+                        <label class="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-white/10 hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" class="mt-1 w-5 h-5 rounded border-white/20 text-blue-500 focus:ring-blue-500 bg-white/10 accent-brand-blue cursor-pointer" required>
+                            <span class="text-sm text-white/90">
+                                <strong class="text-blue-300 mr-1">[필수]</strong> 해외 경매 입찰의 법적 구속력(민법 제527조) 및 원칙적 취소 불가 원칙에 대해 이해하였습니다.
                             </span>
                         </label>
                         <!-- 약관 3 -->
-                        <label class="flex items-start gap-4 p-4 rounded-xl cursor-pointer transition" style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.1);" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">
-                            <input type="checkbox" class="mt-1 w-5 h-5 rounded cursor-pointer" style="accent-color:#D4AF37;" required>
-                            <span class="text-sm" style="color:rgba(255,255,255,0.9);">
-                                <strong style="color:#D4AF37;" class="mr-1">[필수]</strong> 정당한 사유 없는 취소 시 발생하는 위약금 규정 및 낙찰 권리/소유권 이전 규정에 동의합니다.
+                        <label class="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-white/10 hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" class="mt-1 w-5 h-5 rounded border-white/20 text-blue-500 focus:ring-blue-500 bg-white/10 accent-brand-blue cursor-pointer" required>
+                            <span class="text-sm text-white/90">
+                                <strong class="text-blue-300 mr-1">[필수]</strong> 정당한 사유 없는 취소 시 발생하는 위약금 규정 및 낙찰 권리/소유권 이전 규정에 동의합니다.
                             </span>
                         </label>
                         <!-- 약관 4 -->
-                        <label class="flex items-start gap-4 p-4 rounded-xl cursor-pointer transition" style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.1);" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">
-                            <input type="checkbox" class="mt-1 w-5 h-5 rounded cursor-pointer" style="accent-color:#D4AF37;" required>
-                            <span class="text-sm" style="color:rgba(255,255,255,0.9);">
-                                <strong style="color:#D4AF37;" class="mr-1">[필수]</strong> 반드시 본인 명의의 결제수단을 사용하며, 부정거래(카드깡 등) 시 형사 고발 조치될 수 있음에 서약합니다.
+                        <label class="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-white/10 hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" class="mt-1 w-5 h-5 rounded border-white/20 text-blue-500 focus:ring-blue-500 bg-white/10 accent-brand-blue cursor-pointer" required>
+                            <span class="text-sm text-white/90">
+                                <strong class="text-blue-300 mr-1">[필수]</strong> 반드시 본인 명의의 결제수단을 사용하며, 부정거래(카드깡 등) 시 형사 고발 조치될 수 있음에 서약합니다.
                             </span>
                         </label>
                         <!-- 약관 5 -->
-                        <label class="flex items-start gap-4 p-4 rounded-xl cursor-pointer transition" style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.1);" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">
-                            <input type="checkbox" class="mt-1 w-5 h-5 rounded cursor-pointer" style="accent-color:#D4AF37;" required>
-                            <span class="text-sm" style="color:rgba(255,255,255,0.9);">
-                                <strong style="color:#D4AF37;" class="mr-1">[필수]</strong> 개인정보 수집 및 이용 동의
+                        <label class="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-white/10 hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" class="mt-1 w-5 h-5 rounded border-white/20 text-blue-500 focus:ring-blue-500 bg-white/10 accent-brand-blue cursor-pointer" required>
+                            <span class="text-sm text-white/90">
+                                <strong class="text-blue-300 mr-1">[필수]</strong> 개인정보 수집 및 이용 동의
                             </span>
                         </label>
                         <!-- 선택 약관 -->
-                        <label class="flex items-start gap-4 p-4 rounded-xl cursor-pointer transition" style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.1);" onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.3)'">
-                            <input type="checkbox" class="mt-1 w-5 h-5 rounded cursor-pointer" style="accent-color:#D4AF37;">
-                            <span class="text-sm" style="color:rgba(255,255,255,0.6);">
-                                <strong style="color:rgba(255,255,255,0.5);" class="mr-1">[선택]</strong> 마케팅 및 글로벌 경매 동향 정보 수신 동의
+                        <label class="flex items-start gap-4 p-4 bg-black/20 rounded-xl border border-white/10 hover:bg-white/10 cursor-pointer transition">
+                            <input type="checkbox" class="mt-1 w-5 h-5 rounded border-white/20 text-blue-500 focus:ring-blue-500 bg-white/10 accent-brand-blue cursor-pointer">
+                            <span class="text-sm text-white/60">
+                                <strong class="text-gray-400 mr-1">[선택]</strong> 마케팅 및 글로벌 경매 동향 정보 수신 동의
                             </span>
                         </label>
 
                         <div class="pt-6">
-                            <button type="button" class="btn-gold flex justify-center items-center gap-2">
+                            <button type="button" class="w-full bg-brand-accent text-brand-blue font-bold text-lg py-4 rounded-xl hover:bg-white transition shadow-[0_0_20px_rgba(230,237,247,0.3)] flex justify-center items-center gap-2">
                                 <i class="fa-solid fa-check"></i> 모두 동의하고 회원가입 완료
                             </button>
                         </div>
@@ -293,19 +229,19 @@
 
                 <!-- 제1장 총칙 -->
                 <section id="chapter1" class="mb-12">
-                    <h2 class="text-2xl font-bold pb-4 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">제1장 총칙</h2>
-
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mb-6">제1장 총칙</h2>
+                    
                     <h3>제1조 (목적)</h3>
-                    <p>본 약관은 LUXX(Luxury Auction Exchange, 이하 회사)가 운영하는 글로벌 명품 경매 중개 플랫폼에서 제공하는 서비스 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                    <p>본 약관은 SISA(Society of International Specialized Auctioneers, 이하 회사)가 운영하는 글로벌 명품 경매 중개 플랫폼에서 제공하는 서비스 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
 
                     <h3>제2조 (용어의 정의)</h3>
                     <ul>
-                        <li><strong>회사(LUXX):</strong> 국제 전문 경매사 협회로서 인증기관(회원사 심사 및 등급 부여), 통신판매중개자, 결제 중개 플랫폼의 역할을 수행합니다.</li>
+                        <li><strong>회사(SISA):</strong> 국제 전문 경매사 협회로서 인증기관(회원사 심사 및 등급 부여), 통신판매중개자, 결제 중개 플랫폼의 역할을 수행합니다.</li>
                         <li><strong>회원사(Partner):</strong> 회사로부터 인증을 받아 플랫폼을 통해 해외 명품 경매 대행 서비스를 제공하는 사업자입니다.</li>
                         <li><strong>고객(Customer):</strong> 회원사의 경매 대행 서비스를 이용하기 위해 플랫폼에 가입한 개인 또는 법인입니다.</li>
                         <li><strong>경매 대행 서비스:</strong> 회원사가 고객을 대신하여 해외 경매 플랫폼에서 상품을 입찰, 낙찰, 구매하여 전달하는 서비스입니다.</li>
                         <li><strong>보증금(계약금):</strong> 입찰 신청 시 납부하는 예치금으로, 민법 제565조에 따른 계약금 및 손해배상예정금의 성격을 갖습니다. 상품 낙찰 후 대금의 일부로 충당되며, 정당한 사유 없는 계약 해제 시 위약금으로 사용할 수 있습니다.</li>
-                        <li><strong>LUXX Pay‑Link:</strong> 회원사가 고객에게 결제 링크를 생성하여 전송하고, 고객이 본인의 결제수단으로 직접 결제하는 시스템입니다.</li>
+                        <li><strong>SISA Pay‑Link:</strong> 회원사가 고객에게 결제 링크를 생성하여 전송하고, 고객이 본인의 결제수단으로 직접 결제하는 시스템입니다.</li>
                         <li><strong>위약금:</strong> 정당한 사유 없이 계약을 해제하거나 채무를 불이행한 경우 발생하는 손해배상금입니다.</li>
                     </ul>
 
@@ -318,17 +254,17 @@
 
                 <!-- 제2장 회원 가입 및 서비스 제공 -->
                 <section id="chapter2" class="mb-12">
-                    <h2 class="text-2xl font-bold pb-4 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">제2장 회원 가입 및 서비스 제공</h2>
-
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mb-6">제2장 회원 가입 및 서비스 제공</h2>
+                    
                     <h3>제4조 (회원 가입)</h3>
                     <h4>① 가입 신청</h4>
                     <p>이용자는 회사가 정한 가입 양식에 따라 회원정보를 기입하고 본 약관에 동의함으로써 회원 가입을 신청합니다.</p>
                     <h4>② 가입 승낙 거부 사유</h4>
                     <p>실명이 아니거나 타인의 명의 도용, 허위 정보 기재, 과거 회원자격 상실, 부정한 용도로 서비스 이용 등 사유에 해당하는 경우 회사는 가입을 거부하거나 사후에 이용계약을 해지할 수 있습니다.</p>
                     <h4>③ 회원 등급 및 보증금 비율</h4>
-                    <div class="overflow-x-auto my-4 rounded-xl" style="border:1px solid rgba(212,175,55,0.15);background:rgba(0,0,0,0.3);">
+                    <div class="overflow-x-auto my-4 rounded-xl border border-white/10 bg-black/20">
                         <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead style="background:rgba(212,175,55,0.08);color:white;">
+                            <thead class="bg-white/10 text-white">
                                 <tr>
                                     <th class="px-6 py-3 font-semibold">회원 등급</th>
                                     <th class="px-6 py-3 font-semibold">거래 실적 기준</th>
@@ -336,26 +272,26 @@
                                     <th class="px-6 py-3 font-semibold text-center">고변동성 상품 추가</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y" style="divide-color:rgba(212,175,55,0.1);color:rgba(255,255,255,0.8);">
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold" style="color:#D4AF37;">VIP 회원</td>
+                            <tbody class="divide-y divide-white/10 text-white/80">
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-purple-300">VIP 회원</td>
                                     <td class="px-6 py-3">연 1억 원 이상 / 무사고 10회 이상</td>
                                     <td class="px-6 py-3 font-bold text-white text-center">20%</td>
                                     <td class="px-6 py-3 font-bold text-red-300 text-center">+ 5%</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold" style="color:#F5D57B;">Gold 회원</td>
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-yellow-300">Gold 회원</td>
                                     <td class="px-6 py-3">연 5천만 원 이상 / 무사고 5회 이상</td>
                                     <td class="px-6 py-3 font-bold text-white text-center">30%</td>
                                     <td class="px-6 py-3 font-bold text-red-300 text-center">+ 10%</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background=''">
+                                <tr class="hover:bg-white/5 transition">
                                     <td class="px-6 py-3 font-bold text-gray-300">Silver 회원</td>
                                     <td class="px-6 py-3">연 1천만 원 이상 / 무사고 2회 이상</td>
                                     <td class="px-6 py-3 font-bold text-white text-center">45%</td>
                                     <td class="px-6 py-3 font-bold text-red-300 text-center">+ 10%</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background=''">
+                                <tr class="hover:bg-white/5 transition">
                                     <td class="px-6 py-3 font-bold text-orange-300">Bronze 회원</td>
                                     <td class="px-6 py-3">신규 가입 회원</td>
                                     <td class="px-6 py-3 font-bold text-white text-center">60%</td>
@@ -364,7 +300,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-xs mt-2" style="color:#D4AF37;"><i class="fa-solid fa-circle-exclamation"></i> ※ 고변동성 상품은 시계, 주얼리 등 시장 가격 변동이 큰 품목을 의미하며, 보증금 비율은 연 1회 평가 후 조정될 수 있습니다.</p>
+                    <p class="text-xs text-yellow-400 mt-2"><i class="fa-solid fa-circle-exclamation"></i> ※ 고변동성 상품은 시계, 주얼리 등 시장 가격 변동이 큰 품목을 의미하며, 보증금 비율은 연 1회 평가 후 조정될 수 있습니다.</p>
 
                     <h3>제5조 (회사의 역할 및 책임)</h3>
                     <ul>
@@ -375,7 +311,7 @@
 
                 <!-- 제3장 경매 대행 서비스 이용 -->
                 <section id="chapter3" class="mb-12">
-                    <h2 class="text-2xl font-bold pb-4 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">제3장 경매 대행 서비스 이용</h2>
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mb-6">제3장 경매 대행 서비스 이용</h2>
 
                     <h3>제6조 (입찰의 법적 효력)</h3>
                     <ul>
@@ -399,37 +335,37 @@
                     <h3>제9조 (정당한 사유 없는 취소 시 위약금)</h3>
                     <h4>① 위약금 산정 기준</h4>
                     <p>취소 시점과 상품 성격에 따라 위약금을 부과합니다.</p>
-                    <div class="overflow-x-auto my-4 rounded-xl" style="border:1px solid rgba(212,175,55,0.15);background:rgba(0,0,0,0.3);">
+                    <div class="overflow-x-auto my-4 rounded-xl border border-white/10 bg-black/20">
                         <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead style="background:rgba(180,30,30,0.3);color:#fca5a5;">
+                            <thead class="bg-red-900/40 text-red-200">
                                 <tr>
                                     <th class="px-6 py-3 font-semibold">취소 시점</th>
                                     <th class="px-6 py-3 font-semibold">일반 상품 위약금</th>
                                     <th class="px-6 py-3 font-semibold">고변동성 상품 위약금</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-white/80">
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold text-white" style="border-bottom:1px solid rgba(212,175,55,0.1);">입찰 전 취소</td>
-                                    <td class="px-6 py-3 leading-relaxed" style="border-bottom:1px solid rgba(212,175,55,0.1);">
+                            <tbody class="divide-y divide-white/10 text-white/80">
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-white">입찰 전 취소</td>
+                                    <td class="px-6 py-3 leading-relaxed">
                                         보증금의 40% (Bronze)<br>
                                         보증금의 35% (Silver)<br>
                                         보증금의 25% (Gold)<br>
                                         보증금의 10% (VIP)
                                     </td>
-                                    <td class="px-6 py-3 text-red-300 font-bold" style="border-bottom:1px solid rgba(212,175,55,0.1);">기본 위약금 + 보증금의 10% 추가</td>
+                                    <td class="px-6 py-3 text-red-300 font-bold">기본 위약금 + 보증금의 10% 추가</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold text-white" style="border-bottom:1px solid rgba(212,175,55,0.1);">낙찰 후 24시간 이내</td>
-                                    <td class="px-6 py-3 font-bold text-red-300" style="border-bottom:1px solid rgba(212,175,55,0.1);">보증금 전액 + 낙찰가의 20%</td>
-                                    <td class="px-6 py-3 font-bold text-red-400" style="border-bottom:1px solid rgba(212,175,55,0.1);">보증금 전액 포함 낙찰가의 30%</td>
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-white">낙찰 후 24시간 이내</td>
+                                    <td class="px-6 py-3 font-bold text-red-300">보증금 전액 + 낙찰가의 20%</td>
+                                    <td class="px-6 py-3 font-bold text-red-400">보증금 전액 포함 낙찰가의 30%</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold text-white" style="border-bottom:1px solid rgba(212,175,55,0.1);">낙찰 후 48시간 이내</td>
-                                    <td class="px-6 py-3 font-bold text-red-400" style="border-bottom:1px solid rgba(212,175,55,0.1);">보증금 전액 + 낙찰가의 30%</td>
-                                    <td class="px-6 py-3 font-bold text-red-500" style="border-bottom:1px solid rgba(212,175,55,0.1);">보증금 전액 포함 낙찰가의 40%</td>
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-white">낙찰 후 48시간 이내</td>
+                                    <td class="px-6 py-3 font-bold text-red-400">보증금 전액 + 낙찰가의 30%</td>
+                                    <td class="px-6 py-3 font-bold text-red-500">보증금 전액 포함 낙찰가의 40%</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
+                                <tr class="hover:bg-white/5 transition">
                                     <td class="px-6 py-3 font-bold text-red-400">48시간 경과 후</td>
                                     <td class="px-6 py-3 font-bold text-red-500">보증금 전액 + 낙찰가의 40%</td>
                                     <td class="px-6 py-3 font-bold text-red-600">보증금 전액 포함 낙찰가의 50%</td>
@@ -440,9 +376,9 @@
 
                     <h4>② 실손해배상 추가 청구</h4>
                     <p>위약금 외에 해외 경매 플랫폼 위약금·수수료, 재경매로 인한 시세 하락 차액, 법무비용 및 금융비용 등 실제 손해를 추가로 청구할 수 있습니다.</p>
-
+                    
                     <h4>③ 총 청구액 산정</h4>
-                    <div class="p-4 rounded-lg my-3 font-mono text-center" style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.15);color:#D4AF37;">
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-lg my-3 font-mono text-center text-blue-200">
                         총 청구액 = 기본 위약금 + 실손해배상 + 재경매 손실 + 부대비용
                     </div>
 
@@ -464,12 +400,12 @@
 
                 <!-- 제4장 결제 및 부정거래 금지 -->
                 <section id="chapter4" class="mb-12">
-                    <h2 class="text-2xl font-bold pb-4 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">제4장 결제 및 부정거래 금지</h2>
-
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mb-6">제4장 결제 및 부정거래 금지</h2>
+                    
                     <h3>제12조 (결제 원칙)</h3>
                     <ul>
                         <li><strong>본인 결제 의무:</strong> 고객은 본인 명의의 결제수단으로만 결제해야 하며, 타인 명의를 사용하거나 대리결제를 하는 행위는 금지됩니다.</li>
-                        <li><strong>LUXX Pay‑Link 시스템:</strong> 회원사는 고객에게 결제 링크를 생성하여 전송하고, 고객이 직접 결제정보를 입력합니다. 회사와 회원사는 고객의 결제정보를 저장하거나 대리 입력하지 않습니다.</li>
+                        <li><strong>SISA Pay‑Link 시스템:</strong> 회원사는 고객에게 결제 링크를 생성하여 전송하고, 고객이 직접 결제정보를 입력합니다. 회사와 회원사는 고객의 결제정보를 저장하거나 대리 입력하지 않습니다.</li>
                         <li><strong>PG 연동 및 에스크로:</strong> 회사는 금융위원회에 등록된 PG사와 정식 계약을 체결하며, 에스크로 서비스를 제공합니다. 보증금과 결제대금은 에스크로 계좌를 통해 안전하게 관리됩니다.</li>
                     </ul>
 
@@ -480,21 +416,21 @@
                     </ul>
                 </section>
 
-                <!-- 제5장 LUXX 인증 시스템 -->
+                <!-- 제5장 SISA 인증 시스템 -->
                 <section id="chapter5" class="mb-12">
-                    <h2 class="text-2xl font-bold pb-4 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">제5장 LUXX 인증 시스템</h2>
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mb-6">제5장 SISA 인증 시스템</h2>
 
                     <h3>제14조 (인증의 의미)</h3>
                     <ul>
-                        <li><strong>LUXX Certified 의미:</strong> 체계적인 진품 검수 시스템 보유, 자본금·보험·고객보호 시스템 등 운영 기준 충족, 거래 실적·고객 만족도·분쟁 처리 우수 등을 의미합니다.</li>
+                        <li><strong>SISA Certified 의미:</strong> 체계적인 진품 검수 시스템 보유, 자본금·보험·고객보호 시스템 등 운영 기준 충족, 거래 실적·고객 만족도·분쟁 처리 우수 등을 의미합니다.</li>
                         <li><strong>인증의 한계:</strong> 개별 상품의 진품을 보증하는 것은 아니며, 실제 검수와 보증은 회원사가 책임집니다.</li>
                     </ul>
 
                     <h3>제15조 (인증 등급 및 갱신)</h3>
                     <h4>① 등급 체계</h4>
-                    <div class="overflow-x-auto my-4 rounded-xl" style="border:1px solid rgba(212,175,55,0.15);background:rgba(0,0,0,0.3);">
+                    <div class="overflow-x-auto my-4 rounded-xl border border-white/10 bg-black/20">
                         <table class="w-full text-left text-sm whitespace-nowrap">
-                            <thead style="background:rgba(212,175,55,0.08);color:#D4AF37;">
+                            <thead class="bg-blue-900/30 text-blue-200">
                                 <tr>
                                     <th class="px-6 py-3 font-semibold">등급</th>
                                     <th class="px-6 py-3 font-semibold">연 거래액 기준</th>
@@ -503,29 +439,29 @@
                                     <th class="px-6 py-3 font-semibold">연회비</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-white/80">
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.1);">Platinum</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">100억 원 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">3년 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">98% 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">2,000만 원</td>
+                            <tbody class="divide-y divide-white/10 text-white/80">
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-purple-300">Platinum</td>
+                                    <td class="px-6 py-3">100억 원 이상</td>
+                                    <td class="px-6 py-3">3년 이상</td>
+                                    <td class="px-6 py-3">98% 이상</td>
+                                    <td class="px-6 py-3">2,000만 원</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold" style="color:#F5D57B;border-bottom:1px solid rgba(212,175,55,0.1);">Gold</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">50억 원 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">2년 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">96% 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">1,000만 원</td>
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-yellow-300">Gold</td>
+                                    <td class="px-6 py-3">50억 원 이상</td>
+                                    <td class="px-6 py-3">2년 이상</td>
+                                    <td class="px-6 py-3">96% 이상</td>
+                                    <td class="px-6 py-3">1,000만 원</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
-                                    <td class="px-6 py-3 font-bold text-gray-300" style="border-bottom:1px solid rgba(212,175,55,0.1);">Silver</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">10억 원 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">1년 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">94% 이상</td>
-                                    <td class="px-6 py-3" style="border-bottom:1px solid rgba(212,175,55,0.1);">500만 원</td>
+                                <tr class="hover:bg-white/5 transition">
+                                    <td class="px-6 py-3 font-bold text-gray-300">Silver</td>
+                                    <td class="px-6 py-3">10억 원 이상</td>
+                                    <td class="px-6 py-3">1년 이상</td>
+                                    <td class="px-6 py-3">94% 이상</td>
+                                    <td class="px-6 py-3">500만 원</td>
                                 </tr>
-                                <tr onmouseover="this.style.background='rgba(212,175,55,0.04)'" onmouseout="this.style.background=''">
+                                <tr class="hover:bg-white/5 transition">
                                     <td class="px-6 py-3 font-bold text-orange-300">Bronze</td>
                                     <td class="px-6 py-3">신규 가입 기준</td>
                                     <td class="px-6 py-3">6개월 필수</td>
@@ -542,12 +478,12 @@
 
                 <!-- 제6장 분쟁 해결 및 기타 & 부칙 -->
                 <section id="chapter6" class="mb-12">
-                    <h2 class="text-2xl font-bold pb-4 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">제6장 분쟁 해결 및 기타</h2>
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mb-6">제6장 분쟁 해결 및 기타</h2>
 
                     <h3>제16조 (분쟁 해결 절차)</h3>
                     <ul>
                         <li><strong>회원사와 직접 협의:</strong> 7일 이내 해결을 원칙으로 합니다.</li>
-                        <li><strong>LUXX 중재 신청:</strong> 1단계 협의가 실패하면 30일 이내 중재를 신청할 수 있습니다.</li>
+                        <li><strong>SISA 중재 신청:</strong> 1단계 협의가 실패하면 30일 이내 중재를 신청할 수 있습니다.</li>
                         <li><strong>한국소비자원 조정 또는 관할 법원 소송:</strong> 중재가 불성립할 경우 한국소비자원 조정 또는 관할 법원 소송을 통해 해결합니다.</li>
                     </ul>
 
@@ -557,7 +493,7 @@
                     <h3>제18조 (개인정보 보호)</h3>
                     <p>회사는 개인정보보호법을 준수하며, 수집·이용·보관·파기 등의 세부 사항은 별도의 개인정보처리방침에 따릅니다.</p>
 
-                    <h2 class="text-2xl font-bold pb-4 mt-10 mb-6" style="color:#D4AF37;border-bottom:1px solid rgba(212,175,55,0.15);">부칙</h2>
+                    <h2 class="text-2xl font-bold text-blue-300 border-b border-white/10 pb-4 mt-10 mb-6">부칙</h2>
                     <ul>
                         <li><strong>시행일:</strong> 본 약관은 시행일부터 효력을 발생합니다.</li>
                         <li><strong>경과 조치:</strong> 시행 이전 가입 회원은 종전 약관이 적용되나, 본 약관에 동의한 경우 즉시 본 약관이 적용됩니다.</li>
@@ -568,39 +504,39 @@
         </div>
     </main>
 
-    <!-- 하단 푸터 -->
-    <footer class="mt-20 pt-16 pb-10 text-xs relative z-10" style="border-top:1px solid rgba(212,175,55,0.1);background:rgba(10,10,10,0.8);color:rgba(255,255,255,0.6);">
+    <!-- 하단 푸터 (법인 및 컴플라이언스 정보 유지) -->
+    <footer class="border-t border-white/10 mt-20 bg-brand-dark/40 pt-16 pb-10 text-white/60 text-xs relative z-10">
         <div class="max-w-7xl mx-auto px-6">
             <!-- 법인 정보 -->
-            <div class="mb-10 pb-10" style="border-bottom:1px solid rgba(212,175,55,0.1);">
-                <h3 class="text-white font-bold text-lg mb-5 tracking-wide">Luxury Auction Exchange (LUXX LLC.)</h3>
+            <div class="mb-10 pb-10 border-b border-white/10">
+                <h3 class="text-white font-bold text-lg mb-5 tracking-wide">Society of International Specialized Auctioneers (SISA LLC.)</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-[11px] leading-relaxed">
                     <div>
-                        <p><span style="color:rgba(255,255,255,0.4);">Headquarters:</span> 30 N Gould St Ste R, Sheridan, WY 82801, United States</p>
-                        <p><span style="color:rgba(255,255,255,0.4);">Corporate Registration No:</span> US-WY LLC-2026-8839201</p>
+                        <p><span class="text-white/40">Headquarters:</span> 30 N Gould St Ste R, Sheridan, WY 82801, United States</p>
+                        <p><span class="text-white/40">Corporate Registration No:</span> US-WY LLC-2026-8839201</p>
                     </div>
                     <div>
-                        <p><span style="color:rgba(255,255,255,0.4);">Global Compliance & Escrow License:</span> FinCEN MSB Registration No. 31000189XXXXXX</p>
-                        <p><span style="color:rgba(255,255,255,0.4);">Contact:</span> contact@world-LUXX.com | +1 (307) 555-0199</p>
+                        <p><span class="text-white/40">Global Compliance & Escrow License:</span> FinCEN MSB Registration No. 31000189XXXXXX</p>
+                        <p><span class="text-white/40">Contact:</span> contact@world-sisa.com | +1 (307) 555-0199</p>
                     </div>
                 </div>
             </div>
-
-            <!-- 법적 고지 -->
+            
+            <!-- 법적 고지 (Disclaimer) -->
             <div class="space-y-4 mb-10 text-[11px] leading-loose break-keep max-w-5xl">
-                <p>LUXX LLC. is a legally registered corporate entity in the State of Wyoming, USA. All auction proxy services, Vault storage operations, and payment gateways strictly comply with international trade laws and anti-money laundering (AML) regulations.</p>
-                <p>본 웹사이트의 모든 입찰 시스템과 자산 보관소는 미국 본사의 통제하에 운영되며, 한국 내 서비스는 LUXX 공식 인증을 받은 현지 법인 및 파트너사를 통해 적법하게 제공됩니다.</p>
+                <p>SISA LLC. is a legally registered corporate entity in the State of Wyoming, USA. All auction proxy services, Vault storage operations, and payment gateways strictly comply with international trade laws and anti-money laundering (AML) regulations.</p>
+                <p>본 웹사이트의 모든 입찰 시스템과 자산 보관소는 미국 본사의 통제하에 운영되며, 한국 내 서비스는 SISA 공식 인증을 받은 현지 법인 및 파트너사를 통해 적법하게 제공됩니다.</p>
             </div>
-
+            
             <!-- 하단 카피라이트 및 링크 -->
             <div class="flex flex-col md:flex-row items-center justify-between pt-6 flex-wrap gap-4">
-                <p class="font-mono text-[10px]">Copyright &copy; 2026 LUXX LLC. All Rights Reserved.</p>
-                <div class="flex gap-4 font-medium" style="color:rgba(255,255,255,0.7);">
-                    <a href="#" class="hover:text-white transition" style="color:#D4AF37;" onmouseover="this.style.color='#F5D57B'" onmouseout="this.style.color='#D4AF37'">Terms of Service</a>
-                    <span style="color:rgba(255,255,255,0.2);">|</span>
-                    <a href="#" class="hover:text-white transition" style="color:#D4AF37;" onmouseover="this.style.color='#F5D57B'" onmouseout="this.style.color='#D4AF37'">Privacy Policy</a>
-                    <span style="color:rgba(255,255,255,0.2);">|</span>
-                    <a href="#" class="hover:text-white transition" style="color:#D4AF37;" onmouseover="this.style.color='#F5D57B'" onmouseout="this.style.color='#D4AF37'">Vault Agreement</a>
+                <p class="font-mono text-[10px]">Copyright &copy; 2026 SISA LLC. All Rights Reserved.</p>
+                <div class="flex gap-4 font-medium text-white/70">
+                    <a href="#" class="hover:text-white transition">Terms of Service</a>
+                    <span class="text-white/20">|</span>
+                    <a href="#" class="hover:text-white transition">Privacy Policy</a>
+                    <span class="text-white/20">|</span>
+                    <a href="#" class="hover:text-white transition">Vault Agreement</a>
                 </div>
             </div>
         </div>

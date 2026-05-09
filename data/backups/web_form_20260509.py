@@ -2976,15 +2976,16 @@ def ag_static(fn):
     """/ag/img/01.png 등 ag 폴더 내 정적 자산(이미지/HTML) 서빙."""
     from flask import send_from_directory, abort
     base = (BASE_DIR / "ag").resolve()
-    # send_from_directory 가 자체적으로 디렉토리 트래버설을 차단한다.
-    # Windows 백슬래시 문제를 피하기 위해 forward-slash 형태로 전달.
-    safe_fn = str(fn).replace("\\", "/")
-    target = (base / safe_fn).resolve()
-    if not str(target).startswith(str(base)):
+    target = (base / fn).resolve()
+    # 디렉토리 트래버설 방지
+    try:
+        target.relative_to(base)
+    except ValueError:
         abort(404)
     if not target.exists() or not target.is_file():
         abort(404)
-    return send_from_directory(str(base), safe_fn)
+    rel = target.relative_to(base)
+    return send_from_directory(str(base), str(rel))
 
 
 @app.route("/seo/overseas-luxury-auction", methods=["GET"])
