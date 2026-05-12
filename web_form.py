@@ -2520,7 +2520,7 @@ FORM_TEMPLATE = """
     }
   </style>
 </head>
-<body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
+<body class="bg-[#0a0a0a] text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
   <main class="flex-grow pt-10 pb-10 px-4">
     <div class="kv-container">
       <div class="glass-card rounded-[2rem] border border-white/20 shadow-2xl">
@@ -4334,7 +4334,7 @@ def admin():
                     )
                     if use_prepared:
                         amount = str(prepared_asset.get("amount") or amount)
-                    session = {
+                    new_sess = {
                         "id": session_id,
                         "amount": amount,  # 비어 있으면 '고정 안 됨' 으로 동작
                         "installment": installment or "",
@@ -4344,7 +4344,7 @@ def admin():
                         "product_name": product_name,
                     }
                     sessions = [s for s in sessions if str(s.get("id") or "") != session_id]
-                    sessions.append(session)
+                    sessions.append(new_sess)
                     try:
                         _hq_persist_sessions_and_history(sessions, history)
                     except Exception as e:  # noqa: BLE001
@@ -4642,7 +4642,7 @@ def admin():
         });
       </script>
     </head>
-    <body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
+    <body class="bg-[#0a0a0a] text-white font-sans overflow-x-hidden antialiased flex flex-col min-h-screen">
       <div id="pending-create-banner" class="pending-top-banner" aria-hidden="true">
         <i class="fa-solid fa-spinner fa-spin"></i>
         <span>U-PAY 링크 생성 중 (1분정도 소요됩니다.)</span>
@@ -4656,7 +4656,7 @@ def admin():
       </div>
       <!-- 헤더 -->
       <header class="fixed top-0 left-0 right-0 z-30 glass-card border-b border-white/10">
-        <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="max-w-[1100px] mx-auto px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-globe text-white text-xl drop-shadow-sm"></i>
             <div class="flex flex-col leading-tight">
@@ -4685,7 +4685,7 @@ def admin():
         </div>
       </div>
       <main class="flex-grow pt-24 pb-12 px-3 sm:px-4">
-        <div class="max-w-[1400px] mx-auto">
+        <div class="max-w-[1100px] mx-auto">
           <div class="glass-card rounded-[2rem] border border-white/20 shadow-2xl">
             <div class="admin-card-inner">
               <div class="flex items-center justify-between mb-4">
@@ -5903,9 +5903,9 @@ def hq_admin():
         }
       </script>
     </head>
-    <body class="bg-brand-blue text-white font-sans overflow-x-hidden antialiased min-h-screen flex flex-col">
+    <body class="bg-[#0a0a0a] text-white font-sans overflow-x-hidden antialiased min-h-screen flex flex-col">
       <header class="fixed top-0 left-0 right-0 z-30 bg-brand-dark/80 backdrop-blur border-b border-white/10">
-        <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="max-w-[1100px] mx-auto px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-shield-halved text-white text-xl"></i>
             <div class="flex flex-col leading-tight">
@@ -5940,7 +5940,7 @@ def hq_admin():
         </div>
       </div>
       <main class="flex-grow pt-20 pb-10 px-3 sm:px-4">
-        <div class="max-w-[1400px] mx-auto space-y-8">
+        <div class="max-w-[1100px] mx-auto space-y-8">
           {% if history_warnings.warn_7_days or history_warnings.warn_3_days %}
           <script>
             window.addEventListener('load', function () {
@@ -5989,7 +5989,7 @@ def hq_admin():
             {% if expired_with_transactions %}
             <div class="overflow-x-auto max-h-48 overflow-y-auto">
               <table class="min-w-full text-sm border-separate border-spacing-y-1">
-                <thead class="text-xs text-white/70 sticky top-0 bg-brand-blue">
+                <thead class="text-xs text-white/70 sticky top-0 bg-[#0a0a0a]">
                   <tr>
                     <th class="px-2 py-1 text-center w-8">
                       <input type="checkbox" title="전체 선택" onclick="document.querySelectorAll('.exp-chk').forEach(function(c){c.checked=this.checked;}.bind(this));" />
@@ -7495,7 +7495,7 @@ def agency_admin():
         }
       </style>
     </head>
-    <body class="bg-brand-blue text-white font-sans overflow-x-auto antialiased min-h-screen flex flex-col">
+    <body class="bg-[#0a0a0a] text-white font-sans overflow-x-auto antialiased min-h-screen flex flex-col">
       <div id="pending-create-banner" class="pending-top-banner" aria-hidden="true">
         <i class="fa-solid fa-spinner fa-spin"></i>
         <span>U-PAY 링크 생성 중 (1분정도 소요됩니다.)</span>
@@ -7522,7 +7522,7 @@ def agency_admin():
         </div>
       </div>
       <header class="fixed top-0 left-0 right-0 z-30 bg-brand-dark/80 backdrop-blur border-b border-white/10">
-        <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="max-w-[1100px] mx-auto px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-store text-white text-xl"></i>
             <div class="flex flex-col leading-tight">
@@ -7544,7 +7544,7 @@ def agency_admin():
         </div>
       </header>
       <main class="flex-grow pt-20 pb-10 px-3 sm:px-4">
-        <div class="max-w-[1400px] mx-auto space-y-8">
+        <div class="max-w-[1100px] mx-auto space-y-8">
           {% if message %}
           <div class="bg-emerald-500/10 border border-emerald-400/40 text-emerald-100 text-sm px-4 py-3 rounded-xl">
             {{ message }}
