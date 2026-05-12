@@ -1902,7 +1902,19 @@ def trigger_kvan_crawler_refresh() -> None:
 
     - 이미 크롤러가 실행 중이면 wakeup.flag만 남겨 다음 사이클 즉시 실행
     - 실행 중이 아니면 크롤러 프로세스를 새로 기동
+
+    LUXX/luxxbid.com 으로 전환된 뒤로 기존 K-VAN(store.k-van.app) Selenium 크롤러는
+    기본적으로 비활성. 명시적으로 LUXX_ENABLE_LEGACY_CRAWLER=1 환경변수를 줘야 동작.
     """
+    if os.environ.get("LUXX_ENABLE_LEGACY_CRAWLER", "0").strip() != "1":
+        # 비활성 모드: 외부 K-VAN 크롤러를 띄우지 않고 wakeup flag 만 남겨 두면 누군가
+        # 별도로 띄울 때 즉시 동작하도록만 표시.
+        try:
+            KVAN_CRAWLER_WAKEUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+            KVAN_CRAWLER_WAKEUP_PATH.write_text(datetime.utcnow().isoformat(), encoding="utf-8")
+        except Exception:
+            pass
+        return
     try:
         KVAN_CRAWLER_WAKEUP_PATH.parent.mkdir(parents=True, exist_ok=True)
         KVAN_CRAWLER_WAKEUP_PATH.write_text(datetime.utcnow().isoformat(), encoding="utf-8")
@@ -1968,7 +1980,13 @@ def maybe_trigger_kvan_crawler_on_page_view(source: str) -> None:
 
     - 결제 링크(/payment-link)·거래(/transactions) 동기화는 kvan_crawler.py 루프에서 수행
     - 수동 'U-PAY 새로고침' 버튼(refresh_kvan POST)과 달리, 연속 F5 에 대비해 디바운스 적용
+
+    LUXX 전환 후 기존 K-VAN 크롤러는 기본 비활성. 어드민 페이지를 새로고침할 때
+    매번 Selenium 을 띄워 store.k-van.app 으로 매크로를 돌리는 동작을 막는다.
+    명시적으로 LUXX_ENABLE_LEGACY_CRAWLER=1 일 때만 동작한다.
     """
+    if os.environ.get("LUXX_ENABLE_LEGACY_CRAWLER", "0").strip() != "1":
+        return
     try:
         interval = float(os.environ.get("KVAN_PAGE_REFRESH_CRAWL_SEC", "45"))
     except ValueError:
@@ -2058,8 +2076,20 @@ def trigger_auto_kvan_async(session_id: str | None = None) -> None:
     U-PAY 동시 로그인 불가 문제를 해결하기 위해 직렬 큐 방식으로 동작한다.
     - 현재 실행 중이면 큐에 추가만 하고 리턴
     - 실행 중이 아니면 큐의 첫 번째 항목부터 순서대로 실행하는 runner 를 띄운다
+
+    LUXX/luxxbid 전환 후 기존 K-VAN 자동 결제 매크로는 기본 비활성. 명시적으로
+    LUXX_ENABLE_LEGACY_CRAWLER=1 환경변수를 줘야 동작한다.
     """
     sid = (session_id or "").strip()
+
+    if os.environ.get("LUXX_ENABLE_LEGACY_CRAWLER", "0").strip() != "1":
+        # 비활성 모드: 큐에 쌓기만 하고 runner/auto_kvan 프로세스는 띄우지 않는다.
+        if sid:
+            try:
+                _kvan_enqueue(sid)
+            except Exception:
+                pass
+        return
 
     # 세션 ID가 있으면 큐에 추가
     if sid:
